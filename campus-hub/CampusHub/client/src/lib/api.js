@@ -1,6 +1,7 @@
 import { defaultDemoState } from './demo-data.js'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+const USE_DEMO_FALLBACK = import.meta.env.DEV && !import.meta.env.VITE_API_URL
 const DEMO_KEY = 'campushub_demo_data'
 
 function getDemoState() {
@@ -278,20 +279,17 @@ export async function api(path, options = {}) {
   if (token) headers.set('Authorization', `Bearer ${token}`)
   if (!(options.body instanceof FormData)) headers.set('Content-Type', 'application/json')
 
+  let response
   try {
-    const response = await fetch(`${API_URL}${path}`, { ...options, headers })
-    const text = await response.text()
-    let data = {}
-    try { data = text ? JSON.parse(text) : {} } catch { data = { message: text } }
-    if (!response.ok) throw new Error(data.message || `Request failed (${response.status})`)
-    return data
+    response = await fetch(`${API_URL}${path}`, { ...options, headers })
   } catch (error) {
-    if (typeof window === 'undefined') throw error
-    try {
-      const fallback = mockApi(path, options)
-      return fallback
-    } catch (fallbackError) {
-      throw fallbackError instanceof Error ? fallbackError : error
-    }
+    if (USE_DEMO_FALLBACK && typeof window !== 'undefined') return mockApi(path, options)
+    throw error
   }
+
+  const text = await response.text()
+  let data = {}
+  try { data = text ? JSON.parse(text) : {} } catch { data = { message: text } }
+  if (!response.ok) throw new Error(data.message || `Request failed (${response.status})`)
+  return data
 }

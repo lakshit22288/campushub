@@ -4,10 +4,16 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 const { Pool } = pg
+const databaseHost = process.env.DATABASE_URL
+  ? new URL(process.env.DATABASE_URL).hostname
+  : ''
+const useSsl = process.env.NODE_ENV === 'production'
+  || databaseHost.endsWith('.pooler.supabase.com')
+  || databaseHost.endsWith('.supabase.co')
 
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  ssl: useSsl ? { rejectUnauthorized: false } : false,
   max: Number(process.env.DB_POOL_MAX || 10)
 })
 

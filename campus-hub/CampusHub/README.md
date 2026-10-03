@@ -2,10 +2,10 @@
 
 CampusHub is a full-stack student ecosystem starter for Polytechnic/College campuses.
 
-## Included in this starter
+## Included in this project
 
 - React + Vite frontend
-- Responsive dark/glass-inspired UI
+- Responsive student-focused interface
 - Node.js + Express API
 - PostgreSQL schema and seed script
 - JWT authentication with roles
@@ -54,7 +54,9 @@ This is useful for local UI testing and prototype presentations before connectin
 
 Create a database named `campushub` in PostgreSQL.
 
-Copy `server/.env.example` to `server/.env` and update `DATABASE_URL` and `JWT_SECRET`.
+Copy `server/.env.example` to `server/.env` and set `DATABASE_URL`, `JWT_SECRET`, and a private `SEED_ADMIN_PASSWORD` of at least 12 characters. Never commit `server/.env`.
+
+For Supabase from an IPv4 network, use the project's **Connect → Transaction pooler** URI in `DATABASE_URL`. The API uses stateless queries and enables TLS automatically for Supabase database hosts.
 
 ### 3. Install dependencies
 
@@ -71,13 +73,9 @@ npm install --workspace server
 npm run seed --workspace server
 ```
 
-The seed command creates branches, subjects, tools and a first super-admin account. Run it from the project root; the script loads `server/.env` automatically.
-Default admin credentials are:
+The seed command creates the schema, branches, subjects, tools and a first super-admin account. Run it from the project root; the script loads `server/.env` automatically. It refuses to run without the private seed password and never prints that password.
 
-- Email: `admin@campushub.local`
-- Password: `ChangeMe123!`
-
-**Change the password/seed env before any public deployment.**
+The initial admin email defaults to `admin@campushub.local`; set `SEED_ADMIN_EMAIL` to change it. Sign in using the password you set in `SEED_ADMIN_PASSWORD`.
 
 ### 5. Start API
 
@@ -112,7 +110,7 @@ SUPABASE_SERVICE_ROLE_KEY=...
 SUPABASE_STORAGE_BUCKET=campushub-files
 ```
 
-Create a storage bucket with the same name in Supabase. For public note PDFs, configure the bucket/read policy appropriately. Keep the service-role key only on the backend. In production, the API intentionally refuses to fall back to ephemeral local storage.
+Create a public-read storage bucket with the same name in Supabase, restricted to PDF/PNG/JPG and a 10 MB file limit. Keep the service-role key only on the backend. In production, the API intentionally refuses to fall back to ephemeral local storage.
 
 ## Deployment plan (₹0-oriented)
 

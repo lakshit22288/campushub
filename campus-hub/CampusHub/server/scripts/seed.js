@@ -4,7 +4,8 @@ import { fileURLToPath } from 'url'
 import bcrypt from 'bcryptjs'
 import dotenv from 'dotenv'
 
-dotenv.config({ path: path.resolve(process.cwd(), '.env') })
+const scriptDir = path.dirname(fileURLToPath(import.meta.url))
+dotenv.config({ path: path.resolve(scriptDir, '../.env') })
 const { pool } = await import('../src/db/pool.js')
 
 const branches = [
@@ -32,7 +33,12 @@ const tools = [
 ]
 
 try {
-  const schemaPath = new URL('../server/src/db/schema.sql', import.meta.url)
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD
+  if (!adminPassword || adminPassword.length < 12) {
+    throw new Error('Set SEED_ADMIN_PASSWORD to a private password of at least 12 characters in server/.env.')
+  }
+
+  const schemaPath = path.resolve(scriptDir, '../src/db/schema.sql')
   const schema = await fs.readFile(schemaPath, 'utf8')
   await pool.query(schema)
 
@@ -61,7 +67,6 @@ try {
   }
 
   const adminEmail = process.env.SEED_ADMIN_EMAIL || 'admin@campushub.local'
-  const adminPassword = process.env.SEED_ADMIN_PASSWORD || 'ChangeMe123!'
   const hash = await bcrypt.hash(adminPassword, 12)
   await pool.query(
     `INSERT INTO users(name,email,password_hash,role)
@@ -83,7 +88,6 @@ try {
 
   console.log('Seed complete.')
   console.log(`Admin email: ${adminEmail}`)
-  console.log(`Admin password: ${adminPassword}`)
   console.log(`Branches seeded: ${allBranches.join(', ')}`)
 } catch (err) {
   console.error('Seed failed:', err)
