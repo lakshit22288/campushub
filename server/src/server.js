@@ -16,11 +16,16 @@ const app = express()
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173').split(',').map(v => v.trim())
+const allowedOrigins = new Set([
+  'https://campushub-opal.vercel.app',
+  ...(process.env.CLIENT_URL || 'http://localhost:5173')
+    .split(',')
+    .map(v => v.trim().replace(/\/+$/, ''))
+])
 app.use(cors({ origin: (origin, callback) => {
   const localDevelopmentOrigin = process.env.NODE_ENV !== 'production'
     && /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin || '')
-  if (!origin || allowedOrigins.includes(origin) || localDevelopmentOrigin) return callback(null, true)
+  if (!origin || allowedOrigins.has(origin) || localDevelopmentOrigin) return callback(null, true)
   return callback(new Error('CORS blocked'))
 } }))
 app.use(express.json({ limit: '1mb' }))
