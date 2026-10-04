@@ -16,14 +16,14 @@ export async function saveUploadedFile(file) {
     const bucket = process.env.SUPABASE_STORAGE_BUCKET || 'campushub-files'
     const ext = path.extname(file.originalname || '').toLowerCase() || '.bin'
     const objectPath = `notes/${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`
-    const data = await fs.readFile(file.path)
+    const data = file.buffer || await fs.readFile(file.path)
     const { error } = await client.storage.from(bucket).upload(objectPath, data, {
       contentType: file.mimetype,
       upsert: false
     })
     if (error) throw new Error(`Storage upload failed: ${error.message}`)
     const { data: publicData } = client.storage.from(bucket).getPublicUrl(objectPath)
-    await fs.unlink(file.path).catch(() => {})
+    if (file.path) await fs.unlink(file.path).catch(() => {})
     return { url: publicData.publicUrl, fileName: file.originalname }
   }
 

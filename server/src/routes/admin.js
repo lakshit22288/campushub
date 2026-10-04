@@ -9,7 +9,7 @@ const router = Router()
 router.use(requireAuth, requireRole('admin','super_admin','teacher','moderator'))
 
 const upload = multer({
-  dest: 'uploads/',
+  ...(process.env.VERCEL ? { storage: multer.memoryStorage() } : { dest: 'uploads/' }),
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     const ok = ['application/pdf','image/png','image/jpeg'].includes(file.mimetype)
