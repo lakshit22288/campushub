@@ -26,7 +26,9 @@ app.use(cors({ origin: (origin, callback) => {
 app.use(express.json({ limit: '1mb' }))
 app.use(express.urlencoded({ extended: true }))
 app.use(morgan('dev'))
-app.use('/uploads', express.static(path.join(__dirname, '../../uploads')))
+if (!process.env.VERCEL) {
+  app.use('/uploads', express.static(path.join(__dirname, '../../uploads')))
+}
 
 app.get('/api/health', async (_req, res) => {
   try {
@@ -50,4 +52,8 @@ app.use((err, _req, res, _next) => {
 })
 
 const port = Number(process.env.PORT || 5000)
-app.listen(port, () => console.log(`CampusHub API running on http://localhost:${port}`))
+if (!process.env.VERCEL) {
+  app.listen(port, () => console.log(`CampusHub API running on http://localhost:${port}`))
+}
+
+export default app
