@@ -29,7 +29,8 @@ const tools = [
   ['EE','Power Calculator','Calculate DC/AC power using common formulas.','electrical','/tools/power','🔌'],
   ['ECE','Logic Gate Helper','Practice AND, OR, NOT and basic Boolean operations.','electronics','/tools/logic-gates','📡'],
   ['ME','Engineering Unit Converter','Common force, pressure, torque and power conversions.','mechanical','/tools/mechanical-units','⚙️'],
-  ['CE','Area & Volume Calculator','Common construction geometry calculations.','civil','/tools/area-volume','🏗️']
+  ['CE','Area & Volume Calculator','Common construction geometry calculations.','civil','/tools/area-volume','🏗️'],
+  ['MLT','Solution Dilution Calculator','Practice concentration and dilution calculations with C1V1 = C2V2.','laboratory','/tools/mlt-dilution','🧪']
 ]
 
 try {

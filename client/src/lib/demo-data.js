@@ -19,12 +19,19 @@ export const demoSubjects = [
 ]
 
 export const demoTools = [
-  { id: 201, name: 'Percentage Calculator', description: 'Compute marks percentages quickly.', category: 'Academic', route: '/tools/percentage', branch_id: 1 },
-  { id: 202, name: 'CGPA Calculator', description: 'Average semester performance instantly.', category: 'Academic', route: '/tools/cgpa', branch_id: 1 },
-  { id: 203, name: 'Ohm’s Law', description: 'Solve voltage, current and resistance relationships.', category: 'Electrical', route: '/tools/ohms-law', branch_id: 3 },
-  { id: 204, name: 'Power Calculator', description: 'Calculate electrical power with ease.', category: 'Electrical', route: '/tools/power', branch_id: 3 },
-  { id: 205, name: 'Logic Gate Helper', description: 'Test bit patterns and gate outputs.', category: 'Electronics', route: '/tools/logic-gates', branch_id: 4 },
-  { id: 206, name: 'Linux Command Helper', description: 'Quick reference for common commands.', category: 'Systems', route: '/tools/linux', branch_id: 1 }
+  { id: 201, name: 'Percentage Calculator', description: 'Compute marks percentages quickly.', category: 'Academic', route: '/tools/percentage', branch_id: null },
+  { id: 202, name: 'CGPA Calculator', description: 'Average semester performance instantly.', category: 'Academic', route: '/tools/cgpa', branch_id: null },
+  { id: 203, name: 'Unit Converter', description: 'Convert common study and engineering units.', category: 'Academic', route: '/tools/units', branch_id: null },
+  { id: 204, name: "Ohm's Law Calculator", description: 'Solve voltage, current and resistance relationships.', category: 'Electrical', route: '/tools/ohms-law', branch_id: 3 },
+  { id: 205, name: 'Power Calculator', description: 'Calculate electrical power with ease.', category: 'Electrical', route: '/tools/power', branch_id: 3 },
+  { id: 206, name: 'Logic Gate Helper', description: 'Practice AND, OR, NOT and basic Boolean operations.', category: 'Electronics', route: '/tools/logic-gates', branch_id: 4 },
+  { id: 207, name: 'Linux Command Helper', description: 'Search common Linux commands and examples.', category: 'Systems', route: '/tools/linux', branch_id: 1 },
+  { id: 208, name: 'Python Playground', description: 'Practice Python expressions and core concepts.', category: 'Coding', route: '/tools/python', branch_id: 1 },
+  { id: 209, name: 'SQL Query Practice', description: 'Practice and format SQL queries without executing them.', category: 'Database', route: '/tools/sql', branch_id: 1 },
+  { id: 210, name: 'IP/Subnet Calculator', description: 'Calculate IPv4 network ranges from an address and CIDR prefix.', category: 'Networking', route: '/tools/subnet', branch_id: 1 },
+  { id: 211, name: 'Engineering Unit Converter', description: 'Convert force, pressure, torque, power and speed units.', category: 'Mechanical', route: '/tools/mechanical-units', branch_id: 2 },
+  { id: 212, name: 'Area & Volume Calculator', description: 'Calculate common construction areas and volumes.', category: 'Civil', route: '/tools/area-volume', branch_id: 5 },
+  { id: 213, name: 'Solution Dilution Calculator', description: 'Practice concentration and dilution calculations with C1V1 = C2V2.', category: 'Laboratory', route: '/tools/mlt-dilution', branch_id: 6 }
 ]
 
 export const demoAnnouncements = [
@@ -46,9 +53,9 @@ export const demoBooks = [
 ]
 
 export const demoSkills = [
-  { id: 601, skill_name: 'Python', type: 'teach', level: 'advanced', name: 'Ishita', branch: 'Computer Science', user_id: 20 },
-  { id: 602, skill_name: 'AutoCAD', type: 'teach', level: 'intermediate', name: 'Harsh', branch: 'Mechanical', user_id: 21 },
-  { id: 603, skill_name: 'Embedded C', type: 'learn', level: 'beginner', name: 'Riya', branch: 'Electronics', user_id: 22 }
+  { id: 601, skill_name: 'Python', type: 'teach', level: 'advanced', name: 'Ishita', branch: 'Computer Science', branch_id: 1, user_id: 20 },
+  { id: 602, skill_name: 'AutoCAD', type: 'teach', level: 'intermediate', name: 'Harsh', branch: 'Mechanical', branch_id: 2, user_id: 21 },
+  { id: 603, skill_name: 'Embedded C', type: 'learn', level: 'beginner', name: 'Riya', branch: 'Electronics', branch_id: 4, user_id: 22 }
 ]
 
 export const demoUsers = [

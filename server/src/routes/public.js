@@ -44,7 +44,7 @@ router.get('/tools', async (req, res, next) => {
     const { branchId, q } = req.query
     const params = []
     const filters = []
-    if (branchId) { params.push(branchId); filters.push(`t.branch_id=$${params.length}`) }
+    if (branchId) { params.push(branchId); filters.push(`(t.branch_id=$${params.length} OR t.branch_id IS NULL)`) }
     if (q) { params.push(`%${q}%`); filters.push(`(t.name ILIKE $${params.length} OR t.description ILIKE $${params.length} OR t.category ILIKE $${params.length})`) }
     let sql = `SELECT t.*,b.name AS branch_name,s.name AS subject_name FROM tools t
                LEFT JOIN branches b ON b.id=t.branch_id LEFT JOIN subjects s ON s.id=t.subject_id`
@@ -86,13 +86,24 @@ router.get('/books', async (req, res, next) => {
 
 router.get('/skills', async (req, res, next) => {
   try {
-    const { q, type } = req.query
+    const { q, type, branchId, level } = req.query
+    if (type && !['teach','learn'].includes(type)) return res.status(400).json({ message: 'Invalid skill type' })
+    if (level && !['beginner','intermediate','advanced'].includes(level)) return res.status(400).json({ message: 'Invalid skill level' })
     const params = []
     const filters = []
     if (q) { params.push(`%${q}%`); filters.push(`s.skill_name ILIKE $${params.length}`) }
     if (type) { params.push(type); filters.push(`s.type=$${params.length}`) }
-    let sql = `SELECT s.id,s.skill_name,s.type,s.level,u.id AS user_id,u.name,u.bio,b.name AS branch
-               FROM skills s JOIN users u ON u.id=s.user_id LEFT JOIN branches b ON b.id=u.branch_id`
+    if (branchId) { params.push(branchId); filters.push(`u.branch_id=$${params.length}`) }
+    if (level) { params.push(level); filters.push(`s.level=$${params.length}`) }
+    let sql = `SELECT s.id,s.skill_name,s.type,s.level,u.id AS user_id,u.name,b.name AS branch,
+                      reputation.average_rating,reputation.review_count
+               FROM skills s
+               JOIN users u ON u.id=s.user_id
+               LEFT JOIN branches b ON b.id=u.branch_id
+               LEFT JOIN LATERAL (
+                 SELECT ROUND(AVG(rating)::numeric,1) AS average_rating,COUNT(*)::int AS review_count
+                 FROM skill_feedback WHERE reviewee_id=u.id
+               ) reputation ON TRUE`
     if (filters.length) sql += ` WHERE ${filters.join(' AND ')}`
     sql += ' ORDER BY s.created_at DESC LIMIT 100'
     const { rows } = await pool.query(sql, params)

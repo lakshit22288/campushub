@@ -91,6 +91,40 @@ CREATE TABLE IF NOT EXISTS skills (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS skill_requests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  skill_id UUID NOT NULL REFERENCES skills(id) ON DELETE CASCADE,
+  requester_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  offered_skill_id UUID REFERENCES skills(id) ON DELETE SET NULL,
+  message TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','accepted','rejected','completed')),
+  requester_completed_at TIMESTAMPTZ,
+  owner_completed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE skill_requests
+  ADD COLUMN IF NOT EXISTS offered_skill_id UUID REFERENCES skills(id) ON DELETE SET NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_skill_requests_active
+  ON skill_requests(skill_id, requester_id)
+  WHERE status IN ('pending','accepted');
+
+CREATE TABLE IF NOT EXISTS skill_feedback (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  request_id UUID NOT NULL REFERENCES skill_requests(id) ON DELETE CASCADE,
+  reviewer_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  reviewee_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  rating INT NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  comment TEXT NOT NULL DEFAULT '',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(request_id, reviewer_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_skill_requests_requester ON skill_requests(requester_id);
+CREATE INDEX IF NOT EXISTS idx_skill_feedback_reviewee ON skill_feedback(reviewee_id);
+
 CREATE TABLE IF NOT EXISTS help_requests (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
