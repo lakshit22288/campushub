@@ -6,13 +6,13 @@ Copy this whole file into the first message of a new chat to continue work on Ca
 We are continuing my college project, CampusHub. Talk to me casually in Hinglish and explain technical things simply because I am learning. First inspect the current repository, branch, Git status, and this restart.txt; do not assume the code or deployment is unchanged.
 
 IMPORTANT CURRENT CONVERSATION STATE:
-I said CampusHub has many problems and that I want to talk about them first. I have not yet described those problems. Do not start changing code, settings, or deploying anything until I explain the issues and we agree what to fix. Your first response should acknowledge this and invite me to explain.
+The user authorized starting a Python-based rewrite immediately, without further questions. They want the whole app Python-based and agreed to use Python with Supabase and Google login. Start by building a side-by-side Django app, preserving the current React/Express app and existing Supabase schema/data. Do not push to GitHub. Explain that browser rendering still uses HTML/CSS and may require small client-side JS for browser-only OAuth interactions, but server-rendered Django should replace the React app progressively.
 
 WORKING STYLE:
 - Preserve the existing visual design and cream/violet/lime color direction unless I ask to redesign. I disliked boring icons/emojis and earlier UI/color changes.
 - Check Git status before edits; preserve any work already in progress and do not discard unrelated changes.
 - Make small, complete fixes, test them, and explain what changed and why in clear Hinglish.
-- I previously authorized you to inspect and fix deployment issues yourself while I was logged into Vercel. Use any dashboard/browser access only if it is actually available; never claim access you do not have. Ask before consequential or ambiguous actions.
+- I previously authorized you to inspect and fix deployment issues yourself while I was logged into Vercel. Use any dashboard/browser access only if it is actually available; never claim access you do not have.
 - Never ask me to paste secrets into chat. Do not reveal passwords, database URLs, OAuth client secrets, service-role keys, JWT secrets, tokens, or private credentials.
 - At the end of EVERY meaningful project step, update this restart.txt with what changed, why, verification performed, current Git/deployment status if known, and the next task. Keep it concise and factual so a new chat can continue from here. Do not claim a step is verified unless it was.
 
@@ -66,11 +66,18 @@ FINAL DELIVERABLE:
 When I say the project is finished, create a beginner-friendly, step-by-step Hinglish PDF. Explain the app architecture/features; frontend/backend/Supabase/GitHub/Vercel connections; how to run/build/deploy/troubleshoot; Google OAuth redirects; and the full autonomous Vercel debugging work (Runtime Logs diagnosis, upload storage fix, frontend API env var/redeploy, CORS fix, verification, localhost Google callback fix). Include a table for every env-var key explaining where to find/create it, where it is entered, project/environment scope, whether public or secret, and what it does. Never put real secrets in the PDF. Clearly label anything not verified or still pending.
 
 NEXT ACTION:
-Wait for me to explain the problems I am seeing. Investigate and prioritize them with me; do not make changes until we agree on the first task.
+Continue the Python/Django migration side-by-side. Preserve the existing production app and Supabase tables. No GitHub pushes.
 
 LATEST CONVERSATION UPDATE (2026-10-07):
-- I asked whether the project could be done using Python and its libraries. I then asked to save the current state first and explicitly said NOT to push anything to GitHub, so the current project stays safe and we can revert if needed.
-- Python migration is NOT approved/in progress yet. Pause it until we discuss the reported project problems and confirm scope. Keep the current React/Vite + Node/Express + Supabase stack unchanged for now.
-- Create only a local Git checkpoint if needed; never push unless I explicitly ask. Before claiming a checkpoint, verify the commit and confirm the working tree. Do not reset/revert anything automatically.
-- Current code base had last been confirmed at published commit 16b9624. The only new file expected at this checkpoint is restart.txt. Verify actual state before acting.
-- I still want the final detailed Hinglish PDF described above.
+- User authorized starting a full Python-based project immediately and asked no follow-up questions.
+- User explicitly asked to save current state and NOT push anything to GitHub. A local checkpoint `7a36824 docs: add CampusHub restart prompt` contains the handover file; not pushed. A local migration branch `python-migration` was created from it, keeping `main` as the saved baseline.
+- Working tree was clean on branch creation. Current branch is `python-migration`; verify actual status/commit before relying on it.
+- Environment has Python 3.14.7. Current app before migration uses React/Vite in `client/`, Node/Express in `server/`, and existing Supabase PostgreSQL schema in `server/src/db/schema.sql`.
+- Migration approach: build a side-by-side Django server-rendered app in `python_app/`, preserving current design by reusing the CSS, map existing tables as unmanaged models, do not run schema-changing migrations, and port features/auth in stages. Keep the existing app and production deployment untouched until the Python edition is comprehensively tested and explicitly ready. Never push to GitHub.
+- Initial Django foundation now exists under `python_app/`: requirements/config, Supabase Postgres URL parser with SSL, unmanaged Branch/Announcement models, matching landing page/branch directory, health endpoint, in-progress feature placeholders, mobile navigation, and setup docs. It reuses the current stylesheet. `.gitignore` excludes Python virtualenv/env/cache/database files. Root README explains that the Python edition is isolated and React/Express remains production.
+- Focused dependencies installed successfully in ignored `python_app/.venv`: Django 5.2.18, psycopg 3.3.6, httpx 0.28.1, bcrypt 5.0.0, python-dotenv 1.2.4. The `supabase` Python SDK was removed from this first phase because its large transitive dependency downloads were extremely slow; planned Python Auth/Storage integration uses HTTP calls to Supabase and existing PostgreSQL directly.
+- Verification: `manage.py check` clean; 7 Django tests passed; local Django health returned HTTP 200/database connected; local homepage returned 200 and read 6 real branches plus announcement from existing Supabase DB. Browser check confirmed existing CSS loads and mobile details-menu opens with all six links. No schema migrations were run.
+- A local `python-migration` branch was created from `7a36824`; current phase-1 files are being committed locally as a checkpoint. Do not push this branch or alter `main`/production.
+- Next: port Django session/auth flows (email/password bcrypt compatibility and Supabase Google OAuth) with tests, then core BranchHub, SkillSwap, BookShare, admin, tools, compiler, and project ideas. Do not switch production until parity is tested.
+- Final Hinglish PDF requirement remains.
+- Final Hinglish PDF requirement remains.

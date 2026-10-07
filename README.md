@@ -34,3 +34,9 @@ Configure these Production environment variables:
 After the API deploys, set the frontend's `VITE_API_URL` to `https://<api-project>.vercel.app/api` and redeploy the frontend. In Supabase Authentication URL Configuration, set the Site URL to the frontend origin and add `https://<frontend-project>.vercel.app/auth/callback` to the allowed redirect URLs.
 
 Do not add `.env` files, database URLs, JWT secrets, or Supabase secret/service-role keys to GitHub or frontend environment variables. Vercel's free-plan function limits and provider availability may affect usage; the API's compiler proxy also depends on OneCompiler. Python's interactive runner executes in the user's browser using Pyodide.
+
+## Python edition (migration in progress)
+
+An isolated Django-based version is being built in `python_app/` on the local `python-migration` branch. It reuses the existing design stylesheet and maps the current Supabase PostgreSQL tables as unmanaged models; it must not run migrations that alter the existing database. Follow [the Python edition setup guide](python_app/README.md) to run it locally.
+
+The React/Express application and its Vercel deployment remain the production version until the Django edition has feature parity and authentication, database access, and workflows are verified. The Python migration is not being pushed to GitHub or deployed during this stage.

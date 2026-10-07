@@ -1,0 +1,12 @@
+.mobile-menu > summary { list-style: none; cursor: pointer; }
+.mobile-menu > summary::-webkit-details-marker { display: none; }
+
+@media (min-width: 721px) {
+  .mobile-menu > summary { display: none; }
+  .mobile-menu .nav { position: static; display: flex; flex-direction: row; padding: 0; border: 0; background: transparent; box-shadow: none; }
+}
+
+@media (max-width: 720px) {
+  .mobile-menu .nav { display: none; }
+  .mobile-menu[open] .nav { display: flex; }
+}

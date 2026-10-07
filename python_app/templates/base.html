@@ -1,0 +1,35 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f3ec">
+  <title>{% block title %}CampusHub{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'styles/global.css' %}">
+  <link rel="stylesheet" href="{% static 'python/python.css' %}">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="/">
+        <span class="brand-mark">CH</span>
+        <div><strong>CampusHub</strong><span>Your campus, in one place.</span></div>
+      </a>
+      <details class="mobile-menu">
+        <summary class="menu-btn">Menu</summary>
+        <nav class="nav" aria-label="Main navigation">
+          <a href="{% url 'branchhub' %}">BranchHub</a>
+          <a href="{% url 'compiler' %}">Code Lab</a>
+          <a href="{% url 'project_ideas' %}">Project ideas</a>
+          <a href="{% url 'bookshare' %}">BookShare</a>
+          <a href="{% url 'skillswap' %}">SkillSwap</a>
+          <a href="{% url 'branches' %}">Branches</a>
+        </nav>
+      </details>
+    </header>
+    <main>{% block content %}{% endblock %}</main>
+    <footer>CampusHub • Open-source student ecosystem • Built for campus use</footer>
+  </div>
+</body>
+</html>

@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}CampusHub — Learn • Share • Build • Grow{% endblock %}
+{% block content %}
+<section class="home-intro">
+  <div class="container">
+    <div class="hero">
+      <div class="hero-copy">
+        <div class="eyebrow">YOUR CAMPUS, IN MOTION</div>
+        <h1>Learn something.<br><em>Build something.</em></h1>
+        <p>Branch tools, a code lab, student-powered skill exchange and the resources that make campus life easier.</p>
+        <div class="hero-actions">
+          <a class="btn primary" href="{% url 'branches' %}">Explore your campus <span aria-hidden="true">↗</span></a>
+          <a class="btn ghost" href="{% url 'compiler' %}">Open Code Lab</a>
+        </div>
+        <div class="hero-meta"><span>{{ branches|length }} branches</span><span>10 compiler languages</span><span>Built for student projects</span></div>
+      </div>
+      <aside class="hero-card">
+        <div class="lab-window">
+          <div class="lab-window-top"><span>QUICK START / PYTHON</span><span>READY</span></div>
+          <div class="lab-code"><span>01</span><code>skills = ["ideas", "people"]</code><span>02</span><code>print("Let's build.")</code></div>
+          <div class="lab-window-output"><span>OUTPUT</span><strong>Let's build.</strong></div>
+          <a href="{% url 'compiler' %}" class="lab-window-link">Explore what CampusHub offers <span aria-hidden="true">↗</span></a>
+        </div>
+        <div class="hero-card-caption"><span>One campus. More ways to learn.</span><span>CAMPUSHUB / 2026</span></div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<section class="container section module-section">
+  <div class="section-head">
+    <div><div class="eyebrow">START HERE</div><h2>What do you need today?</h2></div>
+    <p class="section-intro">The Python edition is being built alongside the live version.</p>
+  </div>
+  <div class="module-list">
+    <a href="{% url 'branchhub' %}" class="module-row"><span class="module-number">01</span><span class="module-main"><strong>BranchHub</strong><small>Find your subjects, notes, practice material and tools.</small></span><span class="module-detail">LEARN</span><span class="module-arrow">↗</span></a>
+    <a href="{% url 'bookshare' %}" class="module-row"><span class="module-number">02</span><span class="module-main"><strong>BookShare</strong><small>Put useful books back into circulation across campus.</small></span><span class="module-detail">EXCHANGE</span><span class="module-arrow">↗</span></a>
+    <a href="{% url 'skillswap' %}" class="module-row"><span class="module-number">03</span><span class="module-main"><strong>SkillSwap</strong><small>Trade knowledge with people who can teach what you need.</small></span><span class="module-detail">CONNECT</span><span class="module-arrow">↗</span></a>
+  </div>
+</section>
+
+<section class="container section">
+  <div class="section-head"><div><div class="eyebrow">YOUR CAMPUS</div><h2>Built around your branch.</h2></div><a class="text-link" href="{% url 'branches' %}">See all branches ↗</a></div>
+  {% if branches %}
+  <div class="branch-grid">
+    {% for branch in branches %}
+    <a class="branch-card" href="{% url 'branchhub' %}">
+      <span class="branch-index">{{ forloop.counter|stringformat:"02d" }}</span>
+      <div><span class="branch-code">{{ branch.code }}</span><strong>{{ branch.name }}</strong></div>
+      <span class="branch-arrow" aria-hidden="true">↗</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty">{% if database_configured %}No branches are available in the connected database yet.{% else %}Branches will appear here once the existing Supabase database is connected.{% endif %}</div>
+  {% endif %}
+</section>
+
+{% if announcements %}
+<section class="container section">
+  <div class="section-head"><div><div class="eyebrow">CAMPUS UPDATES</div><h2>Announcements</h2></div></div>
+  <div class="announcement-list">
+    {% for announcement in announcements %}
+    <article class="announcement"><span class="tag">{% if announcement.target_branch %}{{ announcement.target_branch.name }}{% else %}ALL STUDENTS{% endif %}</span><h3>{{ announcement.title }}</h3><p>{{ announcement.message }}</p><time>{{ announcement.created_at|date:"M j, Y" }}</time></article>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

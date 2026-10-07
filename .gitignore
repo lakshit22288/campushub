@@ -6,6 +6,13 @@ server/.env
 client/.env
 server/uploads/*
 !server/uploads/.gitkeep
+python_app/.venv/
+python_app/.env
+python_app/dev.sqlite3*
+python_app/__pycache__/
+python_app/**/__pycache__/
+python_app/**/*.py[cod]
+python_app/staticfiles/
 dist/
 .vite/
 .DS_Store

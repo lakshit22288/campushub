@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Branches · CampusHub{% endblock %}
+{% block content %}
+<section class="page-header"><div class="container"><div class="eyebrow">BRANCH DIRECTORY</div><h1>Choose your campus path.</h1><p>These branches are read directly from the existing CampusHub database.</p></div></section>
+<section class="container section">
+  {% if branches %}
+  <div class="branch-grid">{% for branch in branches %}<a class="branch-card" href="{% url 'branchhub' %}"><span class="branch-index">{{ forloop.counter|stringformat:"02d" }}</span><div><span class="branch-code">{{ branch.code }}</span><strong>{{ branch.name }}</strong></div><span class="branch-arrow" aria-hidden="true">↗</span></a>{% endfor %}</div>
+  {% else %}<div class="empty">No branches are available yet.</div>{% endif %}
+</section>
+{% endblock %}
