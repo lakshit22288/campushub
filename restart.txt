@@ -1,0 +1,76 @@
+CAMPUSHUB CHAT RESTART PROMPT
+============================
+
+Copy this whole file into the first message of a new chat to continue work on CampusHub.
+
+We are continuing my college project, CampusHub. Talk to me casually in Hinglish and explain technical things simply because I am learning. First inspect the current repository, branch, Git status, and this restart.txt; do not assume the code or deployment is unchanged.
+
+IMPORTANT CURRENT CONVERSATION STATE:
+I said CampusHub has many problems and that I want to talk about them first. I have not yet described those problems. Do not start changing code, settings, or deploying anything until I explain the issues and we agree what to fix. Your first response should acknowledge this and invite me to explain.
+
+WORKING STYLE:
+- Preserve the existing visual design and cream/violet/lime color direction unless I ask to redesign. I disliked boring icons/emojis and earlier UI/color changes.
+- Check Git status before edits; preserve any work already in progress and do not discard unrelated changes.
+- Make small, complete fixes, test them, and explain what changed and why in clear Hinglish.
+- I previously authorized you to inspect and fix deployment issues yourself while I was logged into Vercel. Use any dashboard/browser access only if it is actually available; never claim access you do not have. Ask before consequential or ambiguous actions.
+- Never ask me to paste secrets into chat. Do not reveal passwords, database URLs, OAuth client secrets, service-role keys, JWT secrets, tokens, or private credentials.
+- At the end of EVERY meaningful project step, update this restart.txt with what changed, why, verification performed, current Git/deployment status if known, and the next task. Keep it concise and factual so a new chat can continue from here. Do not claim a step is verified unless it was.
+
+PROJECT OVERVIEW:
+CampusHub is a student platform. Main priorities are BranchHub branch-specific tools and SkillSwap; teacher notes are secondary. Keep the existing Supabase database/data and Google sign-in unless I approve a specific change.
+
+Previously known workspace:
+C:\Users\Lappyyy\OneDrive\Desktop\Campus Hub - College Project
+
+GitHub repository:
+lakshit22288/campushub
+
+Previously confirmed branch/commit:
+main, 16b9624 fix: allow deployed frontend API requests
+This was clean and synchronized when last checked. Verify current state before relying on it.
+
+LIVE SERVICE REFERENCES (verify before relying on them):
+- Frontend: https://campushub-opal.vercel.app
+- Backend: https://campushub-6vvd.vercel.app
+- API base: https://campushub-6vvd.vercel.app/api
+- Health check: https://campushub-6vvd.vercel.app/api/health
+- Supabase project ref: mlehvtrdoyhrwyvadpqg
+- Supabase project URL: https://mlehvtrdoyhrwyvadpqg.supabase.co
+- Vercel dashboard previously showed the team/account lakshit-yadav-s-projects.
+
+WHAT HAS BEEN BUILT (verify in current code):
+- React/Vite frontend and Express API.
+- Student-facing BranchHub, BookShare, SkillSwap, resources, and admin features.
+- Code Lab supports 10 languages. Python runs interactively in-browser using Pyodide + a Web Worker; the other nine languages use a OneCompiler API proxy and stdin supplied before running.
+- Project Ideas page.
+- Existing email/password sign-in plus Google OAuth. New Google users are asked for their branch.
+- Existing Supabase/Postgres is used for app data.
+- Production frontend and API are separate Vercel projects.
+
+PREVIOUSLY COMPLETED PRODUCTION FIXES:
+1. Vercel backend logs showed Multer trying to create local uploads/ storage and crashing at startup. Updated server/src/routes/admin.js to use memory storage on Vercel while retaining disk storage locally; updated server/src/utils/storage.js to consume in-memory buffers. Commit: 2b105ed fix: support Vercel note uploads.
+2. Added VITE_API_URL in the frontend Vercel project's Production environment and redeployed it. Value is the API base URL above.
+3. Production API CORS initially blocked the frontend. Updated server/src/server.js to allow the deployed frontend origin and normalize configured CLIENT_URL. Commit: 16b9624 fix: allow deployed frontend API requests.
+4. Supabase Auth had Site URL http://localhost:3000 and only local callback URLs, causing mobile Google OAuth to redirect to localhost with bad_oauth_state. Updated Supabase Auth URL Configuration Site URL to https://campushub-opal.vercel.app and added https://campushub-opal.vercel.app/auth/callback while preserving local callback entries.
+5. Verified production Google sign-in redirected through the deployed callback to BranchHub. The test account was signed out afterward.
+6. At the time of the last verification, API health returned HTTP 200/database connected, API CORS preflight returned HTTP 204 with the correct allow-origin, and the production frontend loaded API data.
+These settings and fixes should not be repeated without checking whether they have changed.
+
+ENVIRONMENT VARIABLES (names only; never disclose actual values):
+- Frontend Vercel project: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_API_URL.
+- Backend Vercel project: CLIENT_URL, DATABASE_URL, DB_POOL_MAX, JWT_SECRET, SUPABASE_URL, SUPABASE_ANON_KEY.
+- Optional server-side storage variables may include SUPABASE_SERVICE_ROLE_KEY and SUPABASE_STORAGE_BUCKET.
+Check variable names and environment scopes only when needed, never reveal secret values. Explain safely where values are obtained/configured.
+
+FINAL DELIVERABLE:
+When I say the project is finished, create a beginner-friendly, step-by-step Hinglish PDF. Explain the app architecture/features; frontend/backend/Supabase/GitHub/Vercel connections; how to run/build/deploy/troubleshoot; Google OAuth redirects; and the full autonomous Vercel debugging work (Runtime Logs diagnosis, upload storage fix, frontend API env var/redeploy, CORS fix, verification, localhost Google callback fix). Include a table for every env-var key explaining where to find/create it, where it is entered, project/environment scope, whether public or secret, and what it does. Never put real secrets in the PDF. Clearly label anything not verified or still pending.
+
+NEXT ACTION:
+Wait for me to explain the problems I am seeing. Investigate and prioritize them with me; do not make changes until we agree on the first task.
+
+LATEST CONVERSATION UPDATE (2026-10-07):
+- I asked whether the project could be done using Python and its libraries. I then asked to save the current state first and explicitly said NOT to push anything to GitHub, so the current project stays safe and we can revert if needed.
+- Python migration is NOT approved/in progress yet. Pause it until we discuss the reported project problems and confirm scope. Keep the current React/Vite + Node/Express + Supabase stack unchanged for now.
+- Create only a local Git checkpoint if needed; never push unless I explicitly ask. Before claiming a checkpoint, verify the commit and confirm the working tree. Do not reset/revert anything automatically.
+- Current code base had last been confirmed at published commit 16b9624. The only new file expected at this checkpoint is restart.txt. Verify actual state before acting.
+- I still want the final detailed Hinglish PDF described above.
