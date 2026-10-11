@@ -28,6 +28,7 @@ from portal.storage import (
     upload_announcement_file,
     upload_note_file,
     upload_project_file,
+    signed_storage_url,
 )
 from campushub.settings import postgres_settings
 
@@ -1243,7 +1244,7 @@ class StorageTests(SimpleTestCase):
             url, filename = upload_note_file(upload)
 
         self.assertEqual(filename, "lecture.pdf")
-        self.assertIn("/storage/v1/object/public/campushub-files/notes/", url)
+        self.assertTrue(url.startswith("notes/"))
         client.post.assert_called_once()
         self.assertTrue(client.post.call_args.args[0].startswith(
             "https://campus-project.supabase.co/storage/v1/object/campushub-files/notes/"
@@ -1271,7 +1272,7 @@ class StorageTests(SimpleTestCase):
             url, filename = upload_announcement_file(upload)
 
         self.assertEqual(filename, "campus-update.pdf")
-        self.assertIn("/storage/v1/object/public/campushub-files/announcements/", url)
+        self.assertTrue(url.startswith("announcements/"))
         self.assertIn("/storage/v1/object/campushub-files/announcements/", client.post.call_args.args[0])
 
     @override_settings(
@@ -1293,9 +1294,73 @@ class StorageTests(SimpleTestCase):
             url, filename = upload_project_file(upload)
 
         self.assertEqual(filename, "campus-project.zip")
-        self.assertIn("/storage/v1/object/public/campushub-files/projects/", url)
+        self.assertTrue(url.startswith("projects/"))
         self.assertEqual(client.post.call_args.kwargs["content"], b"PK\x03\x04project archive")
         response.raise_for_status.assert_called_once()
+
+    @override_settings(
+        SUPABASE_URL="https://campus-project.supabase.co/",
+        SUPABASE_SERVICE_ROLE_KEY="test-service-key",
+        SUPABASE_STORAGE_BUCKET="campushub-files",
+    )
+    def test_private_storage_file_links_use_short_lived_signed_urls(self):
+        response = MagicMock()
+        response.json.return_value = {
+            "signedURL": "/object/sign/campushub-files/notes/lecture.pdf?token=temporary"
+        }
+
+        with patch("portal.storage.httpx.Client") as client_factory:
+            client = client_factory.return_value.__enter__.return_value
+            client.post.return_value = response
+            url = signed_storage_url("notes/lecture.pdf")
+
+        self.assertEqual(
+            url,
+            "https://campus-project.supabase.co/storage/v1/object/sign/"
+            "campushub-files/notes/lecture.pdf?token=temporary",
+        )
+        self.assertEqual(
+            client.post.call_args.args[0],
+            "https://campus-project.supabase.co/storage/v1/object/sign/"
+            "campushub-files/notes/lecture.pdf",
+        )
+        self.assertEqual(
+            client.post.call_args.kwargs["json"],
+            {"expiresIn": 60 * 60},
+        )
+        response.raise_for_status.assert_called_once()
+
+    @override_settings(
+        SUPABASE_URL="https://campus-project.supabase.co",
+        SUPABASE_SERVICE_ROLE_KEY="test-service-key",
+        SUPABASE_STORAGE_BUCKET="campushub-files",
+    )
+    def test_private_storage_converts_legacy_public_url_to_object_path(self):
+        response = MagicMock()
+        response.json.return_value = {
+            "signedURL": "/object/sign/campushub-files/notes/lecture.pdf?token=temporary"
+        }
+
+        with patch("portal.storage.httpx.Client") as client_factory:
+            client = client_factory.return_value.__enter__.return_value
+            client.post.return_value = response
+            signed_storage_url(
+                "https://campus-project.supabase.co/storage/v1/object/public/"
+                "campushub-files/notes/lecture.pdf"
+            )
+
+        self.assertTrue(
+            client.post.call_args.args[0].endswith("/notes/lecture.pdf")
+        )
+
+    @override_settings(
+        SUPABASE_URL="https://campus-project.supabase.co",
+        SUPABASE_SERVICE_ROLE_KEY="test-service-key",
+        SUPABASE_STORAGE_BUCKET="campushub-files",
+    )
+    def test_private_storage_rejects_file_references_from_other_hosts(self):
+        with self.assertRaisesRegex(StorageUploadError, "does not belong"):
+            signed_storage_url("https://other-project.supabase.co/notes/lecture.pdf")
 
     def test_project_upload_rejects_invalid_zip_signature(self):
         upload = SimpleUploadedFile(

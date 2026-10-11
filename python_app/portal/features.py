@@ -14,7 +14,11 @@ from django.utils import timezone
 from django.views.decorators.http import require_http_methods, require_POST
 
 from . import auth
-from .storage import StorageUploadError, upload_project_file
+from .storage import (
+    StorageUploadError,
+    sign_storage_references,
+    upload_project_file,
+)
 from .forms import (
     BookListingForm,
     HelpRequestForm,
@@ -191,6 +195,13 @@ def subject_detail(request, subject_id):
         subject=subject,
         source_type=Note.SOURCE_AI,
     ).select_related("created_by")
+    unavailable_teacher_files = sign_storage_references(teacher_notes, "file_url")
+    unavailable_ai_files = sign_storage_references(ai_notes, "file_url")
+    if unavailable_teacher_files or unavailable_ai_files:
+        messages.error(
+            request,
+            "One or more study-resource files are temporarily unavailable. Please contact an administrator.",
+        )
     tools = Tool.objects.filter(Q(subject=subject) | Q(branch=subject.branch) | Q(branch__isnull=True))
     return render(
         request,
@@ -699,6 +710,12 @@ def project_ideas(request):
         projects = projects.filter(branches__contains=[selected_branch])
     if selected_level in {"beginner", "intermediate", "advanced"}:
         projects = projects.filter(difficulty=selected_level)
+    projects = list(projects[:50])
+    if sign_storage_references(projects, "attachment_url"):
+        messages.error(
+            request,
+            "One or more project files are temporarily unavailable. Please try again later.",
+        )
     return render(
         request,
         "portal/project_ideas.html",
@@ -708,7 +725,7 @@ def project_ideas(request):
             "ideas": ideas,
             "idea": idea,
             "idea_count": len(ideas),
-            "projects": projects[:50],
+            "projects": projects,
             "selected_branch": selected_branch,
             "selected_level": selected_level,
             "selected_idea_title": selected_idea_title,

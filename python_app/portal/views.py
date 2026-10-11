@@ -1,7 +1,9 @@
 import logging
+from uuid import UUID
 
 import bcrypt
 from django.conf import settings
+from django.contrib import messages
 from django.db import IntegrityError, OperationalError, ProgrammingError, connection, transaction
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render
@@ -12,6 +14,7 @@ from . import auth
 from .forms import GoogleProfileForm, LoginForm, RegistrationForm
 from .models import Announcement, Branch
 from .models import User
+from .storage import sign_storage_references
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +24,47 @@ def home(request):
     announcements = []
     if settings.SUPABASE_DATABASE_CONFIGURED:
         branches = Branch.objects.all()
-        announcements = Announcement.objects.select_related("target_branch").all()[:4]
+        announcements = list(
+            Announcement.objects.select_related("target_branch").all()[:4]
+        )
+        session_user = request.session.get("campushub_user")
+        session_user_id = (
+            session_user.get("id") if isinstance(session_user, dict) else None
+        )
+        try:
+            session_user_id = UUID(str(session_user_id)) if session_user_id else None
+        except (ValueError, TypeError, AttributeError):
+            session_user_id = None
+        current_user = (
+            User.objects.filter(id=session_user_id).first()
+            if session_user_id
+            else None
+        )
+        unavailable_attachment = False
+        for announcement in announcements:
+            if not announcement.attachment_url:
+                continue
+            announcement_branch_id = getattr(
+                announcement, "target_branch_id", None
+            )
+            if announcement_branch_id and (
+                not current_user
+                or (
+                    current_user.role not in {"admin", "super_admin"}
+                    and current_user.branch_id != announcement_branch_id
+                )
+            ):
+                announcement.attachment_url = ""
+                continue
+            unavailable_attachment = (
+                sign_storage_references([announcement], "attachment_url")
+                or unavailable_attachment
+            )
+        if unavailable_attachment:
+            messages.error(
+                request,
+                "One or more notice attachments are temporarily unavailable. Please contact an administrator.",
+            )
     return render(
         request,
         "portal/home.html",
