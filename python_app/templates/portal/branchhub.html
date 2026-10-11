@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}BranchHub · CampusHub{% endblock %}
+{% block content %}
+<section class="branchhub-hero">
+  <div class="container branchhub-hero-inner">
+    <div class="branchhub-hero-copy">
+      <span class="eyebrow">THE SUBJECT HUB <span aria-hidden="true">/</span> 01</span>
+      <h1>{% if selected_branch %}Explore {{ selected_branch.name }}.{% else %}Find your next area of mastery.{% endif %}</h1>
+      <p>A thoughtful starting point for your semester. Browse subjects, open a study space, and find the resources that move you forward.</p>
+      <div class="branchhub-hero-note"><span aria-hidden="true"></span>{% if selected_branch %}Showing your selected course{% else %}Explore every course, all in one place{% endif %}</div>
+    </div>
+    <aside class="branchhub-count-card" aria-label="Subject catalog summary">
+      <span class="branchhub-count-label">THE LEARNING INDEX</span>
+      <div class="branchhub-count-value"><strong>{{ page_obj.paginator.count|stringformat:"02d" }}</strong><span>SUBJECTS</span></div>
+      <span class="branchhub-count-caption">{% if selected_branch %}In {{ selected_branch.code }} · {{ selected_branch.name }}{% else %}Across {{ branches|length|stringformat:"02d" }} campus branches{% endif %}</span>
+      <span class="branchhub-count-rule" aria-hidden="true"><i></i></span>
+    </aside>
+  </div>
+</section>
+<section class="container section">
+  <form method="get" class="filter-bar branch-filter">
+    <div class="branch-filter-copy"><span class="branch-filter-mark" aria-hidden="true">01</span><div><label for="branch-filter">Set your course focus</label><span>Choose a branch to narrow the study index.</span></div></div>
+    <div class="branch-filter-controls">
+      <select id="branch-filter" name="branch">
+        <option value="">All branches</option>
+        {% for branch in branches %}<option value="{{ branch.id }}" {% if selected_branch.id == branch.id %}selected{% endif %}>{{ branch.code }} · {{ branch.name }}</option>{% endfor %}
+      </select>
+      <button class="btn primary" type="submit">Explore subjects</button>
+      {% if selected_branch %}<a class="filter-reset" href="{% url 'branchhub' %}">Clear filter</a>{% endif %}
+    </div>
+  </form>
+  {% if page_obj.paginator.count %}
+  <div class="catalog-toolbar" aria-live="polite">
+    <div><span class="catalog-toolbar-label">START SOMEWHERE GOOD</span><strong>{% if selected_branch %}{{ selected_branch.code }} / SUBJECT COLLECTION{% else %}A collection for curious minds{% endif %}</strong></div>
+    <span><strong>{{ page_obj.start_index|stringformat:"02d" }}–{{ page_obj.end_index|stringformat:"02d" }}</strong> <span>of {{ page_obj.paginator.count|stringformat:"02d" }} subjects</span></span>
+  </div>
+  {% endif %}
+  {% if subjects %}
+  <div class="subject-grid">{% for subject in subjects %}<a class="subject-tile" href="{% url 'subject_detail' subject.id %}">
+    <span class="subject-tile-top"><span>SUBJECT / {{ subject.branch.code }}</span><span>{{ page_obj.start_index|add:forloop.counter0|stringformat:"02d" }}</span></span>
+    <strong class="subject-tile-title">{{ subject.name }}</strong>
+    <span class="subject-tile-branch">{{ subject.branch.name }}</span>
+    <span class="subject-tile-footer"><span>OPEN STUDY SPACE</span><span class="subject-tile-arrow" aria-hidden="true">↗</span></span>
+  </a>{% endfor %}</div>
+  {% else %}
+  <div class="empty subject-empty">{% if selected_branch %}No subjects have been added for {{ selected_branch.name }} yet. Authorized staff can add them from Admin.{% else %}No subjects are in the catalog yet. Choose a branch or ask an administrator to add subject records.{% endif %}</div>
+  {% endif %}
+  {% if page_obj.paginator.num_pages > 1 %}
+  <nav class="pagination" aria-label="Subject pages">
+    {% if page_obj.has_previous %}
+    <a class="pagination-link" href="?{% if branch_filter %}branch={{ branch_filter|urlencode }}&amp;{% endif %}page={{ page_obj.previous_page_number }}">← Previous</a>
+    {% else %}<span class="pagination-link is-disabled" aria-disabled="true">← Previous</span>{% endif %}
+    <span class="pagination-status">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+    <a class="pagination-link" href="?{% if branch_filter %}branch={{ branch_filter|urlencode }}&amp;{% endif %}page={{ page_obj.next_page_number }}">Next →</a>
+    {% else %}<span class="pagination-link is-disabled" aria-disabled="true">Next →</span>{% endif %}
+  </nav>
+  {% endif %}
+</section>
+{% endblock %}

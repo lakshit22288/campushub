@@ -35,8 +35,8 @@ After the API deploys, set the frontend's `VITE_API_URL` to `https://<api-projec
 
 Do not add `.env` files, database URLs, JWT secrets, or Supabase secret/service-role keys to GitHub or frontend environment variables. Vercel's free-plan function limits and provider availability may affect usage; the API's compiler proxy also depends on OneCompiler. Python's interactive runner executes in the user's browser using Pyodide.
 
-## Python edition (migration in progress)
+## Python edition (staging)
 
-An isolated Django-based version is being built in `python_app/` on the local `python-migration` branch. It reuses the existing design stylesheet and maps the current Supabase PostgreSQL tables as unmanaged models; it must not run migrations that alter the existing database. Follow [the Python edition setup guide](python_app/README.md) to run it locally.
+An isolated Django-based version is being built in `python_app/` on the local `python-migration` branch. It reuses the existing design stylesheet and maps Supabase PostgreSQL tables as unmanaged models; it must not run Django migrations against them. `render.yaml` defines a separate, manual-deploy Django staging service, leaving the existing Node API and Vercel frontend in place.
 
-The React/Express application and its Vercel deployment remain the production version until the Django edition has feature parity and authentication, database access, and workflows are verified. The Python migration is not being pushed to GitHub or deployed during this stage.
+Keep the existing React/Express application and Vercel deployment as production until the Django staging app is validated end to end. Use an isolated Supabase staging project and storage bucket for staging; never point staging writes at production data. Follow [the Python edition setup guide](python_app/README.md) to configure it. No production domain, frontend, or API cutover is performed by this repository change.

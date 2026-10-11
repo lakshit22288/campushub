@@ -1,4 +1,5 @@
 import os
+import secrets
 from pathlib import Path
 from urllib.parse import parse_qsl, unquote, urlsplit
 
@@ -10,23 +11,42 @@ REPO_ROOT = BASE_DIR.parent
 load_dotenv(BASE_DIR / ".env")
 load_dotenv(REPO_ROOT / "server" / ".env")
 
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "local-only-not-for-production")
+SECRET_KEY = os.getenv(
+    "DJANGO_SECRET_KEY",
+    secrets.token_urlsafe(48) if os.getenv("DJANGO_DEBUG", "true").lower() == "true" else "",
+)
+if not SECRET_KEY:
+    raise RuntimeError("Set DJANGO_SECRET_KEY before starting the production Django app.")
 DEBUG = os.getenv("DJANGO_DEBUG", "true").lower() == "true"
 ALLOWED_HOSTS = [
     host.strip()
     for host in os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
     if host.strip()
 ]
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",")
+    if origin.strip()
+]
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SECURE_SSL_REDIRECT = not DEBUG
+SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "0"))
+CSRF_COOKIE_SECURE = not DEBUG
 
 INSTALLED_APPS = [
     "django.contrib.contenttypes",
+    "django.contrib.messages",
+    "django.contrib.sessions",
     "django.contrib.staticfiles",
     "portal",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -40,11 +60,18 @@ TEMPLATES = [
         "OPTIONS": {
             "context_processors": [
                 "django.template.context_processors.request",
+                "django.contrib.messages.context_processors.messages",
+                "portal.context_processors.campushub_user",
             ],
         },
     }
 ]
 WSGI_APPLICATION = "campushub.wsgi.application"
+SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+SUPABASE_STORAGE_BUCKET = os.getenv("SUPABASE_STORAGE_BUCKET", "campushub-files")
+DJANGO_PUBLIC_URL = os.getenv("DJANGO_PUBLIC_URL", "").rstrip("/")
 
 
 def postgres_settings(database_url):
@@ -94,4 +121,20 @@ STATICFILES_DIRS = [
     ("styles", REPO_ROOT / "client" / "src" / "styles"),
     ("python", BASE_DIR / "static"),
 ]
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {
+        "BACKEND": (
+            "whitenoise.storage.CompressedManifestStaticFilesStorage"
+            if not DEBUG
+            else "django.contrib.staticfiles.storage.StaticFilesStorage"
+        )
+    },
+}
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+SESSION_ENGINE = "django.contrib.sessions.backends.signed_cookies"
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 7

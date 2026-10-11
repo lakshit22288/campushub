@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Create account · CampusHub{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <aside class="auth-story">
+    <span class="eyebrow">MAKE THIS PLACE YOURS</span>
+    <h1>Campus life,<br>more <em>connected.</em></h1>
+    <p>Join your course community, share what you know and find what you need.</p>
+    <div class="auth-story-rule"></div>
+    <span class="auth-story-caption">CAMPUSHUB / BUILT TOGETHER</span>
+  </aside>
+  <section class="auth-card wide">
+    <span class="eyebrow">JOIN THE CAMPUS</span>
+    <h2>Create your account</h2>
+    <p>Pick your branch now; you can personalize resources later.</p>
+    {% if not database_configured %}
+    <div class="error" role="alert">Connect the Python app to the existing Supabase database to enable registration.</div>
+    {% else %}
+    <form method="post" action="{% url 'google_sign_in' %}">{% csrf_token %}<button class="btn ghost full" type="submit">Continue with Google</button></form>
+    <div class="auth-divider">or create an account with email</div>
+    <form method="post" class="form two">
+      {% csrf_token %}
+      <label for="{{ form.name.id_for_label }}">Full name{{ form.name }}{{ form.name.errors }}</label>
+      <label for="{{ form.email.id_for_label }}">Email{{ form.email }}{{ form.email.errors }}</label>
+      <label for="{{ form.password.id_for_label }}">Password{{ form.password }}{{ form.password.errors }}</label>
+      <label for="{{ form.semester.id_for_label }}">Semester (optional){{ form.semester }}{{ form.semester.errors }}</label>
+      <label for="{{ form.branch.id_for_label }}" class="span-2">Branch{{ form.branch }}{{ form.branch.errors }}</label>
+      {{ form.non_field_errors }}
+      <button class="btn primary full span-2" type="submit">Create account</button>
+    </form>
+    <p class="muted">Already have an account? <a href="{% url 'login' %}">Login</a></p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

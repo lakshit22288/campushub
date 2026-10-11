@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Finish student profile · CampusHub{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <aside class="auth-story">
+    <span class="eyebrow">ONE LAST STEP</span>
+    <h1>Make it<br><em>yours.</em></h1>
+    <p>Tell us your branch so we can shape your campus experience around you.</p>
+    <div class="auth-story-rule"></div>
+    <span class="auth-story-caption">CAMPUSHUB / YOUR COMMUNITY</span>
+  </aside>
+  <section class="auth-card">
+    <span class="eyebrow">GOOGLE SIGN-IN</span>
+    <h2>Finish your profile</h2>
+    <p>Google verified {{ profile.email }}. Choose your branch so CampusHub can show the right resources.</p>
+    {% if not database_configured %}
+    <div class="error" role="alert">Connect to the existing Supabase database to complete your profile.</div>
+    {% else %}
+    {% if form.non_field_errors %}<div class="error" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+    <form method="post" class="form">
+      {% csrf_token %}
+      <label for="{{ form.branch.id_for_label }}">Branch</label>{{ form.branch }}{{ form.branch.errors }}
+      <label for="{{ form.semester.id_for_label }}">Semester (optional)</label>{{ form.semester }}{{ form.semester.errors }}
+      <button class="btn primary full" type="submit">Finish setup</button>
+    </form>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

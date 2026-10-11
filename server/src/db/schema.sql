@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS notes (
   description TEXT DEFAULT '',
   file_url TEXT,
   file_name TEXT,
+  source_type TEXT NOT NULL DEFAULT 'teacher' CHECK (source_type IN ('teacher', 'ai')),
   created_by UUID REFERENCES users(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -42,6 +43,8 @@ CREATE TABLE IF NOT EXISTS announcements (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title TEXT NOT NULL,
   message TEXT NOT NULL,
+  attachment_url TEXT,
+  attachment_name TEXT,
   target_branch_id UUID REFERENCES branches(id) ON DELETE SET NULL,
   created_by UUID REFERENCES users(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -143,6 +146,8 @@ CREATE TABLE IF NOT EXISTS projects (
   difficulty TEXT NOT NULL DEFAULT 'beginner',
   required_skills TEXT[] NOT NULL DEFAULT '{}',
   branches TEXT[] NOT NULL DEFAULT '{}',
+  attachment_url TEXT,
+  attachment_name TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

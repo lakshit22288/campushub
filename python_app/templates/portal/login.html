@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Login · CampusHub{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <aside class="auth-story">
+    <span class="eyebrow">YOUR CAMPUS IS WAITING</span>
+    <h1>Good to have<br>you <em>back.</em></h1>
+    <p>Pick up where you left off. Your campus, your people, your next idea.</p>
+    <div class="auth-story-rule"></div>
+    <span class="auth-story-caption">CAMPUSHUB / STUDENT COMMUNITY</span>
+  </aside>
+  <section class="auth-card">
+    <span class="eyebrow">WELCOME BACK</span>
+    <h2>Log in to CampusHub</h2>
+    <p>Use your student or authorized staff account.</p>
+    {% if error %}<div class="error" role="alert">{{ error }}</div>{% endif %}
+    {% if not database_configured %}
+    <div class="error" role="alert">Connect the Python app to the existing Supabase database to enable login.</div>
+    {% else %}
+    <form method="post" action="{% url 'google_sign_in' %}">{% csrf_token %}<button class="btn ghost full" type="submit">Continue with Google</button></form>
+    <div class="auth-divider"><span>or use email</span></div>
+    <form method="post" class="form">
+      {% csrf_token %}
+      <label for="{{ form.email.id_for_label }}">Email</label>
+      {{ form.email }}{{ form.email.errors }}
+      <label for="{{ form.password.id_for_label }}">Password</label>
+      {{ form.password }}{{ form.password.errors }}
+      <button class="btn primary full" type="submit">Log in</button>
+    </form>
+    <p class="muted">New around here? <a href="{% url 'register' %}">Create your account</a></p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

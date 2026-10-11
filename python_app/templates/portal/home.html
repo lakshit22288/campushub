@@ -3,67 +3,195 @@
 {% block content %}
 <section class="home-intro">
   <div class="container">
-    <div class="hero">
-      <div class="hero-copy">
-        <div class="eyebrow">YOUR CAMPUS, IN MOTION</div>
+    <div class="home-hero">
+      <div class="home-hero-copy">
+        <div class="home-eyebrow"><span aria-hidden="true"></span> YOUR CAMPUS, IN MOTION</div>
         <h1>Learn something.<br><em>Build something.</em></h1>
         <p>Branch tools, a code lab, student-powered skill exchange and the resources that make campus life easier.</p>
-        <div class="hero-actions">
-          <a class="btn primary" href="{% url 'branches' %}">Explore your campus <span aria-hidden="true">↗</span></a>
+        <div class="home-hero-actions">
+          <a class="btn primary" href="{% url 'register' %}">Get started <span aria-hidden="true">↗</span></a>
           <a class="btn ghost" href="{% url 'compiler' %}">Open Code Lab</a>
         </div>
-        <div class="hero-meta"><span>{{ branches|length }} branches</span><span>10 compiler languages</span><span>Built for student projects</span></div>
-      </div>
-      <aside class="hero-card">
-        <div class="lab-window">
-          <div class="lab-window-top"><span>QUICK START / PYTHON</span><span>READY</span></div>
-          <div class="lab-code"><span>01</span><code>skills = ["ideas", "people"]</code><span>02</span><code>print("Let's build.")</code></div>
-          <div class="lab-window-output"><span>OUTPUT</span><strong>Let's build.</strong></div>
-          <a href="{% url 'compiler' %}" class="lab-window-link">Explore what CampusHub offers <span aria-hidden="true">↗</span></a>
+        <div class="home-hero-meta">
+          <span>{{ branches|length }} branches</span>
+          <span>10 compiler languages</span>
+          <span>Built for student projects</span>
         </div>
-        <div class="hero-card-caption"><span>One campus. More ways to learn.</span><span>CAMPUSHUB / 2026</span></div>
+      </div>
+      <aside class="home-code-card" aria-label="Code Lab Python quick start preview">
+        <div class="home-lab-window">
+          <div class="home-lab-top"><span>QUICK START / PYTHON</span><span>READY</span></div>
+          <div class="home-lab-code" aria-label="Python code example">
+            <span>01</span><code>skills = ["ideas", "people"]</code>
+            <span>02</span><code>print("Let's build.")</code>
+          </div>
+          <div class="home-lab-output"><span>OUTPUT</span><strong>Let's build.</strong></div>
+          <a class="home-lab-link" href="{% url 'compiler' %}">Try it in Code Lab <span aria-hidden="true">↗</span></a>
+        </div>
+        <div class="home-code-caption"><span>One campus. More ways to learn.</span><span>CAMPUSHUB / 2026</span></div>
       </aside>
     </div>
   </div>
 </section>
 
-<section class="container section module-section">
+<section class="container section home-module-section">
   <div class="section-head">
-    <div><div class="eyebrow">START HERE</div><h2>What do you need today?</h2></div>
-    <p class="section-intro">The Python edition is being built alongside the live version.</p>
+    <div><span class="eyebrow">START HERE</span><h2>What do you need today?</h2></div>
+    <p class="section-intro">Pick a section and take it from there.</p>
   </div>
-  <div class="module-list">
-    <a href="{% url 'branchhub' %}" class="module-row"><span class="module-number">01</span><span class="module-main"><strong>BranchHub</strong><small>Find your subjects, notes, practice material and tools.</small></span><span class="module-detail">LEARN</span><span class="module-arrow">↗</span></a>
-    <a href="{% url 'bookshare' %}" class="module-row"><span class="module-number">02</span><span class="module-main"><strong>BookShare</strong><small>Put useful books back into circulation across campus.</small></span><span class="module-detail">EXCHANGE</span><span class="module-arrow">↗</span></a>
-    <a href="{% url 'skillswap' %}" class="module-row"><span class="module-number">03</span><span class="module-main"><strong>SkillSwap</strong><small>Trade knowledge with people who can teach what you need.</small></span><span class="module-detail">CONNECT</span><span class="module-arrow">↗</span></a>
+  <div class="home-module-list">
+    <a class="home-module-row" href="{% url 'branchhub' %}">
+      <span class="home-module-number">01</span><span class="home-module-main"><strong>BranchHub</strong><small>Find your subjects, notes, practice material and tools.</small></span><span class="home-module-detail">LEARN</span><span class="home-module-arrow" aria-hidden="true">↗</span>
+    </a>
+    <a class="home-module-row" href="{% url 'bookshare' %}">
+      <span class="home-module-number">02</span><span class="home-module-main"><strong>BookShare</strong><small>Put useful books back into circulation across campus.</small></span><span class="home-module-detail">EXCHANGE</span><span class="home-module-arrow" aria-hidden="true">↗</span>
+    </a>
+    <a class="home-module-row" href="{% url 'skillswap' %}">
+      <span class="home-module-number">03</span><span class="home-module-main"><strong>SkillSwap</strong><small>Trade knowledge with people who can teach what you need.</small></span><span class="home-module-detail">CONNECT</span><span class="home-module-arrow" aria-hidden="true">↗</span>
+    </a>
+    <a class="home-module-row" href="{% url 'help_requests' %}">
+      <span class="home-module-number">04</span><span class="home-module-main"><strong>Help board</strong><small>Ask for a hand or offer one to someone on campus.</small></span><span class="home-module-detail">SUPPORT</span><span class="home-module-arrow" aria-hidden="true">↗</span>
+    </a>
   </div>
 </section>
 
-<section class="container section">
-  <div class="section-head"><div><div class="eyebrow">YOUR CAMPUS</div><h2>Built around your branch.</h2></div><a class="text-link" href="{% url 'branches' %}">See all branches ↗</a></div>
-  {% if branches %}
-  <div class="branch-grid">
-    {% for branch in branches %}
-    <a class="branch-card" href="{% url 'branchhub' %}">
-      <span class="branch-index">{{ forloop.counter|stringformat:"02d" }}</span>
-      <div><span class="branch-code">{{ branch.code }}</span><strong>{{ branch.name }}</strong></div>
-      <span class="branch-arrow" aria-hidden="true">↗</span>
-    </a>
-    {% endfor %}
+<section class="container section home-explore-section">
+  <div class="section-head">
+    <div><span class="eyebrow">THE BUILDING BLOCKS</span><h2>From first idea to first run.</h2></div>
+    <p class="section-intro">Learn it, test it, make it real.</p>
   </div>
-  {% else %}
-  <div class="empty">{% if database_configured %}No branches are available in the connected database yet.{% else %}Branches will appear here once the existing Supabase database is connected.{% endif %}</div>
-  {% endif %}
+  <div class="home-explore-grid">
+    <a class="home-explore-card home-explore-featured" href="{% url 'compiler' %}">
+      <span class="home-explore-index">01 / CODE</span><span class="home-explore-count">10 languages</span><strong>Code Lab</strong>
+      <p>Write a program, add input and run it from one focused workspace.</p><span class="home-explore-link">Open compiler <span aria-hidden="true">↗</span></span>
+    </a>
+    <a class="home-explore-card" href="{% url 'project_ideas' %}">
+      <span class="home-explore-index">02 / MAKE</span><span class="home-explore-count">6 branches</span><strong>Project ideas</strong>
+      <p>Find a practical starting point matched to your branch and level.</p><span class="home-explore-link">Get an idea <span aria-hidden="true">↗</span></span>
+    </a>
+    <a class="home-explore-card" href="{% url 'branchhub' %}">
+      <span class="home-explore-index">03 / LEARN</span><span class="home-explore-count">Branch-first</span><strong>Interactive tools</strong>
+      <p>Calculators, reference sheets and practice for your course.</p><span class="home-explore-link">Explore tools <span aria-hidden="true">↗</span></span>
+    </a>
+    <a class="home-explore-card" href="{% url 'skillswap' %}">
+      <span class="home-explore-index">04 / SHARE</span><span class="home-explore-count">Peer learning</span><strong>SkillSwap</strong>
+      <p>Trade time and knowledge with students who know what you want to learn.</p><span class="home-explore-link">Meet your match <span aria-hidden="true">↗</span></span>
+    </a>
+  </div>
+</section>
+
+<section class="home-branch-section">
+  <div class="container section">
+    <div class="section-head">
+      <div><span class="eyebrow">THE ACADEMIC SIDE</span><h2>Find your branch.</h2></div>
+      <a class="text-link" href="{% url 'branches' %}">Browse branches <span aria-hidden="true">↗</span></a>
+    </div>
+    {% if branches %}
+    <div class="branch-grid">
+      {% for branch in branches %}
+      <a class="branch-card" href="{% url 'branchhub' %}?branch={{ branch.id|urlencode }}">
+        <span class="branch-index">{{ forloop.counter|stringformat:"02d" }}</span>
+        <div><span class="branch-code">{{ branch.code }}</span><strong>{{ branch.name }}</strong><p>Explore subjects, resources and tools for your course.</p></div>
+        <span class="branch-arrow" aria-hidden="true">↗</span>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="home-branch-empty">{% if database_configured %}No branches are available in the connected database yet.{% else %}Connect to CampusHub to see your branch communities.{% endif %}</div>
+    {% endif %}
+  </div>
 </section>
 
 {% if announcements %}
-<section class="container section">
-  <div class="section-head"><div><div class="eyebrow">CAMPUS UPDATES</div><h2>Announcements</h2></div></div>
-  <div class="announcement-list">
+<section class="container section home-announcement-section">
+  <div class="section-head"><div><span class="eyebrow">PINNED FOR EVERYONE</span><h2>Campus notices.</h2></div></div>
+  <div class="home-announcement-list">
     {% for announcement in announcements %}
-    <article class="announcement"><span class="tag">{% if announcement.target_branch %}{{ announcement.target_branch.name }}{% else %}ALL STUDENTS{% endif %}</span><h3>{{ announcement.title }}</h3><p>{{ announcement.message }}</p><time>{{ announcement.created_at|date:"M j, Y" }}</time></article>
+    <button
+      class="home-announcement"
+      type="button"
+      data-notice-title="{{ announcement.title }}"
+      data-notice-message="{{ announcement.message }}"
+      data-notice-branch="{% if announcement.target_branch %}{{ announcement.target_branch.name }}{% else %}All students{% endif %}"
+      data-notice-date="{{ announcement.created_at|date:'M j, Y' }}"
+      data-notice-attachment="{{ announcement.attachment_url|default:'' }}"
+      data-notice-filename="{{ announcement.attachment_name|default:'' }}"
+      aria-haspopup="dialog"
+      aria-controls="campus-notice-dialog"
+    >
+      <span class="home-announcement-copy">
+        <span class="tag">{% if announcement.target_branch %}{{ announcement.target_branch.name }}{% else %}ALL STUDENTS{% endif %}</span>
+        <strong>{{ announcement.title }}</strong>
+        <span class="home-announcement-summary">{{ announcement.message }}</span>
+        <span class="home-announcement-open">Read notice</span>
+      </span>
+      <time datetime="{{ announcement.created_at|date:'c' }}">{{ announcement.created_at|date:"M j, Y" }}</time>
+    </button>
     {% endfor %}
   </div>
 </section>
+<dialog class="campus-notice-dialog" id="campus-notice-dialog" aria-labelledby="campus-notice-title">
+  <div class="campus-notice-dialog-head">
+    <span class="eyebrow" id="campus-notice-branch"></span>
+    <button class="campus-notice-close" type="button" aria-label="Close notice">Close</button>
+  </div>
+  <h2 id="campus-notice-title"></h2>
+  <time id="campus-notice-date"></time>
+  <p class="campus-notice-message" id="campus-notice-message"></p>
+  <div class="campus-notice-attachment" id="campus-notice-attachment" hidden></div>
+</dialog>
+<script>
+  (function () {
+    var dialog = document.getElementById("campus-notice-dialog");
+    if (!dialog || typeof dialog.showModal !== "function") return;
+
+    var title = document.getElementById("campus-notice-title");
+    var branch = document.getElementById("campus-notice-branch");
+    var date = document.getElementById("campus-notice-date");
+    var message = document.getElementById("campus-notice-message");
+    var attachment = document.getElementById("campus-notice-attachment");
+
+    document.querySelectorAll(".home-announcement").forEach(function (notice) {
+      notice.addEventListener("click", function () {
+        title.textContent = notice.dataset.noticeTitle || "";
+        branch.textContent = notice.dataset.noticeBranch || "";
+        date.textContent = notice.dataset.noticeDate || "";
+        message.textContent = notice.dataset.noticeMessage || "";
+        attachment.replaceChildren();
+        attachment.hidden = true;
+
+        var fileUrl = notice.dataset.noticeAttachment || "";
+        var fileName = notice.dataset.noticeFilename || "Notice attachment";
+        if (fileUrl) {
+          var link = document.createElement("a");
+          link.href = fileUrl;
+          if (link.protocol === "https:" || link.origin === window.location.origin) {
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            link.textContent = "Open " + fileName;
+
+            if (/\.(png|jpe?g)$/i.test(fileName)) {
+              var image = document.createElement("img");
+              image.src = link.href;
+              image.alt = fileName;
+              attachment.appendChild(image);
+            }
+            attachment.appendChild(link);
+            attachment.hidden = false;
+          }
+        }
+
+        dialog.showModal();
+      });
+    });
+
+    dialog.querySelector(".campus-notice-close").addEventListener("click", function () {
+      dialog.close();
+    });
+    dialog.addEventListener("click", function (event) {
+      if (event.target === dialog) dialog.close();
+    });
+  })();
+</script>
 {% endif %}
 {% endblock %}

@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Project ideas · CampusHub{% endblock %}
+{% block content %}
+<section class="ideas-hero">
+  <div class="container ideas-hero-inner">
+    <div class="ideas-hero-copy">
+      <span class="eyebrow">CAMPUS PROJECT STUDIO <span aria-hidden="true">/</span> MAKE IT REAL</span>
+      <h1>Good ideas deserve to be built.</h1>
+      <p>Find a practical starting point, shape it around your branch, and turn what you’re learning into something real.</p>
+      <a class="ideas-hero-cta" href="#idea-library">Explore the idea library <span aria-hidden="true">↓</span></a>
+    </div>
+    <aside class="ideas-hero-index" aria-label="Project idea library size">
+      <span>THE STARTER LIBRARY</span>
+      <strong>{{ ideas|length|stringformat:"02d" }}</strong>
+      <small>curated starting points</small>
+      <i aria-hidden="true"></i>
+    </aside>
+    <span class="ideas-hero-orbit orbit-a" aria-hidden="true"></span>
+    <span class="ideas-hero-orbit orbit-b" aria-hidden="true"></span>
+  </div>
+</section>
+
+<section class="container section ideas-discovery">
+  <div class="ideas-section-intro" id="idea-library">
+    <div><span class="eyebrow">01 / THE IDEA LIBRARY</span><h2>Start with a spark.</h2><p>Explore all {{ idea_count }} ideas or narrow the list to find your kind of challenge.</p></div>
+    <span class="ideas-library-count">{{ idea_count|stringformat:"02d" }} <small>IDEAS</small></span>
+  </div>
+
+  <form method="get" class="ideas-filter-panel">
+    <div class="ideas-filter-heading"><span>MAKE IT YOURS</span><small>Branch + difficulty</small></div>
+    <div class="ideas-filter-field"><label for="idea-branch">Branch</label><select id="idea-branch" name="branch"><option value="">Any branch</option>{% for branch in branches %}<option value="{{ branch.code }}" {% if selected_branch == branch.code %}selected{% endif %}>{{ branch.code }} · {{ branch.name }}</option>{% endfor %}</select></div>
+    <div class="ideas-filter-field"><label for="idea-level">Difficulty</label><select id="idea-level" name="level"><option value="">Any level</option><option value="beginner" {% if selected_level == "beginner" %}selected{% endif %}>Beginner</option><option value="intermediate" {% if selected_level == "intermediate" %}selected{% endif %}>Intermediate</option><option value="advanced" {% if selected_level == "advanced" %}selected{% endif %}>Advanced</option></select></div>
+    <button class="btn primary idea-find-button" type="submit">Show matching ideas <span aria-hidden="true">↗</span></button>
+    {% if selected_branch or selected_level %}<a class="ideas-clear-link" href="{% url 'project_ideas' %}">Clear filters</a>{% endif %}
+  </form>
+
+  {% if idea %}
+  <article class="idea-feature" id="featured-idea">
+    <div class="idea-feature-art" aria-hidden="true"><span>BUILD<br>WHAT<br>MATTERS</span><i></i></div>
+    <div class="idea-feature-content">
+      <div class="idea-feature-meta"><span>YOUR NEXT PROJECT</span><span>{{ idea.branch }} <i>/</i> {{ idea.level|title }}</span></div>
+      {% if surprise_widened_filters %}<span class="idea-filter-note">No fresh idea at that exact level, so we widened your selection to find another match.</span>{% endif %}
+      <h2>{{ idea.title }}</h2>
+      <p>{{ idea.description }}</p>
+      <div class="idea-feature-bottom">
+        <div><span class="idea-skills-label">SKILLS TO EXPLORE</span><div class="tag-list">{% for skill in idea.skills %}<span>{{ skill }}</span>{% endfor %}</div></div>
+        <span class="idea-effort">{{ idea.effort }}</span>
+      </div>
+      <section class="idea-build-plan" aria-labelledby="idea-build-plan-heading">
+        <div class="idea-build-plan-heading"><span class="idea-skills-label">FROM IDEA TO WORKING PROJECT</span><h3 id="idea-build-plan-heading">How to build it</h3></div>
+        <ol>{% for step in idea.build_steps %}<li><span>{{ forloop.counter|stringformat:"02d" }}</span><p>{{ step }}</p></li>{% endfor %}</ol>
+        <div class="idea-build-tools"><span class="idea-skills-label">SUGGESTED TOOLS</span><div class="tag-list">{% for tool in idea.tools %}<span>{{ tool }}</span>{% endfor %}</div></div>
+      </section>
+      <form method="get" class="idea-surprise-form">
+        {% if selected_branch %}<input type="hidden" name="branch" value="{{ selected_branch }}">{% endif %}
+        {% if selected_level %}<input type="hidden" name="level" value="{{ selected_level }}">{% endif %}
+        <input type="hidden" name="exclude" value="{{ idea.title }}">
+        <button class="btn idea-surprise-button" type="submit" name="next" value="1">Surprise me with another <span aria-hidden="true">↗</span></button>
+      </form>
+    </div>
+  </article>
+  {% else %}
+  <div class="ideas-no-match"><strong>No ideas in this combination yet.</strong><p>Clear a filter to explore the full library.</p><a class="btn" href="{% url 'project_ideas' %}">Show all ideas</a></div>
+  {% endif %}
+
+  <div class="ideas-library-heading"><h3>Browse the collection</h3><span>{{ idea_count }} {% if idea_count == 1 %}idea{% else %}ideas{% endif %}{% if selected_branch or selected_level %} match your filters{% else %} across six branches{% endif %}</span></div>
+  {% if ideas %}
+  <div class="ideas-grid">
+    {% for item in ideas %}
+    <a class="idea-card{% if item.title == selected_idea_title %} is-featured{% endif %}" href="?pick={{ item.title|urlencode }}{% if selected_branch %}&amp;branch={{ selected_branch|urlencode }}{% endif %}{% if selected_level %}&amp;level={{ selected_level|urlencode }}{% endif %}#featured-idea">
+      <span class="idea-card-top"><span>{{ item.branch }} <i>/</i> {{ item.level|title }}</span><span>{{ forloop.counter|stringformat:"02d" }}</span></span>
+      <strong>{{ item.title }}</strong>
+      <span class="idea-card-description">{{ item.description }}</span>
+      <span class="idea-card-skills">{% for skill in item.skills|slice:":2" %}<i>{{ skill }}</i>{% endfor %}</span>
+      <span class="idea-card-plan">{{ item.build_steps|length }} practical build steps</span>
+      <span class="idea-card-footer"><span>{{ item.effort }}</span><span class="idea-card-arrow" aria-hidden="true">↗</span></span>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty">Try clearing one of the filters to see more starter ideas.</div>
+  {% endif %}
+</section>
+
+<section class="ideas-community-section" id="community-projects">
+  <div class="container feature-columns ideas-community-grid">
+    <section class="ideas-share-panel"><span class="eyebrow">02 / SHARE WHAT YOU’RE BUILDING</span><h2>Bring your idea to campus.</h2><p>Got a project in progress? Share it with students in your branch and find people who want to build, learn, and make it better.</p>
+      {% if campushub_user %}<form method="post" enctype="multipart/form-data" class="form">{% csrf_token %}{% for field in form %}<label for="{{ field.id_for_label }}">{{ field.label }}{{ field }}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}{% if field.errors %}<span class="error">{{ field.errors }}</span>{% endif %}</label>{% endfor %}<button class="btn primary" type="submit">Publish project <span aria-hidden="true">↗</span></button></form>{% else %}<p>Log in to upload a project description and attach a ZIP, PDF, PNG or JPG file (up to 10 MB).</p><a class="btn primary" href="{% url 'login' %}">Log in to upload a project <span aria-hidden="true">↗</span></a>{% endif %}
+    </section>
+    <section class="ideas-peer-section"><div class="ideas-peer-heading"><div><span class="eyebrow">03 / BUILT BY STUDENTS</span><h2>From your peers.</h2></div><span>{{ projects|length|stringformat:"02d" }} SHARED</span></div>
+      <div class="ideas-peer-list">{% for project in projects %}<article class="ideas-peer-card"><div class="ideas-peer-meta"><span>{{ project.difficulty|title }}</span>{% for code in project.branches %}<span>{{ code }}</span>{% endfor %}</div><h3>{{ project.title }}</h3><p>{{ project.description }}</p><span class="muted">Shared by {{ project.created_by.name }}</span>{% if project.required_skills %}<div class="tag-list">{% for skill in project.required_skills %}<span>{{ skill }}</span>{% endfor %}</div>{% endif %}{% if project.attachment_url %}<a class="ideas-project-file" href="{{ project.attachment_url }}" target="_blank" rel="noopener noreferrer"><span><small>PROJECT ATTACHMENT</small><strong>{{ project.attachment_name|default:"Open project file" }}</strong></span><span aria-hidden="true">↗</span></a>{% endif %}</article>{% empty %}<div class="ideas-peer-empty"><strong>Be the first to share.</strong><p>Projects shared by your campus community will show up here.</p></div>{% endfor %}</div>
+    </section>
+  </div>
+</section>
+{% endblock %}

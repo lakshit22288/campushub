@@ -1,0 +1,224 @@
+from django import forms
+from django.utils import timezone
+
+from .models import (
+    Announcement,
+    Book,
+    Branch,
+    HelpRequest,
+    Note,
+    Project,
+    Skill,
+    SkillFeedback,
+    SkillRequest,
+    Subject,
+    User,
+)
+
+
+class LoginForm(forms.Form):
+    email = forms.EmailField(max_length=254)
+    password = forms.CharField(strip=False, widget=forms.PasswordInput)
+
+
+class RegistrationForm(forms.Form):
+    name = forms.CharField(max_length=120)
+    email = forms.EmailField(max_length=254)
+    password = forms.CharField(min_length=6, max_length=72, strip=False, widget=forms.PasswordInput)
+    branch = forms.ModelChoiceField(queryset=Branch.objects.all(), required=False)
+    semester = forms.IntegerField(min_value=1, max_value=12, required=False)
+
+
+class GoogleProfileForm(forms.Form):
+    branch = forms.ModelChoiceField(queryset=Branch.objects.all())
+    semester = forms.IntegerField(min_value=1, max_value=12, required=False)
+
+
+class BookListingForm(forms.ModelForm):
+    title = forms.CharField(
+        max_length=160,
+        widget=forms.TextInput(attrs={"maxlength": 160}),
+    )
+    author = forms.CharField(
+        required=False,
+        max_length=120,
+        widget=forms.TextInput(attrs={"maxlength": 120}),
+    )
+    subject = forms.CharField(
+        required=False,
+        max_length=120,
+        widget=forms.TextInput(attrs={"maxlength": 120}),
+    )
+    location = forms.CharField(
+        required=False,
+        max_length=160,
+        widget=forms.TextInput(attrs={"maxlength": 160}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["available_until"].widget.attrs["min"] = timezone.localdate().isoformat()
+
+    class Meta:
+        model = Book
+        fields = ("title", "author", "subject", "branch", "action", "location", "available_until")
+        help_texts = {
+            "available_until": "Optional. Leave blank if this listing has no end date.",
+        }
+        widgets = {
+            "available_until": forms.DateInput(attrs={"type": "date"}),
+            "title": forms.TextInput(attrs={"maxlength": 160}),
+            "author": forms.TextInput(attrs={"maxlength": 120}),
+            "subject": forms.TextInput(attrs={"maxlength": 120}),
+            "location": forms.TextInput(attrs={"maxlength": 160}),
+        }
+
+    def clean_available_until(self):
+        available_until = self.cleaned_data.get("available_until")
+        if available_until and available_until < timezone.localdate():
+            raise forms.ValidationError("Choose today or a future date.")
+        return available_until
+
+
+class SkillForm(forms.ModelForm):
+    class Meta:
+        model = Skill
+        fields = ("skill_name", "type", "level")
+        widgets = {"skill_name": forms.TextInput(attrs={"maxlength": 80})}
+
+
+class SkillRequestForm(forms.Form):
+    offered_skill = forms.ModelChoiceField(queryset=Skill.objects.none(), required=False)
+    message = forms.CharField(
+        required=False,
+        max_length=500,
+        widget=forms.Textarea(attrs={"rows": 3, "maxlength": 500}),
+    )
+
+    def __init__(self, *args, requester_id, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["offered_skill"].queryset = Skill.objects.filter(
+            user_id=requester_id, type="teach"
+        ).order_by("skill_name")
+
+
+class ProfileForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ("name", "branch", "semester", "bio")
+        widgets = {
+            "name": forms.TextInput(attrs={"maxlength": 120}),
+            "semester": forms.NumberInput(attrs={"min": 1, "max": 12}),
+            "bio": forms.Textarea(attrs={"rows": 4, "maxlength": 500}),
+        }
+
+
+class HelpRequestForm(forms.ModelForm):
+    class Meta:
+        model = HelpRequest
+        fields = ("title", "description", "branch")
+        widgets = {
+            "title": forms.TextInput(attrs={"maxlength": 160}),
+            "description": forms.Textarea(attrs={"rows": 5, "maxlength": 3000}),
+        }
+
+
+class ProjectForm(forms.Form):
+    title = forms.CharField(max_length=160)
+    description = forms.CharField(
+        max_length=3000,
+        widget=forms.Textarea(attrs={"rows": 5, "maxlength": 3000}),
+    )
+    difficulty = forms.ChoiceField(
+        choices=(("beginner", "Beginner"), ("intermediate", "Intermediate"), ("advanced", "Advanced"))
+    )
+    required_skills = forms.CharField(
+        max_length=500,
+        required=False,
+        help_text="Separate skills with commas.",
+    )
+    branch = forms.ModelChoiceField(
+        queryset=Branch.objects.all(),
+        required=True,
+        empty_label="Choose one branch",
+        label="Project branch",
+        help_text="Each project can be listed under one branch.",
+    )
+    attachment = forms.FileField(
+        required=False,
+        label="Project file (optional)",
+        help_text="Upload a ZIP, PDF, PNG or JPG project file (max 10 MB).",
+        widget=forms.ClearableFileInput(
+            attrs={
+                "accept": (
+                    ".zip,.pdf,.png,.jpg,.jpeg,"
+                    "application/zip,application/pdf,image/png,image/jpeg"
+                )
+            }
+        ),
+    )
+
+
+class SkillFeedbackForm(forms.ModelForm):
+    rating = forms.IntegerField(min_value=1, max_value=5)
+
+    class Meta:
+        model = SkillFeedback
+        fields = ("rating", "comment")
+        widgets = {
+            "rating": forms.NumberInput(attrs={"min": 1, "max": 5}),
+            "comment": forms.Textarea(attrs={"rows": 2, "maxlength": 500}),
+        }
+
+
+class SubjectForm(forms.ModelForm):
+    class Meta:
+        model = Subject
+        fields = ("name", "branch")
+
+
+class NoteForm(forms.Form):
+    SOURCE_CHOICES = (
+        (Note.SOURCE_TEACHER, "Teacher / faculty upload"),
+        (Note.SOURCE_AI, "AI-generated study material"),
+    )
+
+    def __init__(self, *args, user_role=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if user_role == "teacher":
+            self.fields["source_type"].choices = self.SOURCE_CHOICES[:1]
+
+    title = forms.CharField(max_length=160)
+    description = forms.CharField(
+        required=False,
+        max_length=3000,
+        widget=forms.Textarea(attrs={"rows": 3, "maxlength": 3000}),
+    )
+    subject = forms.ModelChoiceField(queryset=Subject.objects.select_related("branch"))
+    source_type = forms.ChoiceField(
+        choices=SOURCE_CHOICES,
+        initial=Note.SOURCE_TEACHER,
+        label="Resource type",
+    )
+    file = forms.FileField(required=False)
+
+
+class AnnouncementForm(forms.ModelForm):
+    attachment = forms.FileField(
+        required=False,
+        label="Notice image or PDF",
+        help_text="Optional. Upload a PDF, PNG or JPG file (max 10 MB).",
+        widget=forms.ClearableFileInput(
+            attrs={"accept": ".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"}
+        ),
+    )
+
+    def __init__(self, *args, user_role=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if user_role == "teacher":
+            self.fields.pop("attachment")
+
+    class Meta:
+        model = Announcement
+        fields = ("title", "message", "target_branch")
+        widgets = {"message": forms.Textarea(attrs={"rows": 3, "maxlength": 3000})}

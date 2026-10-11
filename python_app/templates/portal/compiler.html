@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Code Lab · CampusHub{% endblock %}
+{% block body_class %}code-lab-page{% endblock %}
+{% block content %}
+<div class="compiler-page" id="compiler-page" data-execute-url="{% url 'compiler_execute' %}">
+  <section class="compiler-intro">
+    <div>
+      <span class="eyebrow">CAMPUSHUB CODE LAB</span>
+      <h2>Think it.<br><em>Run it.</em></h2>
+      <p>Run Python interactively in your browser, with nine more languages available through cloud execution.</p>
+    </div>
+    <div class="compiler-language-count"><strong>10</strong><span>languages available</span></div>
+  </section>
+
+  <section class="compiler-panel" aria-label="Code editor">
+    <div class="compiler-toolbar">
+      <label class="compiler-language">Language
+        <select id="compiler-language" aria-label="Language">
+          {% for slug, language in languages.items %}<option value="{{ slug }}">{{ language.label }}</option>{% endfor %}
+        </select>
+      </label>
+      <div class="compiler-toolbar-actions">
+        <span class="compiler-file" id="compiler-file">{{ languages.python.file }}</span>
+        <button class="compiler-reset" id="compiler-reset" type="button">Reset example</button>
+        <button class="btn primary compiler-run" id="compiler-run" type="button">Run code</button>
+        <button class="btn compiler-stop" id="compiler-stop" type="button" hidden>Stop</button>
+      </div>
+    </div>
+
+    <div class="compiler-editor">
+      <div class="compiler-gutter" id="compiler-gutter" aria-hidden="true"></div>
+      <textarea id="compiler-code" aria-label="Python source code" autocapitalize="off" autocomplete="off" autocorrect="off" maxlength="{{ max_code_length }}" spellcheck="false"></textarea>
+    </div>
+
+    <div class="compiler-lower">
+      <section class="compiler-input compiler-live-input" id="compiler-live-input" aria-label="Live program input">
+        <strong>Live program input</strong>
+        <div class="compiler-live-console" aria-live="polite">
+          <form id="compiler-live-form" hidden>
+            <label for="compiler-live-response" class="compiler-live-prompt" id="compiler-live-prompt"></label>
+            <div class="compiler-live-response-row">
+              <input id="compiler-live-response" aria-label="Response to the running program" autocomplete="off">
+              <button class="btn primary compiler-send" type="submit">Send</button>
+            </div>
+          </form>
+          <span id="compiler-runner-status">When input() runs, respond here and the program will continue.</span>
+        </div>
+      </section>
+      <label class="compiler-input" id="compiler-stdin-label" for="compiler-stdin">Program input <span class="compiler-input-hint">Enter input before Run · one value per line</span>
+        <textarea id="compiler-stdin" maxlength="{{ max_input_length }}" placeholder="For example: CampusHub">CampusHub
+</textarea>
+      </label>
+      <section class="compiler-output" id="compiler-output" aria-live="polite">
+        <div class="compiler-output-head">
+          <strong>Output</strong>
+          <span id="compiler-output-status">Waiting to run</span>
+        </div>
+        <pre id="compiler-output-text">Run your code. Any input() call will pause here for your response.</pre>
+      </section>
+    </div>
+    <div class="compiler-footnote">
+      <span>Shortcuts: Tab to indent · Ctrl/⌘ + Enter to run</span>
+      <span id="compiler-privacy-note">Python runs in your browser; input() pauses for your response. Its runtime is downloaded from https://cdn.jsdelivr.net/npm/pyodide@0.29.3/ on first use; your code stays in this browser.</span>
+    </div>
+  </section>
+  <div hidden>{% csrf_token %}</div>
+</div>
+{{ languages|json_script:"compiler-languages" }}
+<script src="{% static 'python/compiler.js' %}?v=3" defer></script>
+{% endblock %}

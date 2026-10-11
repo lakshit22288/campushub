@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block title %}BookShare · CampusHub{% endblock %}
+{% block content %}
+<section class="bookshare-hero">
+  <div class="container bookshare-hero-inner">
+    <div class="bookshare-hero-copy">
+      <span class="eyebrow">CAMPUS LIBRARY / COMMUNITY EXCHANGE</span>
+      <h1>Good books find<br><em>their next reader.</em></h1>
+      <p>Borrow a book, exchange a favorite, or pass one along. Browse campus listings and keep every request in one place.</p>
+      <div class="bookshare-hero-actions">
+        <a class="btn primary" href="#book-directory">Explore books <span aria-hidden="true">↓</span></a>
+        <a class="bookshare-text-link" href="#add-book">Share a book <span aria-hidden="true">↗</span></a>
+      </div>
+    </div>
+    <aside class="bookshare-hero-index" aria-label="BookShare activity">
+      <span>THE CAMPUS BOOKSHELF</span>
+      <div><strong>{{ listing_count|stringformat:"02d" }}</strong><small>LISTINGS TO EXPLORE</small></div>
+      <i aria-hidden="true"></i>
+      <span>{{ own_requests|length|stringformat:"02d" }} SENT · {{ received_requests|length|stringformat:"02d" }} RECEIVED</span>
+    </aside>
+    <span class="bookshare-orbit bookshare-orbit-one" aria-hidden="true"></span>
+    <span class="bookshare-orbit bookshare-orbit-two" aria-hidden="true"></span>
+  </div>
+</section>
+
+<section class="container section bookshare-main">
+  <div class="bookshare-workspace">
+    <section class="bookshare-create-panel" id="add-book" aria-labelledby="add-book-heading">
+      <header class="bookshare-panel-heading">
+        <span class="bookshare-step">01 / PASS IT ON</span>
+        <span class="bookshare-panel-count">COMMUNITY SHELF</span>
+        <h2 id="add-book-heading">List a book for someone else.</h2>
+        <p>Add a few details so students know what you’re offering and how to find you.</p>
+      </header>
+      <form method="post" class="form bookshare-add-form">
+        {% csrf_token %}
+        {% for field in form %}
+        <label for="{{ field.id_for_label }}">
+          {{ field.label }}{{ field }}
+          {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+          {% if field.errors %}<span class="error">{{ field.errors }}</span>{% endif %}
+        </label>
+        {% endfor %}
+        {% if form.non_field_errors %}<div class="error" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+        <button class="btn primary" type="submit">Publish book listing <span aria-hidden="true">↗</span></button>
+      </form>
+      <div class="bookshare-guidance"><strong>Keep exchanges simple.</strong><p>Agree on a safe campus pickup spot with the other student before handing over a book.</p></div>
+    </section>
+
+    <section class="bookshare-directory" id="book-directory" aria-labelledby="book-directory-heading">
+      <div class="bookshare-directory-heading">
+        <div><span class="eyebrow">02 / FIND YOUR NEXT READ</span><h2 id="book-directory-heading">Books on the campus shelf.</h2><p>Search by title, author, or subject, then filter by branch.</p></div>
+        <span class="bookshare-directory-count">{{ listing_count|stringformat:"02d" }} <small>LISTINGS</small></span>
+      </div>
+      <form method="get" class="bookshare-filter">
+        <div class="bookshare-filter-fields">
+          <label for="book-query">Book or subject<input id="book-query" name="q" value="{{ query }}" maxlength="120" placeholder="e.g. Calculus, design"></label>
+          <label for="book-branch">Branch<select id="book-branch" name="branch"><option value="">All branches</option>{% for branch in branches %}<option value="{{ branch.id }}" {% if selected_branch == branch.id|stringformat:"s" %}selected{% endif %}>{{ branch.code }} · {{ branch.name }}</option>{% endfor %}</select></label>
+        </div>
+        <div class="bookshare-filter-actions">
+          <button class="btn primary" type="submit">Find a book <span aria-hidden="true">↗</span></button>
+          {% if query or selected_branch %}<a href="{% url 'bookshare' %}">Clear filters</a>{% endif %}
+        </div>
+      </form>
+
+      <div class="bookshare-listings">
+        {% for book in listings %}
+        <article class="bookshare-listing-card{% if book.is_expired %} is-expired{% endif %}">
+          <div class="bookshare-listing-top">
+            <span class="bookshare-action bookshare-action-{{ book.action }}">{{ book.get_action_display }}</span>
+            {% if book.is_expired %}<span class="bookshare-status status-expired">Expired</span>
+            {% else %}<span class="bookshare-status status-{{ book.status }}">{{ book.status|title }}</span>{% endif %}
+          </div>
+          <h3>{{ book.title }}</h3>
+          <p class="bookshare-book-meta">{% if book.author %}{{ book.author }} <span>·</span> {% endif %}{{ book.subject|default:"General reading" }}</p>
+          <div class="bookshare-listing-owner">
+            <span class="bookshare-owner-mark" aria-hidden="true">{{ book.owner.name|make_list|first|upper }}</span>
+            <span><strong>{{ book.owner.name }}</strong><small>{% if book.branch %}{{ book.branch.code }}{% else %}Campus community{% endif %}{% if book.location %} · {{ book.location }}{% endif %}</small></span>
+          </div>
+          {% if book.available_until %}<p class="bookshare-availability">{% if book.is_expired %}Availability ended{% else %}Available until {{ book.available_until|date:"M j, Y" }}{% endif %}</p>{% endif %}
+          <div class="bookshare-listing-footer">
+            {% if book.owner_id == campushub_user.id %}
+              <span class="bookshare-own-label">Your listing</span>
+            {% elif book.is_expired %}
+              <span class="bookshare-unavailable-note">This listing has expired.</span>
+            {% elif book.status == "available" %}
+              <form method="post" action="{% url 'request_book' book.id %}">
+                {% csrf_token %}
+                <button class="btn primary small" type="submit">{% if book.action == "borrow" %}Request to borrow{% elif book.action == "exchange" %}Request an exchange{% else %}Request this book{% endif %} <span aria-hidden="true">↗</span></button>
+              </form>
+            {% else %}
+              <span class="bookshare-unavailable-note">{% if book.status == "requested" %}A student has requested this book.{% elif book.status == "lent" %}This book is currently with another student.{% else %}This listing is unavailable.{% endif %}</span>
+            {% endif %}
+          </div>
+        </article>
+        {% empty %}
+        <div class="bookshare-directory-empty"><span>NO BOOKS / YET</span><strong>No listings match these filters.</strong><p>Try another search or branch, or add a book to start the campus shelf.</p><a href="{% url 'bookshare' %}">Browse all books <span aria-hidden="true">↗</span></a></div>
+        {% endfor %}
+      </div>
+      {% if listing_count > 100 %}<p class="bookshare-listing-limit">Showing the first 100 matches. Narrow your search to find a specific book.</p>{% endif %}
+    </section>
+  </div>
+</section>
+
+<section class="bookshare-exchanges">
+  <div class="container section">
+    <div class="bookshare-section-heading">
+      <div><span class="eyebrow">03 / YOUR EXCHANGE DESK</span><h2>Keep every handoff on track.</h2><p>Review requests you’ve sent and manage requests for your own listings.</p></div>
+      <a href="#book-directory">Explore listings <span aria-hidden="true">↑</span></a>
+    </div>
+    <div class="bookshare-request-columns">
+      <section aria-labelledby="sent-requests-heading">
+        <div class="bookshare-request-heading"><h3 id="sent-requests-heading">Requests you sent</h3><span>{{ own_requests|length|stringformat:"02d" }}</span></div>
+        <div class="bookshare-requests">
+          {% for item in own_requests %}
+          <article class="bookshare-request-row">
+            <div class="bookshare-request-copy">
+              <div class="bookshare-request-top"><span class="bookshare-status status-{{ item.status }}">{{ item.status|title }}</span><span class="bookshare-action bookshare-action-{{ item.book.action }}">{{ item.book.get_action_display }}</span></div>
+              <h4>{{ item.book.title }}</h4>
+              <p>Owner: {{ item.book.owner.name }}{% if item.book.location %} · Pickup: {{ item.book.location }}{% endif %}</p>
+            </div>
+            <div class="bookshare-request-actions">
+              {% if item.status == "pending" %}
+              <form method="post" action="{% url 'update_book_request' item.id %}">{% csrf_token %}<button class="btn small" name="action" value="cancel">Cancel request</button></form>
+              {% elif item.status == "accepted" %}
+              <form method="post" action="{% url 'update_book_request' item.id %}">{% csrf_token %}<button class="btn primary small" name="action" value="complete">{% if item.book.action == "borrow" %}Mark returned{% elif item.book.action == "exchange" %}Confirm exchange{% else %}Confirm received{% endif %}</button></form>
+              {% endif %}
+            </div>
+          </article>
+          {% empty %}
+          <div class="bookshare-requests-empty"><strong>No requests sent yet.</strong><p>When you request a book, you can follow its status here.</p><a href="#book-directory">Find a book <span aria-hidden="true">↗</span></a></div>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section aria-labelledby="received-requests-heading">
+        <div class="bookshare-request-heading"><h3 id="received-requests-heading">Requests for your books</h3><span>{{ received_requests|length|stringformat:"02d" }}</span></div>
+        <div class="bookshare-requests">
+          {% for item in received_requests %}
+          <article class="bookshare-request-row">
+            <div class="bookshare-request-copy">
+              <div class="bookshare-request-top"><span class="bookshare-status status-{{ item.status }}">{{ item.status|title }}</span><span class="bookshare-action bookshare-action-{{ item.book.action }}">{{ item.book.get_action_display }}</span></div>
+              <h4>{{ item.book.title }}</h4>
+              <p>Requested by {{ item.requester.name }}{% if item.book.location %} · Pickup: {{ item.book.location }}{% endif %}</p>
+            </div>
+            <div class="bookshare-request-actions">
+              {% if item.status == "pending" %}
+              <form method="post" action="{% url 'update_book_request' item.id %}">{% csrf_token %}<button class="btn primary small" name="action" value="accept">Accept</button><button class="btn small bookshare-decline" name="action" value="reject">Decline</button></form>
+              {% elif item.status == "accepted" %}
+              <form method="post" action="{% url 'update_book_request' item.id %}">{% csrf_token %}<button class="btn small" name="action" value="complete">{% if item.book.action == "borrow" %}Mark returned{% elif item.book.action == "exchange" %}Confirm exchange{% else %}Confirm handoff{% endif %}</button></form>
+              {% endif %}
+            </div>
+          </article>
+          {% empty %}
+          <div class="bookshare-requests-empty"><strong>No incoming requests.</strong><p>Requests for your listings will appear here for you to review.</p><a href="#add-book">Share a book <span aria-hidden="true">↗</span></a></div>
+          {% endfor %}
+        </div>
+      </section>
+    </div>
+    {% if own_requests|length == 100 or received_requests|length == 100 %}<p class="bookshare-listing-limit">Showing up to 100 recent requests in each list.</p>{% endif %}
+  </div>
+</section>
+{% endblock %}

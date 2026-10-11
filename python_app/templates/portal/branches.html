@@ -1,10 +1,15 @@
 {% extends "base.html" %}
 {% block title %}Branches · CampusHub{% endblock %}
 {% block content %}
-<section class="page-header"><div class="container"><div class="eyebrow">BRANCH DIRECTORY</div><h1>Choose your campus path.</h1><p>These branches are read directly from the existing CampusHub database.</p></div></section>
+<section class="page-header branches-header"><div class="container">
+  <span class="eyebrow">YOUR CAMPUS, YOUR COURSE</span>
+  <h1>Find your people.<br><span>Start with your branch.</span></h1>
+  <p>Every course has its own study paths, notes and tools. Choose yours to see what your campus has collected.</p>
+  {% if branches %}<div class="branches-header-meta"><span>{{ branches|length|stringformat:"02d" }}</span> course communities <i aria-hidden="true"></i> select one to explore</div>{% endif %}
+</div></section>
 <section class="container section">
   {% if branches %}
-  <div class="branch-grid">{% for branch in branches %}<a class="branch-card" href="{% url 'branchhub' %}"><span class="branch-index">{{ forloop.counter|stringformat:"02d" }}</span><div><span class="branch-code">{{ branch.code }}</span><strong>{{ branch.name }}</strong></div><span class="branch-arrow" aria-hidden="true">↗</span></a>{% endfor %}</div>
-  {% else %}<div class="empty">No branches are available yet.</div>{% endif %}
+  <div class="branch-grid branch-directory-grid">{% for branch in branches %}<a class="branch-card branch-directory-card" href="{% url 'branchhub' %}?branch={{ branch.id|urlencode }}"><span class="branch-index">{{ forloop.counter|stringformat:"02d" }}</span><div><span class="branch-code">{{ branch.code }} <span class="subject-card-divider">/</span> COURSE HUB</span><strong>{{ branch.name }}</strong><small>Subjects, study resources and course tools</small></div><span class="branch-arrow" aria-hidden="true">↗</span></a>{% endfor %}</div>
+  {% else %}<div class="empty">{% if database_configured %}No course communities have been added yet.{% else %}Course communities will appear once the existing CampusHub database is connected.{% endif %}</div>{% endif %}
 </section>
 {% endblock %}

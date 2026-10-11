@@ -22,3 +22,36 @@ services:
         sync: false
       - key: SUPABASE_STORAGE_BUCKET
         value: campushub-files
+  - type: web
+    name: campushub-python-staging
+    runtime: python
+    rootDir: python_app
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    startCommand: gunicorn campushub.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120 --access-logfile - --error-logfile -
+    healthCheckPath: /health/
+    autoDeploy: false
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.4
+      - key: DJANGO_DEBUG
+        value: "false"
+      - key: SECURE_HSTS_SECONDS
+        value: "3600"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_ALLOWED_HOSTS
+        value: .onrender.com
+      - key: DJANGO_PUBLIC_URL
+        value: https://campushub-python-staging.onrender.com
+      - key: DJANGO_CSRF_TRUSTED_ORIGINS
+        value: https://campushub-python-staging.onrender.com
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_STORAGE_BUCKET
+        value: campushub-staging-files

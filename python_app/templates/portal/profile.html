@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}My profile · CampusHub{% endblock %}
+{% block content %}
+<section class="page-header"><div class="container"><span class="eyebrow">YOUR CAMPUS IDENTITY</span><h1>My profile.</h1><p>Keep your branch and semester current so peers can find the right community.</p></div></section>
+<section class="container section profile-layout">
+  <form method="post" class="content-card form profile-form">{% csrf_token %}
+    {% if form.non_field_errors %}<div class="error" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+    {% for field in form %}<label for="{{ field.id_for_label }}">{{ field.label }}{{ field }}{% if field.errors %}<span class="error">{{ field.errors }}</span>{% endif %}</label>{% endfor %}
+    <button class="btn primary" type="submit">Save profile</button>
+  </form>
+  <aside class="content-card profile-summary"><span class="eyebrow">PUBLIC BASICS</span><h2>{{ campushub_user.name }}</h2><p>{{ campushub_user.email }}</p><span class="branch-code">{{ campushub_user.role|upper }}</span><h3>My skills</h3>
+    {% for skill in skills %}<p><strong>{{ skill.skill_name }}</strong> · {{ skill.type }} · {{ skill.level }}</p>{% empty %}<p>No skills listed yet. Add them in SkillSwap to help classmates discover you.</p>{% endfor %}
+    <a class="text-link" href="{% url 'skillswap' %}">Manage skills ↗</a>
+  </aside>
+</section>
+{% endblock %}

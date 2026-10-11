@@ -7,29 +7,80 @@
   <meta name="theme-color" content="#f5f3ec">
   <title>{% block title %}CampusHub{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'styles/global.css' %}">
-  <link rel="stylesheet" href="{% static 'python/python.css' %}">
+  <link rel="stylesheet" href="{% static 'python/python.css' %}?v=29">
 </head>
-<body>
+<body class="{% block body_class %}campus-page{% endblock %}">
   <div class="app-shell">
     <header class="topbar">
       <a class="brand" href="/">
+        {% if request.resolver_match.url_name == "compiler" %}
         <span class="brand-mark">CH</span>
+        {% else %}
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 40 40" fill="none">
+            <path d="M11 11h8v8h-8zM21 21h8v8h-8z" fill="currentColor"/>
+            <path d="M19 15h6a4 4 0 0 1 4 4v2M21 25h-6a4 4 0 0 1-4-4v-2" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </span>
+        {% endif %}
         <div><strong>CampusHub</strong><span>Your campus, in one place.</span></div>
       </a>
       <details class="mobile-menu">
         <summary class="menu-btn">Menu</summary>
         <nav class="nav" aria-label="Main navigation">
-          <a href="{% url 'branchhub' %}">BranchHub</a>
-          <a href="{% url 'compiler' %}">Code Lab</a>
-          <a href="{% url 'project_ideas' %}">Project ideas</a>
-          <a href="{% url 'bookshare' %}">BookShare</a>
-          <a href="{% url 'skillswap' %}">SkillSwap</a>
-          <a href="{% url 'branches' %}">Branches</a>
+          {% if request.resolver_match.url_name == "compiler" %}
+          <a href="{% url 'branchhub' %}" {% if request.resolver_match.url_name == "branchhub" or request.resolver_match.url_name == "subject_detail" %}class="active" aria-current="page"{% endif %}>BranchHub</a>
+          <a href="{% url 'compiler' %}" {% if request.resolver_match.url_name == "compiler" %}class="active" aria-current="page"{% endif %}>Code Lab</a>
+          <a href="{% url 'project_ideas' %}" {% if request.resolver_match.url_name == "project_ideas" %}class="active" aria-current="page"{% endif %}>Project ideas</a>
+          <a href="{% url 'bookshare' %}" {% if request.resolver_match.url_name == "bookshare" %}class="active" aria-current="page"{% endif %}>BookShare</a>
+          <a href="{% url 'skillswap' %}" {% if request.resolver_match.url_name == "skillswap" %}class="active" aria-current="page"{% endif %}>SkillSwap</a>
+          <a href="{% url 'help_requests' %}" {% if request.resolver_match.url_name == "help_requests" %}class="active" aria-current="page"{% endif %}>Help board</a>
+          <a href="{% url 'branches' %}" {% if request.resolver_match.url_name == "branches" %}class="active" aria-current="page"{% endif %}>Branches</a>
+          {% else %}
+          <a href="{% url 'branches' %}" {% if request.resolver_match.url_name == "branches" %}class="active" aria-current="page"{% endif %}>Branches</a>
+          <a href="{% url 'branchhub' %}" {% if request.resolver_match.url_name == "branchhub" or request.resolver_match.url_name == "subject_detail" %}class="active" aria-current="page"{% endif %}>BranchHub</a>
+          <a href="{% url 'bookshare' %}" {% if request.resolver_match.url_name == "bookshare" %}class="active" aria-current="page"{% endif %}>BookShare</a>
+          <a href="{% url 'skillswap' %}" {% if request.resolver_match.url_name == "skillswap" %}class="active" aria-current="page"{% endif %}>SkillSwap</a>
+          <a href="{% url 'help_requests' %}" {% if request.resolver_match.url_name == "help_requests" %}class="active" aria-current="page"{% endif %}>Help board</a>
+          <a href="{% url 'search' %}" {% if request.resolver_match.url_name == "search" %}class="active" aria-current="page"{% endif %}>Search</a>
+          <a href="{% url 'project_ideas' %}" {% if request.resolver_match.url_name == "project_ideas" %}class="active" aria-current="page"{% endif %}>Ideas</a>
+          <a href="{% url 'compiler' %}" {% if request.resolver_match.url_name == "compiler" %}class="active" aria-current="page"{% endif %}>Code Lab</a>
+          {% endif %}
+          {% if campushub_user %}
+          {% if request.resolver_match.url_name != "compiler" %}<a href="{% url 'profile' %}">My profile</a>{% endif %}
+          {% if campushub_user.role == "admin" or campushub_user.role == "super_admin" or campushub_user.role == "teacher" or campushub_user.role == "moderator" %}<a href="{% url 'admin' %}">Admin</a>{% endif %}
+          <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="nav-btn" type="submit">Log out</button></form>
+          {% else %}
+          <a href="{% url 'login' %}">Log in</a>
+          {% if request.resolver_match.url_name == "compiler" %}
+          <a href="{% url 'register' %}">Join</a>
+          {% else %}
+          <a class="nav-join" href="{% url 'register' %}">Join CampusHub</a>
+          {% endif %}
+          {% endif %}
         </nav>
       </details>
     </header>
-    <main>{% block content %}{% endblock %}</main>
+    <main>
+      {% if messages %}<div class="container notice-stack" aria-live="polite">{% for message in messages %}<div class="notice notice-{{ message.tags }}">{{ message }}</div>{% endfor %}</div>{% endif %}
+      {% block content %}{% endblock %}
+    </main>
+    {% if request.resolver_match.url_name == "compiler" %}
     <footer>CampusHub • Open-source student ecosystem • Built for campus use</footer>
+    {% else %}
+    <footer><span>CampusHub</span><span>Made for the people who make campus.</span></footer>
+    {% endif %}
   </div>
+  <script>
+    (function () {
+      var menu = document.querySelector(".mobile-menu");
+      if (!menu || !window.matchMedia) return;
+      var desktop = window.matchMedia("(min-width: 981px)");
+      var syncMenu = function () { menu.open = desktop.matches; };
+      syncMenu();
+      if (desktop.addEventListener) desktop.addEventListener("change", syncMenu);
+      else desktop.addListener(syncMenu);
+    })();
+  </script>
 </body>
 </html>

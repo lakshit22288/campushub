@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Campus admin · CampusHub{% endblock %}
+{% block content %}
+<section class="page-header"><div class="container"><span class="eyebrow">AUTHORIZED STAFF ONLY</span><h1>Campus admin.</h1><p>Manage academic content and announcements. Access is checked against your current database role on every request.</p></div></section>
+<section class="container section">
+  <div class="stats-grid">{% for label,value in stats.items %}<article class="content-card"><span class="content-meta">{{ label|title }}</span><strong class="stat-number">{{ value }}</strong></article>{% endfor %}</div>
+</section>
+<section class="container section feature-columns">
+  {% if can_manage_content %}
+  <section class="content-card"><span class="eyebrow">PUBLISH ACADEMIC RESOURCE</span><h2>Add notes or a file</h2><p>Choose whether this is a faculty upload or AI-generated study material. PDF, PNG and JPG uploads are sent to the configured Supabase Storage bucket (10 MB maximum).</p>
+    <form method="post" enctype="multipart/form-data" class="form">{% csrf_token %}<input type="hidden" name="action" value="note">{% for field in note_form %}<label for="{{ field.id_for_label }}">{{ field.label }}{{ field }}{% if field.errors %}<span class="error">{{ field.errors }}</span>{% endif %}</label>{% endfor %}<button class="btn primary" type="submit">Publish resource</button></form>
+  </section>
+  <section class="content-card"><span class="eyebrow">CAMPUS UPDATE</span><h2>Post an announcement</h2>
+    <form method="post" enctype="multipart/form-data" class="form">{% csrf_token %}<input type="hidden" name="action" value="announcement">{% for field in announcement_form %}<label for="{{ field.id_for_label }}">{{ field.label }}{{ field }}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}{% if field.errors %}<span class="error">{{ field.errors }}</span>{% endif %}</label>{% endfor %}<button class="btn primary" type="submit">Publish announcement</button></form>
+  </section>
+  {% endif %}
+  {% if can_manage_subjects %}
+  <section class="content-card"><span class="eyebrow">BRANCHHUB CATALOG</span><h2>Add a subject</h2>
+    <form method="post" class="form">{% csrf_token %}<input type="hidden" name="action" value="subject">{% for field in subject_form %}<label for="{{ field.id_for_label }}">{{ field.label }}{{ field }}{% if field.errors %}<span class="error">{{ field.errors }}</span>{% endif %}</label>{% endfor %}<button class="btn primary" type="submit">Add subject</button></form>
+  </section>
+  {% endif %}
+</section>
+<section class="container section"><div class="section-head"><div><span class="eyebrow">CURRENT SUBJECTS</span><h2>BranchHub content map</h2></div></div><div class="branch-grid">{% for subject in subjects %}<article class="content-card"><span class="branch-code">{{ subject.branch.code }}</span><strong>{{ subject.name }}</strong></article>{% empty %}<div class="empty">No subjects have been added yet.</div>{% endfor %}</div></section>
+{% if can_manage_users %}
+<section class="container section"><div class="section-head"><div><span class="eyebrow">SUPER ADMIN</span><h2>Manage account roles</h2></div></div><div class="admin-user-list">{% for account in users %}<article class="request-row"><div><strong>{{ account.name }}</strong><span>{{ account.email }} · {{ account.branch.code|default:"No branch" }}</span></div><form method="post" class="role-form">{% csrf_token %}<input type="hidden" name="action" value="role"><input type="hidden" name="user_id" value="{{ account.id }}"><select name="role" aria-label="Role for {{ account.name }}">{% for role in role_choices %}<option value="{{ role }}" {% if account.role == role %}selected{% endif %}>{{ role|title }}</option>{% endfor %}</select><button class="btn small" type="submit">Update role</button></form></article>{% endfor %}</div></section>
+{% endif %}
+{% endblock %}

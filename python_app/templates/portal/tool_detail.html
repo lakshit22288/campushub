@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · CampusHub{% endblock %}
+{% block content %}
+<section class="page-header"><div class="container"><span class="eyebrow">MINI TOOLS LAB</span><h1>{{ title }}</h1><p>Practical, browser-based tools for learning and everyday calculations.</p></div></section>
+<section class="container section">
+  <div class="simple-tool">
+    {% if slug == "percentage" %}<h2>What percent is A of B?</h2><p>Enter non-negative values. B must be greater than zero.</p>
+    {% elif slug == "cgpa" %}<h2>Average GPA</h2><p>Enter 1–30 GPA values from 0 to 10, separated by commas.</p>
+    {% elif slug == "units" or slug == "mechanical-units" %}<h2>Convert a measurement</h2><p>Choose compatible units from the same measurement group.</p>
+    {% elif slug == "python" %}<h2>Python Basics Practice</h2><p>This practice tool checks concepts and does not execute arbitrary code.</p>
+    {% elif slug == "sql" %}<h2>SQL Query Practice</h2><p>Practice or format a query locally. SQL is not executed or sent to the database.</p>
+    {% elif slug == "linux" %}<h2>Common commands</h2><p>Quick reference for frequently used terminal commands.</p>
+    {% elif slug == "subnet" %}<h2>IPv4 subnet range</h2><p>Calculate the network range from an IPv4 address and CIDR prefix.</p>
+    {% elif slug == "ohms-law" %}<h2>Ohm's Law</h2><p>Enter any two values to calculate the third and electrical power.</p>
+    {% elif slug == "power" %}<h2>DC power: P = V × I</h2><p>Enter voltage and current to calculate power.</p>
+    {% elif slug == "logic-gates" %}<h2>Logic gates</h2><p>Toggle inputs and inspect the outputs.</p>
+    {% elif slug == "area-volume" %}<h2>Area &amp; Volume</h2><p>Use consistent dimensions; results use square or cubic units.</p>
+    {% elif slug == "mlt-dilution" %}<h2>Solution Dilution (C₁V₁ = C₂V₂)</h2><p>Academic calculations only. Use consistent units and verify lab protocols with your instructor.</p>
+    {% endif %}
+
+    {% if exercise %}<p class="tool-prompt">{{ exercise.prompt }}</p>{% endif %}
+    {% if form %}
+    <form method="post" class="form tool-form">
+      {% csrf_token %}
+      {% for error in form.non_field_errors %}<div class="error">{{ error }}</div>{% endfor %}
+      {% for field in form %}
+      <label class="tool-field{% if field.field.widget.input_type == 'checkbox' %} tool-check-field{% endif %}">
+        {{ field.label }}{{ field }}
+        {% for error in field.errors %}<span class="error">{{ error }}</span>{% endfor %}
+      </label>
+      {% endfor %}
+      <button class="btn primary" type="submit">{% if slug == "python" %}Check answer{% elif slug == "sql" %}Format query{% else %}Calculate{% endif %}</button>
+    </form>
+    {% endif %}
+
+    {% if result and slug == "sql" %}<div class="result"><span>Formatted preview</span><pre>{{ result }}</pre></div>
+    {% elif result %}<div class="result{% if result_detail == 'success' %} notice-success{% elif result_detail == 'error' %} notice-error{% endif %}" aria-live="polite"><span>Result</span><strong>{{ result }}</strong></div>{% endif %}
+    {% if result_detail and slug == "subnet" or result_detail and slug == "logic-gates" %}
+    <div class="resource-list">{% for label, value in result_detail %}<article class="resource"><strong>{{ label }}</strong><span>{{ value }}</span></article>{% endfor %}</div>
+    {% endif %}
+    {% if result_detail and slug == "linux" %}<div class="cmd-grid">{% for command, description in result_detail %}<article class="cmd"><code>{{ command }}</code><span>{{ description }}</span></article>{% endfor %}</div>{% endif %}
+  </div>
+</section>
+{% endblock %}
