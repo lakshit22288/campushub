@@ -1,44 +1,26 @@
 # CampusHub
 
-Everything you need for college, all in one place.
+CampusHub is a student platform for learning, sharing resources, finding project ideas, and running code. The maintained application is the Django edition in `python_app/`.
 
-CampusHub is a college student platform for learning, sharing resources, finding project ideas, and running code.
+## Production
 
-## Legacy React/Express deployment (rollback only)
+The Python application is deployed at [campushub-python.vercel.app](https://campushub-python.vercel.app/) with the Vercel project root set to `python_app`. It uses the existing Supabase PostgreSQL database and Auth project. Database models are unmanaged; **do not run Django schema migrations against the production database**.
 
-These instructions describe the previous React/Express deployment. The active production setup is the Python edition below; use this legacy setup only when rolling back.
+The previous `campushub-opal.vercel.app` domain is retained as a compatibility alias. Its Vercel project uses [client/vercel.json](client/vercel.json) to forward requests to the existing Python Render production service. Keep that configuration until the alias is intentionally migrated. The Render service and isolated staging service are defined in [render.yaml](render.yaml).
 
-### Frontend
+The former React/Vite frontend and Express API source have been removed. The remaining SQL files under `python_app/sql/` document the existing schema and additive changes; they are reference/maintenance scripts, not Django migrations.
 
-Create/import a Vercel project with the repository root directory set to `client` and the Vite framework preset. Configure these Production environment variables:
+## Local development
 
-- `VITE_SUPABASE_URL`: the Supabase project URL.
-- `VITE_SUPABASE_ANON_KEY`: the Supabase publishable key (never the secret/service-role key).
-- `VITE_API_URL`: add after deploying the API; use the API project's origin followed by `/api`.
+See the [Python app setup and deployment guide](python_app/README.md). In short:
 
-### API
+```powershell
+py -m venv python_app\.venv
+python_app\.venv\Scripts\Activate.ps1
+python -m pip install -r python_app\requirements.txt
+Copy-Item python_app\.env.example python_app\.env
+python python_app\manage.py check
+python python_app\manage.py runserver
+```
 
-Create a second Vercel project from the same repository with the root directory set to `server` and the Express framework preset. Vercel detects `src/server.js` as the Express entry point.
-
-Configure these Production environment variables:
-
-- `CLIENT_URL`: the exact deployed frontend origin, such as `https://campushub.vercel.app`.
-- `DATABASE_URL`: the existing Supabase Postgres connection string. Use Supabase's Session Pooler connection details; do not create or migrate a separate database for deployment.
-- `DB_POOL_MAX`: `1` to keep serverless database connections bounded.
-- `JWT_SECRET`: a new, long, random secret.
-- `SUPABASE_URL`: the Supabase project URL.
-- `SUPABASE_ANON_KEY`: the Supabase publishable key, used to verify Supabase Auth tokens.
-- `SUPABASE_SERVICE_ROLE_KEY`: optional; configure only if the API needs to upload files to Supabase Storage. Keep it server-side.
-- `SUPABASE_STORAGE_BUCKET`: the existing Storage bucket name, when file uploads are enabled.
-
-After the API deploys, set the frontend's `VITE_API_URL` to `https://<api-project>.vercel.app/api` and redeploy the frontend. In Supabase Authentication URL Configuration, set the Site URL to the frontend origin and add `https://<frontend-project>.vercel.app/auth/callback` to the allowed redirect URLs.
-
-Do not add `.env` files, database URLs, JWT secrets, or Supabase secret/service-role keys to GitHub or frontend environment variables. Vercel's free-plan function limits and provider availability may affect usage; the API's compiler proxy also depends on OneCompiler. Python's interactive runner executes in the user's browser using Pyodide.
-
-## Python edition (production)
-
-The Django app in `python_app/` serves `https://campushub-opal.vercel.app` through the Render service `campushub-python-production`. The Vercel project keeps its `client` root and proxies requests to Render via `client/vercel.json`. Django maps the existing Supabase PostgreSQL tables as unmanaged models; never run Django migrations against the production database.
-
-Production uses the existing Supabase project. New uploads go to the private `campushub-python-files` bucket, while the existing public `campushub-files` bucket remains available for legacy file references and rollback. Render production deploys are manual and use `main`; configure secrets only in Render's environment settings. Staging must use its separate Supabase project and bucket and must never write to production data.
-
-For rollback, restore the previous Vercel production deployment or its SPA rewrite while keeping the existing database and public bucket intact. See [the Python edition setup guide](python_app/README.md) for deployment and storage details.
+Do not commit `.env` files or share credentials in chat. Keep Supabase service-role keys and database URLs server-side.

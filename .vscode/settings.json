@@ -4,8 +4,7 @@
     "**/dist": true,
     "**/.vite": true,
     "**/coverage": true,
-    "**/uploads/**": true,
-    "**/package-lock.json": true
+    "**/uploads/**": true
   },
   "search.exclude": {
     "**/node_modules": true,

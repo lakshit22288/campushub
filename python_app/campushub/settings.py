@@ -119,7 +119,7 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [
-    ("styles", REPO_ROOT / "client" / "src" / "styles"),
+    ("styles", BASE_DIR / "static" / "styles"),
     ("python", BASE_DIR / "static"),
 ]
 STATIC_ROOT = BASE_DIR / "staticfiles"
