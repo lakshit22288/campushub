@@ -62,7 +62,13 @@ WORKING STYLE / SAFETY
 
 NEXT
 ----
-Cleanup diff reviewed; no stale references to deleted Node code or SQL paths
-remain. Changes are local and not committed/pushed. Before any future production
-deployment, confirm the old alias project's build behavior with its Vercel root
-set to client; no deployment was run for this cleanup.
+Cleanup commit 5e0aaa3 was merged and pushed to GitHub main. Vercel project
+campushub-python is connected to lakshit22288/campushub, production branch
+main, root python_app, with Git deployments enabled. Vercel reports commit
+5e0aaa3 as a READY production deployment. Live /health/, homepage, and moved
+stylesheet returned HTTP 200; health reported the database connected.
+
+Future local edits are not live merely when saved: commit and push/merge them
+to main to trigger Vercel's production deployment. The active workspace is
+still on python-migration; a push to that branch alone is not a production
+deployment. No Supabase settings or schema were changed.
