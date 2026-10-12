@@ -4,9 +4,9 @@ Everything you need for college, all in one place.
 
 CampusHub is a college student platform for learning, sharing resources, finding project ideas, and running code.
 
-## Deploy to Vercel
+## Legacy React/Express deployment (rollback only)
 
-CampusHub uses separate Vercel projects for the frontend and the Express API. Both projects can use the same GitHub repository.
+These instructions describe the previous React/Express deployment. The active production setup is the Python edition below; use this legacy setup only when rolling back.
 
 ### Frontend
 
@@ -35,8 +35,10 @@ After the API deploys, set the frontend's `VITE_API_URL` to `https://<api-projec
 
 Do not add `.env` files, database URLs, JWT secrets, or Supabase secret/service-role keys to GitHub or frontend environment variables. Vercel's free-plan function limits and provider availability may affect usage; the API's compiler proxy also depends on OneCompiler. Python's interactive runner executes in the user's browser using Pyodide.
 
-## Python edition (staging and cutover preparation)
+## Python edition (production)
 
-An isolated Django-based version is being built in `python_app/` on the `python-migration` branch. It reuses the existing design stylesheet and maps Supabase PostgreSQL tables as unmanaged models; it must not run Django migrations against them. `render.yaml` defines separate manual-deploy Django staging and production services, leaving the existing Node API and Vercel frontend in place by default.
+The Django app in `python_app/` serves `https://campushub-opal.vercel.app` through the Render service `campushub-python-production`. The Vercel project keeps its `client` root and proxies requests to Render via `client/vercel.json`. Django maps the existing Supabase PostgreSQL tables as unmanaged models; never run Django migrations against the production database.
 
-Keep the existing React/Express application and Vercel deployment serving production until the Django app is validated end to end. Use an isolated Supabase staging project and storage bucket for staging; never point staging writes at production data. The production Render service requires its own explicit environment setup, and Vercel traffic must not be proxied to it before production checks pass. Follow [the Python edition setup guide](python_app/README.md) to configure the services and cutover safely.
+Production uses the existing Supabase project. New uploads go to the private `campushub-python-files` bucket, while the existing public `campushub-files` bucket remains available for legacy file references and rollback. Render production deploys are manual and use `main`; configure secrets only in Render's environment settings. Staging must use its separate Supabase project and bucket and must never write to production data.
+
+For rollback, restore the previous Vercel production deployment or its SPA rewrite while keeping the existing database and public bucket intact. See [the Python edition setup guide](python_app/README.md) for deployment and storage details.

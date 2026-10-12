@@ -1,6 +1,6 @@
 # CampusHub Python edition
 
-The Django app is a side-by-side staging service, not yet a replacement for the live React/Express deployment. It uses Supabase PostgreSQL through unmanaged models; do not run Django migrations against that database.
+The Django app is the production CampusHub application, served at `https://campushub-opal.vercel.app` through Render. It uses Supabase PostgreSQL through unmanaged models; do not run Django migrations against that database.
 
 ## Staging deployment
 
@@ -8,15 +8,15 @@ The repository's Render Blueprint defines a separate `campushub-python-staging` 
 
 The default staging origin is `https://campushub-python-staging.onrender.com`. If Render assigns another hostname, update `DJANGO_PUBLIC_URL`, `DJANGO_ALLOWED_HOSTS`, and `DJANGO_CSRF_TRUSTED_ORIGINS` together. Add `https://campushub-python-staging.onrender.com/auth/callback` to the staging Supabase Auth allowed redirect URLs. Do not change the production Supabase Site URL or production OAuth callback during staging.
 
-Staging is for isolated verification only. Do not switch production traffic until authentication, OAuth, database writes, real file uploads, all primary workflows, and production security/storage requirements have been verified. Signed download URLs are bearer links and remain usable until they expire; do not publish them in logs or share them outside the intended audience. The existing React/Express production app and its Storage configuration are unchanged.
+Staging remains isolated verification only and must never write to production data. Signed download URLs are bearer links and remain usable until they expire; do not publish them in logs or share them outside the intended audience. The existing React/Express app remains available for rollback.
 
-## Production cutover preparation
+## Production deployment
 
-The Render Blueprint also defines a separate `campushub-python-production` service with automatic deploys disabled. It is intentionally not connected to production by default. Keep the existing Vercel and Express deployments serving users until the production service is configured and validated.
+The Render Blueprint defines a separate `campushub-python-production` service with automatic deploys disabled. The production Vercel project proxies its existing domain to this service; production releases are deployed manually from `main`.
 
 Configure the production service with the existing production Supabase PostgreSQL connection string, Supabase URL and publishable key, plus the server-only legacy `service_role` JWT required by the storage helper. Keep `SUPABASE_STORAGE_BUCKET` set to the existing `campushub-files` bucket so existing public file references continue to work. That bucket is public, so configure a separate private `campushub-python-files` bucket as `SUPABASE_UPLOAD_BUCKET`; new Python uploads are stored there with bucket-qualified references, while pre-existing public references continue to resolve through the legacy bucket. Do not make the existing bucket private or use staging credentials. Set `DJANGO_PUBLIC_URL` to the exact production-facing origin, `DJANGO_ALLOWED_HOSTS` to the exact Render and Vercel hostnames, and `DJANGO_CSRF_TRUSTED_ORIGINS` to the HTTPS production origin. Keep all secrets in Render environment settings.
 
-Before switching Vercel traffic, verify production schema compatibility without running Django migrations, confirm the storage bucket is private or migrate existing files and references to a private bucket, allow the production `/auth/callback` URL in Supabase Auth, then test login, registration, Google sign-in, branch authorization, uploads/downloads, and primary workflows against the production service. Only after those checks pass should Vercel be configured to proxy the production origin; verify the Vercel URL end to end and retain the previous Vercel deployment for rollback. A Render service definition alone does not create the Vercel proxy or perform a traffic cutover.
+The production health endpoint, database connection, Google OAuth provider redirect, and private bucket upload/signed-download path have been smoke-tested. Complete an account-based sign-in and authenticated workflow acceptance test after deployment; do not create test accounts or write sample records to the production database. Retain the previous Vercel production deployment for rollback.
 
 ## Local setup
 
