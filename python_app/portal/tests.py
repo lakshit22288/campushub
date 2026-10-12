@@ -1302,6 +1302,31 @@ class StorageTests(SimpleTestCase):
         SUPABASE_URL="https://campus-project.supabase.co/",
         SUPABASE_SERVICE_ROLE_KEY="test-service-key",
         SUPABASE_STORAGE_BUCKET="campushub-files",
+        SUPABASE_UPLOAD_BUCKET="campushub-python-files",
+    )
+    def test_upload_uses_private_bucket_and_persists_bucket_qualified_reference(self):
+        upload = SimpleUploadedFile(
+            "lecture.pdf",
+            b"%PDF-1.7 test",
+            content_type="application/pdf",
+        )
+        response = MagicMock()
+
+        with patch("portal.storage.httpx.Client") as client_factory:
+            client = client_factory.return_value.__enter__.return_value
+            client.post.return_value = response
+            file_reference, _ = upload_note_file(upload)
+
+        self.assertTrue(file_reference.startswith("storage://campushub-python-files/notes/"))
+        self.assertIn(
+            "/storage/v1/object/campushub-python-files/notes/",
+            client.post.call_args.args[0],
+        )
+
+    @override_settings(
+        SUPABASE_URL="https://campus-project.supabase.co/",
+        SUPABASE_SERVICE_ROLE_KEY="test-service-key",
+        SUPABASE_STORAGE_BUCKET="campushub-files",
     )
     def test_private_storage_file_links_use_short_lived_signed_urls(self):
         response = MagicMock()
@@ -1329,6 +1354,39 @@ class StorageTests(SimpleTestCase):
             {"expiresIn": 60 * 60},
         )
         response.raise_for_status.assert_called_once()
+
+    @override_settings(
+        SUPABASE_URL="https://campus-project.supabase.co/",
+        SUPABASE_SERVICE_ROLE_KEY="test-service-key",
+        SUPABASE_STORAGE_BUCKET="campushub-files",
+        SUPABASE_UPLOAD_BUCKET="campushub-python-files",
+    )
+    def test_bucket_qualified_private_reference_signs_from_its_bucket(self):
+        response = MagicMock()
+        response.json.return_value = {
+            "signedURL": "/object/sign/campushub-python-files/notes/lecture.pdf?token=temporary"
+        }
+
+        with patch("portal.storage.httpx.Client") as client_factory:
+            client = client_factory.return_value.__enter__.return_value
+            client.post.return_value = response
+            signed_storage_url("storage://campushub-python-files/notes/lecture.pdf")
+
+        self.assertEqual(
+            client.post.call_args.args[0],
+            "https://campus-project.supabase.co/storage/v1/object/sign/"
+            "campushub-python-files/notes/lecture.pdf",
+        )
+
+    @override_settings(
+        SUPABASE_URL="https://campus-project.supabase.co",
+        SUPABASE_SERVICE_ROLE_KEY="test-service-key",
+        SUPABASE_STORAGE_BUCKET="campushub-files",
+        SUPABASE_UPLOAD_BUCKET="campushub-python-files",
+    )
+    def test_bucket_qualified_reference_rejects_unconfigured_bucket(self):
+        with self.assertRaisesRegex(StorageUploadError, "configured storage bucket"):
+            signed_storage_url("storage://other-bucket/notes/lecture.pdf")
 
     @override_settings(
         SUPABASE_URL="https://campus-project.supabase.co",

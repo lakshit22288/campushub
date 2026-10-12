@@ -55,3 +55,40 @@ services:
         sync: false
       - key: SUPABASE_STORAGE_BUCKET
         value: campushub-staging-files
+      - key: SUPABASE_UPLOAD_BUCKET
+        value: campushub-staging-files
+  - type: web
+    name: campushub-python-production
+    runtime: python
+    rootDir: python_app
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    startCommand: gunicorn campushub.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120 --access-logfile - --error-logfile -
+    healthCheckPath: /health/
+    autoDeploy: false
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.4
+      - key: DJANGO_DEBUG
+        value: "false"
+      - key: SECURE_HSTS_SECONDS
+        value: "3600"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_ALLOWED_HOSTS
+        sync: false
+      - key: DJANGO_PUBLIC_URL
+        sync: false
+      - key: DJANGO_CSRF_TRUSTED_ORIGINS
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_STORAGE_BUCKET
+        sync: false
+      - key: SUPABASE_UPLOAD_BUCKET
+        sync: false

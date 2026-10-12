@@ -35,8 +35,8 @@ After the API deploys, set the frontend's `VITE_API_URL` to `https://<api-projec
 
 Do not add `.env` files, database URLs, JWT secrets, or Supabase secret/service-role keys to GitHub or frontend environment variables. Vercel's free-plan function limits and provider availability may affect usage; the API's compiler proxy also depends on OneCompiler. Python's interactive runner executes in the user's browser using Pyodide.
 
-## Python edition (staging)
+## Python edition (staging and cutover preparation)
 
-An isolated Django-based version is being built in `python_app/` on the local `python-migration` branch. It reuses the existing design stylesheet and maps Supabase PostgreSQL tables as unmanaged models; it must not run Django migrations against them. `render.yaml` defines a separate, manual-deploy Django staging service, leaving the existing Node API and Vercel frontend in place.
+An isolated Django-based version is being built in `python_app/` on the `python-migration` branch. It reuses the existing design stylesheet and maps Supabase PostgreSQL tables as unmanaged models; it must not run Django migrations against them. `render.yaml` defines separate manual-deploy Django staging and production services, leaving the existing Node API and Vercel frontend in place by default.
 
-Keep the existing React/Express application and Vercel deployment as production until the Django staging app is validated end to end. Use an isolated Supabase staging project and storage bucket for staging; never point staging writes at production data. Follow [the Python edition setup guide](python_app/README.md) to configure it. No production domain, frontend, or API cutover is performed by this repository change.
+Keep the existing React/Express application and Vercel deployment serving production until the Django app is validated end to end. Use an isolated Supabase staging project and storage bucket for staging; never point staging writes at production data. The production Render service requires its own explicit environment setup, and Vercel traffic must not be proxied to it before production checks pass. Follow [the Python edition setup guide](python_app/README.md) to configure the services and cutover safely.

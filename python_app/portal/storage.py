@@ -57,13 +57,13 @@ def upload_project_file(uploaded_file):
 def signed_storage_url(file_reference):
     supabase_url = settings.SUPABASE_URL.rstrip("/")
     service_key = settings.SUPABASE_SERVICE_ROLE_KEY
-    bucket = settings.SUPABASE_STORAGE_BUCKET
-    if not supabase_url or not service_key or not bucket:
+    buckets = _configured_buckets()
+    if not supabase_url or not service_key or not buckets:
         raise StorageUploadError(
             "File downloads are not configured. Ask an administrator to check the Supabase Storage settings."
         )
 
-    object_name = _storage_object_name(file_reference, supabase_url, bucket)
+    bucket, object_name = _storage_location(file_reference, supabase_url, buckets)
     encoded_bucket = quote(bucket, safe="")
     encoded_object = quote(object_name, safe="/")
     endpoint = (
@@ -121,19 +121,49 @@ def signed_storage_url(file_reference):
     return f"{supabase_url}/{signed_url.lstrip('/')}"
 
 
-def _storage_object_name(file_reference, supabase_url, bucket):
+def _configured_buckets():
+    return tuple(
+        dict.fromkeys(
+            bucket
+            for bucket in (
+                settings.SUPABASE_STORAGE_BUCKET,
+                getattr(settings, "SUPABASE_UPLOAD_BUCKET", ""),
+            )
+            if bucket
+        )
+    )
+
+
+def _storage_location(file_reference, supabase_url, buckets):
     if not isinstance(file_reference, str) or not file_reference.strip():
         raise StorageUploadError("The file reference is invalid.")
 
     reference = file_reference.strip()
     parsed_reference = urlsplit(reference)
-    if parsed_reference.scheme or parsed_reference.netloc:
+    if parsed_reference.scheme == "storage":
+        bucket = parsed_reference.netloc
+        if bucket not in buckets:
+            raise StorageUploadError("The file reference does not belong to a configured storage bucket.")
+        reference = parsed_reference.path
+    elif parsed_reference.scheme or parsed_reference.netloc:
         if parsed_reference.netloc != urlsplit(supabase_url).netloc:
             raise StorageUploadError("The file reference does not belong to this storage project.")
-        public_prefix = f"/storage/v1/object/public/{quote(bucket, safe='')}/"
-        if not parsed_reference.path.startswith(public_prefix):
+        bucket = next(
+            (
+                candidate
+                for candidate in buckets
+                if parsed_reference.path.startswith(
+                    f"/storage/v1/object/public/{quote(candidate, safe='')}/"
+                )
+            ),
+            None,
+        )
+        if not bucket:
             raise StorageUploadError("The file reference does not belong to this storage bucket.")
+        public_prefix = f"/storage/v1/object/public/{quote(bucket, safe='')}/"
         reference = parsed_reference.path[len(public_prefix):]
+    else:
+        bucket = settings.SUPABASE_STORAGE_BUCKET or buckets[0]
 
     object_name = unquote(reference).lstrip("/")
     path_parts = object_name.split("/")
@@ -143,7 +173,7 @@ def _storage_object_name(file_reference, supabase_url, bucket):
         or any(part in {"", ".", ".."} for part in path_parts)
     ):
         raise StorageUploadError("The file reference is invalid.")
-    return object_name
+    return bucket, object_name
 
 
 def sign_storage_references(records, field_name):
@@ -179,7 +209,8 @@ def _upload_file(
 
     supabase_url = settings.SUPABASE_URL.rstrip("/")
     service_key = settings.SUPABASE_SERVICE_ROLE_KEY
-    bucket = settings.SUPABASE_STORAGE_BUCKET
+    legacy_bucket = settings.SUPABASE_STORAGE_BUCKET
+    bucket = getattr(settings, "SUPABASE_UPLOAD_BUCKET", "") or legacy_bucket
     if not supabase_url or not service_key or not bucket:
         raise StorageUploadError(
             "File uploads are not configured. Ask an administrator to check the Supabase Storage settings."
@@ -234,4 +265,9 @@ def _upload_file(
         raise StorageUploadError("Could not connect to Supabase Storage.") from error
 
     safe_filename = PurePath(uploaded_file.name).name[:255]
-    return object_name, safe_filename
+    file_reference = (
+        f"storage://{bucket}/{object_name}"
+        if legacy_bucket and bucket != legacy_bucket
+        else object_name
+    )
+    return file_reference, safe_filename
