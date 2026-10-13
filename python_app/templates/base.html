@@ -5,7 +5,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f5f3ec">
+  <meta name="description" content="{% block meta_description %}CampusHub helps college students learn, share study resources, explore project ideas, use academic tools, and write code in the Code Lab.{% endblock %}">
+  <meta name="robots" content="{% block robots %}index,follow{% endblock %}">
+  <link rel="canonical" href="https://campushub-python.vercel.app{{ request.path }}">
   <title>{% block title %}CampusHub{% endblock %}</title>
+  {% block structured_data %}{% endblock %}
   <link rel="stylesheet" href="{% static 'styles/global.css' %}">
   <link rel="stylesheet" href="{% static 'python/python.css' %}?v=29">
 </head>

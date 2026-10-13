@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}{% if feature == "Code Lab" %}Code Lab · CampusHub Python{% else %}{{ feature }} · CampusHub{% endif %}{% endblock %}
+{% block robots %}noindex,nofollow{% endblock %}
 {% block body_class %}{% if feature == "Code Lab" %}code-lab-page{% else %}campus-page{% endif %}{% endblock %}
 {% block content %}
 {% if feature == "Code Lab" %}

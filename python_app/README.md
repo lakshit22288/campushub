@@ -2,6 +2,10 @@
 
 The Django app is the maintained CampusHub application, deployed at `https://campushub-python.vercel.app` from the `python_app` Vercel project root. The legacy `https://campushub-opal.vercel.app` domain remains a compatibility alias that forwards to the Python Render production service. The app uses Supabase PostgreSQL through unmanaged models; do not run Django migrations against that database.
 
+## Google Search visibility
+
+The app publishes a crawlable `robots.txt` and `sitemap.xml`, canonical URLs for `campushub-python.vercel.app`, descriptive page metadata, and marks account-only pages `noindex`. After a successful production deployment, add the URL-prefix property `https://campushub-python.vercel.app/` in [Google Search Console](https://search.google.com/search-console), complete Google's ownership verification, and submit `https://campushub-python.vercel.app/sitemap.xml`. Google decides when to crawl and index pages; submission is not a guarantee of indexing or ranking. A custom domain is recommended if CampusHub gets one, because the current address is a shared `vercel.app` subdomain.
+
 ## Staging deployment
 
 The repository's Render Blueprint defines a separate `campushub-python-staging` web service with automatic deploys disabled. Review the Blueprint in Render, then set the staging service's `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` to an **isolated staging Supabase project**, not production. Create `campushub-staging-files` as a **private** Storage bucket. Django stores object paths and creates one-hour signed download URLs; branch-targeted notice attachments are signed only for the target branch or admins. Add the additive SQL scripts for the note source type, project attachments, and notice attachments to the staging database before deploying. Render generates a unique Django secret key; the service uses WhiteNoise for collected static assets and Gunicorn to serve Django. HTTPS redirects, secure cookies, and one-hour HSTS are enabled for the staging host.

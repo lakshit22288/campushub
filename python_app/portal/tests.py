@@ -59,6 +59,37 @@ class PortalPageTests(SimpleTestCase):
         self.assertContains(response, "Computer Science / IT")
         self.assertContains(response, "/static/styles/global.css")
         self.assertContains(response, "/static/python/python.css?v=29")
+        self.assertContains(response, 'name="description"')
+        self.assertContains(response, 'rel="canonical" href="https://campushub-python.vercel.app/"')
+        self.assertContains(response, 'application/ld+json')
+
+    def test_robots_txt_disallows_private_or_non_page_routes_and_links_sitemap(self):
+        response = self.client.get("/robots.txt")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/plain")
+        self.assertContains(response, "Disallow: /admin/")
+        self.assertContains(response, "Disallow: /profile/")
+        self.assertContains(
+            response,
+            "Sitemap: https://campushub-python.vercel.app/sitemap.xml",
+        )
+
+    def test_sitemap_contains_only_public_site_and_tool_pages(self):
+        response = self.client.get("/sitemap.xml")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/xml")
+        self.assertContains(response, "https://campushub-python.vercel.app/")
+        self.assertContains(response, "https://campushub-python.vercel.app/tools/percentage/")
+        self.assertNotContains(response, "/admin/")
+        self.assertNotContains(response, "/profile/")
+
+    def test_login_page_is_marked_noindex(self):
+        response = self.client.get("/login/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '<meta name="robots" content="noindex,nofollow">')
 
     @patch("portal.features.Skill.objects.select_related")
     def test_global_search_splits_terms_and_shows_skill_context(self, skills_query):
