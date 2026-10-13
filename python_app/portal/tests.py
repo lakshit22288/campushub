@@ -60,6 +60,10 @@ class PortalPageTests(SimpleTestCase):
         self.assertContains(response, "/static/styles/global.css")
         self.assertContains(response, "/static/python/python.css?v=29")
         self.assertContains(response, 'name="description"')
+        self.assertContains(
+            response,
+            '<meta name="google-site-verification" content="NxuHJKI0DXW3RZZak_86nkclsPrbCCLeY8rQG4729Yc">',
+        )
         self.assertContains(response, 'rel="canonical" href="https://campushub-python.vercel.app/"')
         self.assertContains(response, 'application/ld+json')
 
