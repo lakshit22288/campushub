@@ -62,13 +62,19 @@ WORKING STYLE / SAFETY
 
 NEXT
 ----
-Cleanup commit 5e0aaa3 was merged and pushed to GitHub main. Vercel project
-campushub-python is connected to lakshit22288/campushub, production branch
-main, root python_app, with Git deployments enabled. Vercel reports commit
-5e0aaa3 as a READY production deployment. Live /health/, homepage, and moved
-stylesheet returned HTTP 200; health reported the database connected.
+SEO indexing support was added in commit b1f80d8 and deployed to production.
+It adds /robots.txt, /sitemap.xml, canonical URLs and homepage metadata/schema,
+and noindex rules for account-only or internal pages. Django check and all 77
+portal tests passed. Live robots.txt, sitemap.xml, home, login, and health
+returned HTTP 200; home canonical/metadata and login noindex were confirmed;
+health reports database connected.
+
+Google Search Console ownership verification and sitemap submission are still
+manual/pending. They are needed to request indexing; Google controls timing and
+ranking and does not guarantee a search result. Search Console account is not
+connected/verified yet.
 
 Future local edits are not live merely when saved: commit and push/merge them
 to main to trigger Vercel's production deployment. The active workspace is
 still on python-migration; a push to that branch alone is not a production
-deployment. No Supabase settings or schema were changed.
+deployment. No Supabase settings or schema were changed during SEO setup.
