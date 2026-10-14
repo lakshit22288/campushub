@@ -20,6 +20,12 @@ The Render Blueprint defines a `campushub-python-production` compatibility servi
 
 Configure the production service with the existing production Supabase PostgreSQL connection string, Supabase URL and publishable key, plus the server-only legacy `service_role` JWT required by the storage helper. Keep `SUPABASE_STORAGE_BUCKET` set to the existing `campushub-files` bucket so existing public file references continue to work. That bucket is public, so configure a separate private `campushub-python-files` bucket as `SUPABASE_UPLOAD_BUCKET`; new Python uploads are stored there with bucket-qualified references, while pre-existing public references continue to resolve through the legacy bucket. Do not make the existing bucket private or use staging credentials. Set `DJANGO_PUBLIC_URL` to the exact production-facing origin, `DJANGO_ALLOWED_HOSTS` to the exact Render and Vercel hostnames, and `DJANGO_CSRF_TRUSTED_ORIGINS` to the HTTPS production origin. Keep all secrets in Render environment settings.
 
+### Email ownership verification
+
+Email/password signups use the existing Supabase Auth project. In Supabase Auth settings, enable email confirmations for the Email provider and configure production SMTP for reliable delivery. Set the Site URL to `https://campushub-python.vercel.app` and add `https://campushub-python.vercel.app/auth/email/confirm/` to the allowed redirect URLs. Add the matching local confirmation URL while developing locally. Do not disable email confirmations: the app refuses to create a CampusHub account if Supabase returns an immediate session instead of requiring confirmation.
+
+New accounts are created in CampusHub only after the confirmation link returns a verified Supabase identity. Existing email/password CampusHub accounts are prompted to verify their email on their next successful password login before the app establishes a session. Google sign-in remains verified by Google/Supabase. The login page can resend a pending confirmation email.
+
 The production health endpoint, database connection, Google OAuth provider redirect, and private bucket upload/signed-download path have been smoke-tested. Complete an account-based sign-in and authenticated workflow acceptance test after deployment; do not create test accounts or write sample records to the production database. Retain the legacy Vercel alias and Render compatibility service unless they are deliberately retired.
 
 ## Local setup

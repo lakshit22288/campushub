@@ -15,6 +15,7 @@
     <h2>Log in to CampusHub</h2>
     <p>Use your student or authorized staff account.</p>
     {% if error %}<div class="error" role="alert">{{ error }}</div>{% endif %}
+    {% if notice %}<div class="notice notice-success" role="status">{{ notice }}</div>{% endif %}
     {% if not database_configured %}
     <div class="error" role="alert">Connect the Python app to the existing Supabase database to enable login.</div>
     {% else %}

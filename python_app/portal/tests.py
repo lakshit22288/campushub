@@ -95,6 +95,14 @@ class PortalPageTests(SimpleTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '<meta name="robots" content="noindex,nofollow">')
 
+    def test_email_confirmation_page_handles_supabase_redirect_tokens(self):
+        response = self.client.get("/auth/email/confirm/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "window.location.hash.slice(1)")
+        self.assertContains(response, "/auth/email/complete/")
+        self.assertContains(response, "window.history.replaceState")
+
     @patch("portal.features.Skill.objects.select_related")
     def test_global_search_splits_terms_and_shows_skill_context(self, skills_query):
         branch = SimpleNamespace(code="CSE")
@@ -803,7 +811,11 @@ class GoogleOAuthTests(SimpleTestCase):
         self.assertTrue(render.call_args.args[2]["database_configured"])
 
     @override_settings(SUPABASE_DATABASE_CONFIGURED=True)
-    def test_password_hash_is_compatible_with_bcrypt_storage(self):
+    @patch("portal.views.auth.begin_email_signup")
+    @patch("portal.views.auth.sign_in_with_email_password", return_value=None)
+    def test_legacy_password_login_requires_email_verification(
+        self, sign_in, begin_email_signup
+    ):
         password_hash = bcrypt.hashpw(b"student-password", bcrypt.gensalt(rounds=4)).decode()
         user = SimpleNamespace(
             id="user-id",
@@ -820,8 +832,211 @@ class GoogleOAuthTests(SimpleTestCase):
                 {"email": user.email, "password": "student-password"},
             )
 
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response["Location"], "/branchhub/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "We sent a verification link to your email.")
+        self.assertNotIn("campushub_user", self.client.session)
+        begin_email_signup.assert_called_once()
+        self.assertTrue(begin_email_signup.call_args.args[3]["campushub_signup"])
+
+
+class EmailVerificationTests(SimpleTestCase):
+    def make_post_request(self, path, data):
+        request = RequestFactory().post(path, data)
+        SessionMiddleware(lambda current_request: None).process_request(request)
+        return request
+
+    @patch("portal.views.User.objects.create")
+    @patch("portal.views.auth.get_verified_email_identity")
+    def test_confirmation_rejects_invalid_or_unverified_links(
+        self, verify_identity, create_user
+    ):
+        verify_identity.side_effect = auth.SupabaseAuthError(
+            "This email address has not been verified."
+        )
+        request = self.make_post_request(
+            "/auth/email/complete/", {"access_token": "unverified-token"}
+        )
+
+        from portal.views import complete_email_confirmation
+
+        response = complete_email_confirmation(request)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertTrue(json.loads(response.content)["error"])
+        create_user.assert_not_called()
+
+    @override_settings(SUPABASE_DATABASE_CONFIGURED=True)
+    @patch("portal.views.auth.set_user_session")
+    @patch("portal.views.bcrypt.hashpw", return_value=b"unusable-hash")
+    @patch("portal.views.transaction.atomic", return_value=nullcontext())
+    @patch("portal.views.User.objects.create")
+    @patch("portal.views.auth.find_user_by_email", return_value=None)
+    @patch("portal.views.auth.get_verified_email_identity")
+    def test_verified_email_creates_student_account_and_session(
+        self,
+        verify_identity,
+        find_user,
+        create_user,
+        atomic,
+        hash_password,
+        set_session,
+    ):
+        user = SimpleNamespace(id=uuid.uuid4(), email="new@example.edu")
+        create_user.return_value = user
+        verify_identity.return_value = {
+            "email": "new@example.edu",
+            "email_confirmed_at": "2026-10-14T00:00:00Z",
+            "user_metadata": {
+                "campushub_signup": True,
+                "campushub_name": "New Student",
+                "campushub_branch_id": None,
+                "campushub_semester": None,
+            },
+        }
+        request = self.make_post_request(
+            "/auth/email/complete/", {"access_token": "verified-token"}
+        )
+
+        from portal.views import complete_email_confirmation
+
+        response = complete_email_confirmation(request)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(json.loads(response.content)["redirect_url"], "/branchhub/")
+        self.assertEqual(create_user.call_args.kwargs["email"], "new@example.edu")
+        self.assertEqual(create_user.call_args.kwargs["role"], "student")
+        set_session.assert_called_once_with(request, user)
+
+    @override_settings(
+        SUPABASE_URL="https://campus-project.supabase.co",
+        SUPABASE_ANON_KEY="public-anon-key",
+        DJANGO_PUBLIC_URL="https://campushub.example",
+        ALLOWED_HOSTS=["testserver"],
+    )
+    def test_email_signup_uses_the_public_confirmation_callback_and_requires_confirmation(
+        self,
+    ):
+        request = RequestFactory().post("/register/")
+        response = SimpleNamespace(
+            status_code=200,
+            json=lambda: {
+                "user": {
+                    "id": "auth-user-id",
+                    "email": "student@example.edu",
+                    "email_confirmed_at": None,
+                    "identities": [{"provider": "email"}],
+                }
+            },
+        )
+        client = MagicMock()
+        client.post.return_value = response
+
+        with patch("portal.auth.httpx.Client") as client_factory:
+            client_factory.return_value.__enter__.return_value = client
+            auth.begin_email_signup(
+                request,
+                "student@example.edu",
+                "student-password",
+                {"campushub_signup": True},
+            )
+
+        self.assertEqual(
+            client.post.call_args.args[0],
+            "https://campus-project.supabase.co/auth/v1/signup",
+        )
+        self.assertEqual(
+            client.post.call_args.kwargs["params"]["redirect_to"],
+            "https://campushub.example/auth/email/confirm/",
+        )
+        self.assertEqual(
+            client.post.call_args.kwargs["json"]["data"]["campushub_signup"],
+            True,
+        )
+
+    @override_settings(
+        SUPABASE_URL="https://campus-project.supabase.co",
+        SUPABASE_ANON_KEY="public-anon-key",
+    )
+    def test_email_signup_fails_closed_when_confirmation_is_disabled(self):
+        request = RequestFactory().post("/register/")
+        response = SimpleNamespace(
+            status_code=200,
+            json=lambda: {
+                "user": {"id": "auth-user-id", "email_confirmed_at": None},
+                "session": {"access_token": "unverified-session"},
+            },
+        )
+        client = MagicMock()
+        client.post.return_value = response
+
+        with patch("portal.auth.httpx.Client") as client_factory:
+            client_factory.return_value.__enter__.return_value = client
+            with self.assertRaises(auth.SupabaseAuthError):
+                auth.begin_email_signup(
+                    request,
+                    "student@example.edu",
+                    "student-password",
+                    {"campushub_signup": True},
+                )
+
+    @override_settings(
+        SUPABASE_URL="https://campus-project.supabase.co",
+        SUPABASE_ANON_KEY="public-anon-key",
+    )
+    def test_email_password_signin_rejects_unconfirmed_email(self):
+        response = SimpleNamespace(
+            status_code=400,
+            json=lambda: {
+                "code": "email_not_confirmed",
+                "msg": "Email not confirmed",
+            },
+        )
+        client = MagicMock()
+        client.post.return_value = response
+
+        with patch("portal.auth.httpx.Client") as client_factory:
+            client_factory.return_value.__enter__.return_value = client
+            with self.assertRaisesRegex(auth.SupabaseAuthError, "verify your email"):
+                auth.sign_in_with_email_password(
+                    "student@example.edu", "student-password"
+                )
+        client.get.assert_not_called()
+
+    @override_settings(
+        SUPABASE_URL="https://campus-project.supabase.co",
+        SUPABASE_ANON_KEY="public-anon-key",
+    )
+    def test_email_password_signin_checks_confirmed_identity(self):
+        token_response = SimpleNamespace(
+            status_code=200,
+            json=lambda: {"access_token": "verified-access-token"},
+        )
+        identity_response = SimpleNamespace(
+            status_code=200,
+            json=lambda: {
+                "email": "student@example.edu",
+                "email_confirmed_at": "2026-10-14T00:00:00Z",
+            },
+        )
+        client = MagicMock()
+        client.post.return_value = token_response
+        client.get.return_value = identity_response
+
+        with patch("portal.auth.httpx.Client") as client_factory:
+            client_factory.return_value.__enter__.return_value = client
+            identity = auth.sign_in_with_email_password(
+                "student@example.edu", "student-password"
+            )
+
+        self.assertEqual(identity["email"], "student@example.edu")
+        self.assertEqual(
+            client.get.call_args.args[0],
+            "https://campus-project.supabase.co/auth/v1/user",
+        )
+        self.assertEqual(
+            client.get.call_args.kwargs["headers"]["Authorization"],
+            "Bearer verified-access-token",
+        )
 
 
 class FeaturePermissionTests(SimpleTestCase):
@@ -892,43 +1107,11 @@ class FeaturePermissionTests(SimpleTestCase):
         self.assertRedirects(response, "/", fetch_redirect_response=False)
 
     @override_settings(SUPABASE_DATABASE_CONFIGURED=True, ALLOWED_HOSTS=["testserver"])
-    @patch("portal.views.transaction.atomic", return_value=nullcontext())
+    @patch("portal.views.auth.begin_email_signup")
+    @patch("portal.views.auth.find_user_by_email", return_value=None)
     @patch("portal.views.User.objects.create")
-    @patch("portal.views.auth.find_user_by_email", return_value=None)
-    def test_public_registration_always_creates_student_role(
-        self, find_user, create_user, atomic
-    ):
-        user = SimpleNamespace(
-            id=uuid.uuid4(),
-            name="New Student",
-            email="new@example.edu",
-            role="student",
-            branch_id=None,
-            semester=None,
-        )
-        create_user.return_value = user
-
-        response = self.client.post(
-            "/register/",
-            {
-                "name": "New Student",
-                "email": "new@example.edu",
-                "password": "valid-password",
-                "role": "super_admin",
-            },
-        )
-
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response["Location"], "/branchhub/")
-        self.assertEqual(create_user.call_args.kwargs["role"], "student")
-        self.assertIsNotNone(create_user.call_args.kwargs["created_at"])
-
-    @override_settings(SUPABASE_DATABASE_CONFIGURED=True, ALLOWED_HOSTS=["testserver"])
-    @patch("portal.views.auth.find_user_by_email", return_value=None)
-    @patch("portal.views.User.objects.create", side_effect=IntegrityError("required column failed"))
-    @patch("portal.views.transaction.atomic", return_value=nullcontext())
-    def test_registration_does_not_report_unrelated_database_error_as_duplicate(
-        self, atomic, create_user, find_user
+    def test_registration_sends_verification_without_creating_an_account(
+        self, create_user, find_user, begin_email_signup
     ):
         request = RequestFactory().post(
             "/register/",
@@ -936,6 +1119,8 @@ class FeaturePermissionTests(SimpleTestCase):
                 "name": "New Student",
                 "email": "new@example.edu",
                 "password": "valid-password",
+                "branch": "",
+                "semester": "",
             },
         )
         SessionMiddleware(lambda current_request: None).process_request(request)
@@ -944,16 +1129,14 @@ class FeaturePermissionTests(SimpleTestCase):
         ):
             from portal.views import register
 
-            register(request)
+            response = register(request)
 
-        form = render.call_args.args[2]["form"]
-        self.assertTrue(
-            any("We could not create your account." in error for error in form.non_field_errors())
-        )
-        self.assertNotIn(
-            "An account with this email address already exists.",
-            form.errors.get("email", []),
-        )
+        self.assertEqual(response, render.return_value)
+        self.assertTrue(render.call_args.args[2]["confirmation_sent"])
+        self.assertEqual(render.call_args.args[2]["confirmation_email"], "new@example.edu")
+        begin_email_signup.assert_called_once()
+        self.assertTrue(begin_email_signup.call_args.args[3]["campushub_signup"])
+        create_user.assert_not_called()
 
 
 class BookShareWorkflowTests(SimpleTestCase):

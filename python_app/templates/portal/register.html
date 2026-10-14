@@ -17,6 +17,12 @@
     {% if not database_configured %}
     <div class="error" role="alert">Connect the Python app to the existing Supabase database to enable registration.</div>
     {% else %}
+    {% if confirmation_sent %}
+    <div class="notice notice-success" role="status">
+      We sent a verification link to <strong>{{ confirmation_email }}</strong>. Open that email and verify your address before signing in.
+    </div>
+    <p class="muted">If it does not arrive soon, check your spam folder. The link may expire; you can request another by trying to log in.</p>
+    {% else %}
     <form method="post" action="{% url 'google_sign_in' %}">{% csrf_token %}<button class="btn ghost full" type="submit">Continue with Google</button></form>
     <div class="auth-divider">or create an account with email</div>
     <form method="post" class="form two">
@@ -30,6 +36,7 @@
       <button class="btn primary full span-2" type="submit">Create account</button>
     </form>
     <p class="muted">Already have an account? <a href="{% url 'login' %}">Login</a></p>
+    {% endif %}
     {% endif %}
   </section>
 </div>

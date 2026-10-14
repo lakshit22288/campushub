@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Verify your email · CampusHub{% endblock %}
+{% block robots %}noindex,nofollow{% endblock %}
+{% block content %}
+<section class="container section">
+  <div class="auth-card">
+    <span class="eyebrow">EMAIL VERIFICATION</span>
+    <h1>Confirming your email</h1>
+    <p id="verification-status" role="status" aria-live="polite">Checking your verification link…</p>
+    <form id="verification-form" hidden>{% csrf_token %}</form>
+    <p class="muted"><a href="{% url 'login' %}">Return to login</a></p>
+  </div>
+</section>
+<script>
+  (function () {
+    var status = document.getElementById("verification-status");
+    var form = document.getElementById("verification-form");
+    var fragment = new URLSearchParams(window.location.hash.slice(1));
+    var token = fragment.get("access_token");
+    var confirmationType = fragment.get("type");
+    var providerError = fragment.get("error_description") || fragment.get("error");
+    window.history.replaceState(null, "", window.location.pathname);
+
+    if (providerError) {
+      status.textContent = "This verification link could not be used. Request a new link and try again.";
+      return;
+    }
+    if (!token || (confirmationType && confirmationType !== "signup")) {
+      status.textContent = "This verification link is invalid or expired. Request a new one and try again.";
+      return;
+    }
+
+    var body = new URLSearchParams();
+    body.set("access_token", token);
+    body.set("csrfmiddlewaretoken", form.querySelector("[name=csrfmiddlewaretoken]").value);
+    fetch("{% url 'email_confirmation_complete' %}", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+      body: body.toString()
+    }).then(function (response) {
+      return response.json().then(function (result) {
+        if (!response.ok) throw new Error(result.error || "Email verification failed. Request a new link.");
+        window.location.assign(result.redirect_url);
+      });
+    }).catch(function (error) {
+      status.textContent = error.message || "Email verification failed. Request a new link.";
+    });
+  })();
+</script>
+{% endblock %}

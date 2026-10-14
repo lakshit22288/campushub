@@ -1,4 +1,5 @@
 import logging
+import secrets
 from uuid import UUID
 
 import bcrypt
@@ -121,21 +122,79 @@ def login(request):
         )
     if request.method == "POST":
         form = LoginForm(request.POST)
+        error = ""
         if form.is_valid():
             email = form.cleaned_data["email"].strip().lower()
             user = auth.find_user_by_email(email)
             password = form.cleaned_data["password"].encode("utf-8")[:72]
             try:
-                password_matches = user and bcrypt.checkpw(
-                    password,
-                    user.password_hash.encode("ascii"),
+                identity = auth.sign_in_with_email_password(
+                    email, form.cleaned_data["password"]
                 )
-            except (ValueError, TypeError):
-                password_matches = False
-            if password_matches:
-                auth.set_user_session(request, user)
-                return redirect("branchhub")
-        error = "The email address or password is incorrect."
+            except auth.SupabaseAuthError as auth_error:
+                error = str(auth_error)
+                if "verify your email" in error.lower():
+                    try:
+                        auth.resend_email_confirmation(request, email)
+                    except auth.SupabaseAuthError:
+                        logger.exception(
+                            "Could not resend the verification email during sign-in"
+                        )
+                        error = (
+                            "Your email is not verified, and we could not resend the "
+                            "verification link. Please try again later."
+                        )
+                identity = None
+            else:
+                if identity and user:
+                    auth.set_user_session(request, user)
+                    return redirect("branchhub")
+
+            if not error:
+                try:
+                    password_matches = user and bcrypt.checkpw(
+                        password,
+                        user.password_hash.encode("ascii"),
+                    )
+                except (ValueError, TypeError):
+                    password_matches = False
+                if password_matches:
+                    try:
+                        auth.begin_email_signup(
+                            request,
+                            email,
+                            form.cleaned_data["password"],
+                            {
+                                "campushub_signup": True,
+                                "campushub_name": user.name,
+                                "campushub_branch_id": (
+                                    str(user.branch_id) if user.branch_id else None
+                                ),
+                                "campushub_semester": user.semester,
+                            },
+                        )
+                    except auth.SupabaseAuthError as auth_error:
+                        error = str(auth_error)
+                    else:
+                        return render(
+                            request,
+                            "portal/login.html",
+                            {
+                                "form": LoginForm(),
+                                "notice": (
+                                    "We sent a verification link to your email. "
+                                    "Verify it to continue signing in."
+                                ),
+                                "database_configured": True,
+                            },
+                        )
+                elif identity:
+                    error = (
+                        "This email has been verified, but no CampusHub account is linked to it. "
+                        "Please create an account."
+                    )
+                else:
+                    error = "The email address or password is incorrect."
     else:
         form = LoginForm()
         error = ""
@@ -165,33 +224,35 @@ def register(request):
                 if auth.find_user_by_email(email):
                     form.add_error("email", "An account with this email address already exists.")
                 else:
-                    password_hash = bcrypt.hashpw(
-                        values["password"].encode("utf-8"),
-                        bcrypt.gensalt(rounds=12),
-                    ).decode()
                     try:
-                        with transaction.atomic():
-                            user = User.objects.create(
-                                name=values["name"].strip(),
-                                email=email,
-                                password_hash=password_hash,
-                                branch=values["branch"],
-                                semester=values["semester"],
-                                role="student",
-                                created_at=timezone.now(),
-                            )
-                    except IntegrityError:
-                        if auth.find_user_by_email(email):
-                            form.add_error("email", "An account with this email address already exists.")
-                        else:
-                            logger.exception("Database rejected a new student registration")
-                            form.add_error(
-                                None,
-                                "We could not create your account. Check your details and try again.",
-                            )
+                        auth.begin_email_signup(
+                            request,
+                            email,
+                            values["password"],
+                            {
+                                "campushub_signup": True,
+                                "campushub_name": values["name"].strip(),
+                                "campushub_branch_id": (
+                                    str(values["branch"].id)
+                                    if values["branch"]
+                                    else None
+                                ),
+                                "campushub_semester": values["semester"],
+                            },
+                        )
+                    except auth.SupabaseAuthError as error:
+                        form.add_error(None, str(error))
                     else:
-                        auth.set_user_session(request, user)
-                        return redirect("branchhub")
+                        return render(
+                            request,
+                            "portal/register.html",
+                            {
+                                "form": RegistrationForm(),
+                                "database_configured": True,
+                                "confirmation_sent": True,
+                                "confirmation_email": email,
+                            },
+                        )
     else:
         form = RegistrationForm()
     return render(
@@ -199,6 +260,96 @@ def register(request):
         "portal/register.html",
         {"form": form, "database_configured": True},
     )
+
+
+def email_confirmation(request):
+    return render(request, "portal/email_confirmation.html")
+
+
+def complete_email_confirmation(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Use the verification link in your email."}, status=405)
+    access_token = request.POST.get("access_token", "")
+    if not access_token or len(access_token) > 4096:
+        return JsonResponse(
+            {"error": "This verification link is invalid or expired. Request a new one."},
+            status=400,
+        )
+    try:
+        identity = auth.get_verified_email_identity(access_token)
+    except auth.SupabaseAuthError as error:
+        return JsonResponse({"error": str(error)}, status=400)
+
+    email = identity.get("email")
+    metadata = identity.get("user_metadata") or {}
+    if not isinstance(metadata, dict):
+        metadata = {}
+    if (
+        not isinstance(email, str)
+        or not email.strip()
+        or metadata.get("campushub_signup") is not True
+    ):
+        return JsonResponse(
+            {"error": "This verified email is not linked to a CampusHub signup."},
+            status=400,
+        )
+
+    user = auth.find_user_by_email(email.strip().lower())
+    if not user:
+        name = metadata.get("campushub_name")
+        if not isinstance(name, str) or not name.strip():
+            return JsonResponse(
+                {"error": "The signup details are incomplete. Please register again."},
+                status=400,
+            )
+        branch_id = metadata.get("campushub_branch_id")
+        branch = None
+        if branch_id:
+            try:
+                branch = Branch.objects.filter(id=UUID(str(branch_id))).first()
+            except (ValueError, TypeError, AttributeError):
+                return JsonResponse(
+                    {"error": "The selected branch is invalid. Please register again."},
+                    status=400,
+                )
+            if not branch:
+                return JsonResponse(
+                    {"error": "The selected branch is no longer available. Please register again."},
+                    status=400,
+                )
+        semester = metadata.get("campushub_semester")
+        if semester is not None and (
+            not isinstance(semester, int) or not 1 <= semester <= 12
+        ):
+            return JsonResponse(
+                {"error": "The selected semester is invalid. Please register again."},
+                status=400,
+            )
+        password_hash = bcrypt.hashpw(
+            secrets.token_bytes(48), bcrypt.gensalt(rounds=12)
+        ).decode()
+        try:
+            with transaction.atomic():
+                user = User.objects.create(
+                    name=name.strip(),
+                    email=email.strip().lower(),
+                    password_hash=password_hash,
+                    branch=branch,
+                    semester=semester,
+                    role="student",
+                    created_at=timezone.now(),
+                )
+        except IntegrityError:
+            user = auth.find_user_by_email(email.strip().lower())
+            if not user:
+                logger.exception("Could not create a verified CampusHub student")
+                return JsonResponse(
+                    {"error": "We could not finish account setup. Please try again."},
+                    status=500,
+                )
+
+    auth.set_user_session(request, user)
+    return JsonResponse({"redirect_url": reverse("branchhub")})
 
 
 def google_sign_in(request):

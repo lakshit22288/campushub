@@ -25,7 +25,7 @@ def _supabase_config():
     url = getattr(settings, "SUPABASE_URL", "").rstrip("/")
     key = getattr(settings, "SUPABASE_ANON_KEY", "")
     if not url or not key:
-        raise SupabaseAuthError("Google sign-in is not configured for the Python app.")
+        raise SupabaseAuthError("Supabase sign-in is not configured for the Python app.")
     return url, key
 
 
@@ -54,6 +54,193 @@ def _auth_headers(api_key, access_token=None):
     if access_token:
         headers["Authorization"] = f"Bearer {access_token}"
     return headers
+
+
+def _email_confirmation_url(request):
+    callback_path = reverse("email_confirmation")
+    if settings.DJANGO_PUBLIC_URL:
+        return f"{settings.DJANGO_PUBLIC_URL}{callback_path}"
+    return request.build_absolute_uri(callback_path)
+
+
+def begin_email_signup(request, email, password, metadata):
+    supabase_url, api_key = _supabase_config()
+    try:
+        with httpx.Client(timeout=12) as client:
+            response = client.post(
+                f"{supabase_url}/auth/v1/signup",
+                params={"redirect_to": _email_confirmation_url(request)},
+                headers=_auth_headers(api_key),
+                json={"email": email, "password": password, "data": metadata},
+            )
+    except httpx.TimeoutException as error:
+        logger.warning("Supabase Auth timed out while starting email registration")
+        raise SupabaseAuthError(
+            "Email verification could not be started right now. Please try again."
+        ) from error
+    except httpx.RequestError as error:
+        logger.exception("Supabase Auth request failed while starting email registration")
+        raise SupabaseAuthError(
+            "Could not reach the email verification service. Please try again."
+        ) from error
+
+    if response.status_code not in (200, 201):
+        logger.warning(
+            "Supabase Auth rejected email registration with status %s",
+            response.status_code,
+        )
+        raise SupabaseAuthError(
+            "We could not start email verification. Check your email address and try again."
+        )
+
+    result = response.json()
+    if not isinstance(result, dict):
+        raise SupabaseAuthError(
+            "The email verification service returned an invalid response."
+        )
+    user = result.get("user") or result
+    if not isinstance(user, dict) or not user.get("id"):
+        raise SupabaseAuthError(
+            "The email verification service returned an invalid response."
+        )
+    if result.get("session") or user.get("email_confirmed_at"):
+        raise SupabaseAuthError(
+            "Email verification is not enabled for CampusHub yet. Please contact an administrator."
+        )
+    if user.get("identities") == []:
+        raise SupabaseAuthError(
+            "This email is already registered. Log in or use the sign-in method linked to it."
+        )
+
+
+def resend_email_confirmation(request, email):
+    supabase_url, api_key = _supabase_config()
+    try:
+        with httpx.Client(timeout=12) as client:
+            response = client.post(
+                f"{supabase_url}/auth/v1/resend",
+                headers=_auth_headers(api_key),
+                json={
+                    "type": "signup",
+                    "email": email,
+                    "options": {"emailRedirectTo": _email_confirmation_url(request)},
+                },
+            )
+    except httpx.TimeoutException as error:
+        logger.warning("Supabase Auth timed out while resending email confirmation")
+        raise SupabaseAuthError(
+            "The verification email could not be resent right now. Please try again."
+        ) from error
+    except httpx.RequestError as error:
+        logger.exception("Supabase Auth request failed while resending email confirmation")
+        raise SupabaseAuthError(
+            "Could not reach the email verification service. Please try again."
+        ) from error
+
+    if response.status_code not in (200, 201):
+        logger.warning(
+            "Supabase Auth rejected email confirmation resend with status %s",
+            response.status_code,
+        )
+        raise SupabaseAuthError(
+            "The verification email could not be resent. Please try again later."
+        )
+
+
+def sign_in_with_email_password(email, password):
+    supabase_url, api_key = _supabase_config()
+    try:
+        with httpx.Client(timeout=12) as client:
+            response = client.post(
+                f"{supabase_url}/auth/v1/token",
+                params={"grant_type": "password"},
+                headers=_auth_headers(api_key),
+                json={"email": email, "password": password},
+            )
+    except httpx.TimeoutException as error:
+        logger.warning("Supabase Auth timed out during email/password sign-in")
+        raise SupabaseAuthError("Sign-in timed out. Please try again.") from error
+    except httpx.RequestError as error:
+        logger.exception("Supabase Auth request failed during email/password sign-in")
+        raise SupabaseAuthError(
+            "Could not reach the sign-in service. Please try again."
+        ) from error
+
+    if response.status_code == 400:
+        payload = response.json()
+        code = str(payload.get("code", "")).lower()
+        message = str(payload.get("msg") or payload.get("message") or "").lower()
+        if code == "email_not_confirmed" or "email not confirmed" in message:
+            raise SupabaseAuthError(
+                "Please verify your email before signing in. We can send you another verification link."
+            )
+        if code in {"invalid_credentials", "user_not_found"} or "invalid login credentials" in message:
+            return None
+    if response.status_code != 200:
+        logger.warning(
+            "Supabase Auth email/password sign-in returned status %s",
+            response.status_code,
+        )
+        raise SupabaseAuthError(
+            "Sign-in could not be completed right now. Please try again."
+        )
+
+    result = response.json()
+    access_token = result.get("access_token")
+    if not access_token:
+        raise SupabaseAuthError("The sign-in service did not return a valid session.")
+    try:
+        with httpx.Client(timeout=12) as client:
+            user_response = client.get(
+                f"{supabase_url}/auth/v1/user",
+                headers=_auth_headers(api_key, access_token),
+            )
+    except httpx.TimeoutException as error:
+        logger.warning("Supabase Auth timed out while checking a signed-in email")
+        raise SupabaseAuthError("Sign-in timed out. Please try again.") from error
+    except httpx.RequestError as error:
+        logger.exception("Supabase Auth request failed while checking a signed-in email")
+        raise SupabaseAuthError(
+            "Could not verify the sign-in session. Please try again."
+        ) from error
+
+    if user_response.status_code != 200:
+        raise SupabaseAuthError("The sign-in session could not be verified. Please try again.")
+    identity = user_response.json()
+    if not identity.get("email_confirmed_at"):
+        raise SupabaseAuthError(
+            "Please verify your email before signing in. We can send you another verification link."
+        )
+    return identity
+
+
+def get_verified_email_identity(access_token):
+    supabase_url, api_key = _supabase_config()
+    try:
+        with httpx.Client(timeout=12) as client:
+            response = client.get(
+                f"{supabase_url}/auth/v1/user",
+                headers=_auth_headers(api_key, access_token),
+            )
+    except httpx.TimeoutException as error:
+        logger.warning("Supabase Auth timed out while verifying an email confirmation")
+        raise SupabaseAuthError(
+            "Email verification timed out. Please open the link again."
+        ) from error
+    except httpx.RequestError as error:
+        logger.exception("Supabase Auth request failed while verifying an email confirmation")
+        raise SupabaseAuthError(
+            "Could not reach the email verification service. Please try again."
+        ) from error
+
+    if response.status_code != 200:
+        raise SupabaseAuthError(
+            "This verification link is invalid or expired. Request a new one and try again."
+        )
+    identity = response.json()
+    if not identity.get("email_confirmed_at"):
+        raise SupabaseAuthError("This email address has not been verified.")
+    return identity
 
 
 def exchange_google_code(request, code):
