@@ -17,6 +17,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.conf import settings
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.messages.storage.fallback import FallbackStorage
+from django.template.loader import render_to_string
 from django.test import RequestFactory, SimpleTestCase, override_settings
 from django.utils import timezone
 
@@ -58,7 +59,7 @@ class PortalPageTests(SimpleTestCase):
         self.assertContains(response, "QUICK START / PYTHON")
         self.assertContains(response, "Computer Science / IT")
         self.assertContains(response, "/static/styles/global.css")
-        self.assertContains(response, "/static/python/python.css?v=31")
+        self.assertContains(response, "/static/python/python.css?v=32")
         self.assertContains(response, 'name="description"')
         self.assertContains(
             response,
@@ -102,6 +103,21 @@ class PortalPageTests(SimpleTestCase):
         self.assertContains(response, "window.location.hash.slice(1)")
         self.assertContains(response, "/auth/email/complete/")
         self.assertContains(response, "window.history.replaceState")
+
+    def test_signup_confirmation_highlights_spam_folder_guidance(self):
+        content = render_to_string(
+            "portal/register.html",
+            {
+                "database_configured": True,
+                "confirmation_sent": True,
+                "confirmation_email": "student@example.edu",
+            },
+        )
+
+        self.assertIn('class="notice notice-warning email-delivery-tip"', content)
+        self.assertIn("Check your Spam or Junk folder", content)
+        self.assertIn("mark it as “Not spam”", content)
+        self.assertIn("request a new verification link", content)
 
     @patch("portal.features.Skill.objects.select_related")
     def test_global_search_splits_terms_and_shows_skill_context(self, skills_query):

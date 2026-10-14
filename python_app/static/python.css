@@ -629,6 +629,8 @@
   .campus-page .notice-success { border-color: rgba(104, 133, 45, .28); background: rgba(183, 223, 96, .16); }
   .campus-page .notice-error { border-color: rgba(178, 75, 75, .25); color: #873d48; background: #fbefed; }
   .campus-page .notice-warning { border-color: rgba(178, 126, 52, .25); background: #fbf4e8; }
+  .campus-page .email-delivery-tip { margin: 10px 0 0; line-height: 1.65; }
+  .campus-page .email-delivery-tip strong { color: #765018; }
   .campus-page .feature-columns,
   .campus-page .content-columns,
   .campus-page .profile-layout,

@@ -21,7 +21,9 @@
     <div class="notice notice-success" role="status">
       We sent a verification link to <strong>{{ confirmation_email }}</strong>. Open that email and verify your address before signing in.
     </div>
-    <p class="muted">If it does not arrive soon, check your spam folder. The link may expire; you can request another by trying to log in.</p>
+    <div class="notice notice-warning email-delivery-tip" role="note">
+      <strong>Check your Spam or Junk folder</strong> if the email is not in your inbox. If you find it there, mark it as “Not spam” to help future emails reach your inbox. Still can’t find it? Try logging in again to request a new verification link.
+    </div>
     {% else %}
     <form method="post" action="{% url 'google_sign_in' %}">{% csrf_token %}<button class="btn ghost full" type="submit">Continue with Google</button></form>
     <div class="auth-divider">or create an account with email</div>

@@ -15,7 +15,12 @@
     <h2>Log in to CampusHub</h2>
     <p>Use your student or authorized staff account.</p>
     {% if error %}<div class="error" role="alert">{{ error }}</div>{% endif %}
-    {% if notice %}<div class="notice notice-success" role="status">{{ notice }}</div>{% endif %}
+    {% if notice %}
+    <div class="notice notice-success" role="status">{{ notice }}</div>
+    <div class="notice notice-warning email-delivery-tip" role="note">
+      <strong>Check your Spam or Junk folder</strong> if the email is not in your inbox. If you find it there, mark it as “Not spam” to help future emails reach your inbox.
+    </div>
+    {% endif %}
     {% if not database_configured %}
     <div class="error" role="alert">Connect the Python app to the existing Supabase database to enable login.</div>
     {% else %}
