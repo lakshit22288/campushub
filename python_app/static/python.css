@@ -46,7 +46,7 @@
 }
 .campus-page .nav a:hover,
 .campus-page .nav-btn:hover {
-  border-color: rgba(200, 255, 61, .22);
+  border-color: rgba(200, 255, 61, .24);
   color: #c8ff3d;
   background: rgba(200, 255, 61, .07);
 }
@@ -1487,6 +1487,17 @@
 .campus-page .search-result { transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease; }
 .campus-page .search-result:hover { border-color: rgba(91, 61, 245, .3); box-shadow: 0 12px 28px rgba(45, 27, 105, .075); }
 .campus-page .feature-status-card { border-radius: 15px; background: #fffdf7; }
+.campus-page .nav form .nav-btn {
+  border-color: transparent;
+  color: #fff;
+  background: #dc3545;
+  font-weight: 750;
+}
+.campus-page .nav form .nav-btn:hover {
+  border-color: transparent;
+  color: #fff;
+  background: #bb2d3b;
+}
 .campus-page .feature-hero .btn { margin-top: 4px; }
 .campus-page .module-card { background: #fffdf7; }
 .campus-page .module-card:hover { border-color: rgba(91, 61, 245, .32); background: #fffefa; }
