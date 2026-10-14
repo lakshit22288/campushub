@@ -1,6 +1,6 @@
 # CampusHub Python edition
 
-The Django app is the maintained CampusHub application, deployed at `https://campushub-python.vercel.app` from the `python_app` Vercel project root. The legacy `https://campushub-opal.vercel.app` domain remains a compatibility alias that forwards to the Python Render production service. The app uses Supabase PostgreSQL through unmanaged models; do not run Django migrations against that database.
+The Django app is the maintained CampusHub application, deployed at `https://campushub-python.vercel.app` from the `python_app` Vercel project root. The Vercel Function is pinned to `bom1` (Mumbai), near the production Supabase database region, to avoid cross-continent database round trips. The legacy `https://campushub-opal.vercel.app` domain remains a compatibility alias that forwards to the Python Render production service. The app uses Supabase PostgreSQL through unmanaged models; do not run Django migrations against that database.
 
 ## Google Search visibility
 
