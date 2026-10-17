@@ -47,6 +47,35 @@ class Announcement(models.Model):
         ordering = ["-created_at"]
 
 
+class CampusEvent(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    title = models.TextField()
+    description = models.TextField()
+    location = models.TextField(blank=True, default="")
+    starts_at = models.DateTimeField()
+    ends_at = models.DateTimeField()
+    target_branch = models.ForeignKey(
+        Branch,
+        db_column="target_branch_id",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+    )
+    created_by = models.ForeignKey(
+        "User",
+        db_column="created_by",
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+    )
+    created_at = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = "campus_events"
+        ordering = ["starts_at"]
+
+
 class User(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.TextField()
@@ -254,6 +283,48 @@ class HelpRequest(models.Model):
         managed = False
         db_table = "help_requests"
         ordering = ["-created_at"]
+
+
+class ScheduleEntry(models.Model):
+    WEEKDAYS = (
+        (0, "Monday"),
+        (1, "Tuesday"),
+        (2, "Wednesday"),
+        (3, "Thursday"),
+        (4, "Friday"),
+        (5, "Saturday"),
+        (6, "Sunday"),
+    )
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    course = models.TextField()
+    day_of_week = models.PositiveSmallIntegerField(choices=WEEKDAYS)
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    location = models.TextField(blank=True, default="")
+    created_at = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = "schedule_entries"
+        ordering = ["day_of_week", "start_time"]
+
+
+class AssignmentEntry(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    title = models.TextField()
+    subject = models.TextField(blank=True, default="")
+    due_date = models.DateField()
+    notes = models.TextField(blank=True, default="")
+    completed = models.BooleanField(default=False)
+    created_at = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = "assignment_entries"
+        ordering = ["completed", "due_date"]
 
 
 class Project(models.Model):

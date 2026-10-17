@@ -3,11 +3,14 @@ from django.utils import timezone
 
 from .models import (
     Announcement,
+    AssignmentEntry,
     Book,
     Branch,
+    CampusEvent,
     HelpRequest,
     Note,
     Project,
+    ScheduleEntry,
     Skill,
     SkillFeedback,
     SkillRequest,
@@ -222,3 +225,63 @@ class AnnouncementForm(forms.ModelForm):
         model = Announcement
         fields = ("title", "message", "target_branch")
         widgets = {"message": forms.Textarea(attrs={"rows": 3, "maxlength": 3000})}
+
+
+class CampusEventForm(forms.ModelForm):
+    starts_at = forms.DateTimeField(
+        input_formats=("%Y-%m-%dT%H:%M",),
+        widget=forms.DateTimeInput(attrs={"type": "datetime-local"}),
+    )
+    ends_at = forms.DateTimeField(
+        input_formats=("%Y-%m-%dT%H:%M",),
+        widget=forms.DateTimeInput(attrs={"type": "datetime-local"}),
+    )
+
+    class Meta:
+        model = CampusEvent
+        fields = ("title", "description", "location", "starts_at", "ends_at", "target_branch")
+        widgets = {
+            "title": forms.TextInput(attrs={"maxlength": 160}),
+            "description": forms.Textarea(attrs={"rows": 4, "maxlength": 3000}),
+            "location": forms.TextInput(attrs={"maxlength": 160}),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        starts_at = cleaned_data.get("starts_at")
+        ends_at = cleaned_data.get("ends_at")
+        if starts_at and ends_at and ends_at <= starts_at:
+            self.add_error("ends_at", "The event end must be after its start.")
+        return cleaned_data
+
+
+class ScheduleEntryForm(forms.ModelForm):
+    class Meta:
+        model = ScheduleEntry
+        fields = ("course", "day_of_week", "start_time", "end_time", "location")
+        widgets = {
+            "course": forms.TextInput(attrs={"maxlength": 120}),
+            "start_time": forms.TimeInput(attrs={"type": "time"}),
+            "end_time": forms.TimeInput(attrs={"type": "time"}),
+            "location": forms.TextInput(attrs={"maxlength": 160}),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start_time = cleaned_data.get("start_time")
+        end_time = cleaned_data.get("end_time")
+        if start_time and end_time and end_time <= start_time:
+            self.add_error("end_time", "The class end time must be after its start time.")
+        return cleaned_data
+
+
+class AssignmentEntryForm(forms.ModelForm):
+    class Meta:
+        model = AssignmentEntry
+        fields = ("title", "subject", "due_date", "notes")
+        widgets = {
+            "title": forms.TextInput(attrs={"maxlength": 160}),
+            "subject": forms.TextInput(attrs={"maxlength": 120}),
+            "due_date": forms.DateInput(attrs={"type": "date"}),
+            "notes": forms.Textarea(attrs={"rows": 3, "maxlength": 2000}),
+        }

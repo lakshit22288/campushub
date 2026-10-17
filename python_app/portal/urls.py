@@ -3,6 +3,7 @@ from django.urls import path
 from . import admin_views
 from . import compiler_views
 from . import features
+from . import planner_views
 from . import tool_views
 from . import views
 
@@ -30,6 +31,8 @@ urlpatterns = [
     path("skillswap/requests/<uuid:request_id>/", features.update_skill_request, name="update_skill_request"),
     path("skillswap/requests/<uuid:request_id>/feedback/", features.submit_skill_feedback, name="submit_skill_feedback"),
     path("help/", features.help_requests, name="help_requests"),
+    path("campus/", planner_views.campus_board, name="campus_board"),
+    path("planner/", planner_views.planner, name="planner"),
     path("help/<uuid:request_id>/resolve/", features.close_help_request, name="close_help_request"),
     path("profile/", features.profile, name="profile"),
     path("compiler/", compiler_views.compiler_page, name="compiler"),

@@ -6,7 +6,7 @@ import uuid
 from contextlib import nullcontext
 from datetime import timedelta
 from types import SimpleNamespace
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import ANY, MagicMock, call, patch
 from urllib.parse import parse_qs, urlparse
 
 import bcrypt
@@ -22,7 +22,15 @@ from django.test import RequestFactory, SimpleTestCase, override_settings
 from django.utils import timezone
 
 from portal import auth
-from portal.forms import AnnouncementForm, BookListingForm, NoteForm, ProjectForm
+from portal.forms import (
+    AnnouncementForm,
+    AssignmentEntryForm,
+    BookListingForm,
+    CampusEventForm,
+    NoteForm,
+    ProjectForm,
+    ScheduleEntryForm,
+)
 from portal.idea_catalog import IDEAS
 from portal.storage import (
     StorageUploadError,
@@ -466,6 +474,116 @@ class PortalPageTests(SimpleTestCase):
         self.assertIn("attachment", admin_form.fields)
         self.assertIn("attachment", super_admin_form.fields)
         self.assertNotIn("attachment", teacher_form.fields)
+
+    def test_event_form_rejects_end_time_before_start_time(self):
+        form = CampusEventForm(
+            data={
+                "title": "Campus talk",
+                "description": "Guest speaker",
+                "location": "Auditorium",
+                "starts_at": "2026-10-18T14:00",
+                "ends_at": "2026-10-18T13:00",
+                "target_branch": "",
+            }
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn("ends_at", form.errors)
+
+    def test_schedule_form_rejects_end_time_before_start_time(self):
+        form = ScheduleEntryForm(
+            data={
+                "course": "Database Systems",
+                "day_of_week": "0",
+                "start_time": "11:00",
+                "end_time": "10:00",
+                "location": "Room 101",
+            }
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn("end_time", form.errors)
+
+    def test_assignment_form_accepts_due_date_and_notes(self):
+        form = AssignmentEntryForm(
+            data={
+                "title": "Lab report",
+                "subject": "Physics",
+                "due_date": "2026-10-20",
+                "notes": "Include the calculation steps.",
+            }
+        )
+
+        self.assertTrue(form.is_valid(), form.errors)
+
+    def test_planner_redirects_signed_out_visitors_to_login(self):
+        response = self.client.get("/planner/")
+
+        self.assertRedirects(response, "/login/", fetch_redirect_response=False)
+
+    @patch("portal.features.User.objects.filter")
+    @patch("portal.planner_views.AssignmentEntry.objects.filter", return_value=[])
+    @patch("portal.planner_views.ScheduleEntry.objects.filter")
+    def test_signed_in_student_can_render_a_private_planner(
+        self, schedule_filter, assignment_filter, user_filter
+    ):
+        user = SimpleNamespace(id=uuid.uuid4(), role="student", branch_id=None)
+        self.set_logged_in_user(user.id)
+        user_filter.return_value.first.return_value = user
+        schedule_filter.return_value.order_by.return_value = []
+
+        response = self.client.get("/planner/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Your timetable is empty.")
+        self.assertContains(response, "No assignments yet.")
+        schedule_filter.assert_called_once_with(user=user)
+        assignment_filter.assert_called_once_with(user=user)
+
+    @patch("portal.features.User.objects.filter")
+    @patch("portal.planner_views.AssignmentEntry.objects.filter")
+    def test_planner_mutations_are_scoped_to_the_signed_in_user(
+        self, assignment_filter, user_filter
+    ):
+        user = SimpleNamespace(id=uuid.uuid4(), role="student", branch_id=None)
+        assignment_id = uuid.uuid4()
+        self.set_logged_in_user(user.id)
+        user_filter.return_value.first.return_value = user
+        assignment_filter.return_value.delete.return_value = (1, {"portal.AssignmentEntry": 1})
+
+        response = self.client.post(
+            "/planner/",
+            {"action": "delete_assignment", "entry_id": str(assignment_id)},
+        )
+
+        self.assertRedirects(response, "/planner/", fetch_redirect_response=False)
+        assignment_filter.assert_called_once_with(id=assignment_id, user=user)
+
+    @patch("portal.planner_views.CampusEvent.objects.select_related")
+    @patch("portal.planner_views.Announcement.objects.select_related")
+    @override_settings(SUPABASE_DATABASE_CONFIGURED=True)
+    def test_public_campus_board_limits_updates_to_campus_wide_posts(
+        self, notices_query, events_query
+    ):
+        notices_query.return_value.filter.return_value.order_by.return_value.__getitem__.return_value = []
+        events = events_query.return_value.filter.return_value
+        events.filter.return_value = events
+        events.select_related.return_value.order_by.return_value.__getitem__.return_value = []
+
+        response = self.client.get("/campus/")
+
+        self.assertEqual(response.status_code, 200)
+        notices_query.return_value.filter.assert_called_once_with(target_branch__isnull=True)
+        events_query.return_value.filter.assert_called_once_with(ends_at__gte=ANY)
+        events.filter.assert_called_once_with(target_branch__isnull=True)
+
+    @override_settings(SUPABASE_DATABASE_CONFIGURED=False)
+    def test_campus_board_renders_without_connecting_to_any_database(self):
+        response = self.client.get("/campus/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Connect this local app to a safe development database")
+        self.assertContains(response, "No upcoming events have been posted yet.")
 
     @patch("portal.admin_views.messages.success")
     @patch("portal.admin_views.upload_announcement_file")

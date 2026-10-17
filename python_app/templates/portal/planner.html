@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}My planner · CampusHub{% endblock %}
+{% block meta_description %}Organize your weekly class timetable and assignment deadlines in CampusHub.{% endblock %}
+{% block robots %}noindex,nofollow{% endblock %}
+{% block content %}
+<section class="page-header"><div class="container"><span class="eyebrow">YOUR ACADEMIC SPACE</span><h1>My planner.</h1><p>Your timetable and assignments are private to your CampusHub account. Add items here to keep your week in order.</p></div></section>
+<section class="container section feature-columns planner-forms">
+  <section class="content-card"><span class="eyebrow">REPEATS EVERY WEEK</span><h2>Add a class</h2><form method="post" class="form">{% csrf_token %}<input type="hidden" name="action" value="add_schedule">{% for field in schedule_form %}<label for="{{ field.id_for_label }}">{{ field.label }}{{ field }}{% if field.errors %}<span class="error">{{ field.errors }}</span>{% endif %}</label>{% endfor %}<button class="btn primary" type="submit">Add to timetable</button></form></section>
+  <section class="content-card"><span class="eyebrow">DUE-DATE TRACKER</span><h2>Add an assignment</h2><form method="post" class="form">{% csrf_token %}<input type="hidden" name="action" value="add_assignment">{% for field in assignment_form %}<label for="{{ field.id_for_label }}">{{ field.label }}{{ field }}{% if field.errors %}<span class="error">{{ field.errors }}</span>{% endif %}</label>{% endfor %}<button class="btn primary" type="submit">Add assignment</button></form></section>
+</section>
+<section class="container section campus-board-grid">
+  <section><div class="section-head"><div><span class="eyebrow">WEEKLY ROUTINE</span><h2>Timetable</h2></div></div><div class="planner-list">
+    {% for entry in schedule_entries %}<article class="content-card planner-item"><div><span class="content-meta">{{ entry.get_day_of_week_display }}</span><h3>{{ entry.course }}</h3><p>{{ entry.start_time|time:"g:i A" }}–{{ entry.end_time|time:"g:i A" }}{% if entry.location %} · {{ entry.location }}{% endif %}</p></div><form method="post">{% csrf_token %}<input type="hidden" name="action" value="delete_schedule"><input type="hidden" name="entry_id" value="{{ entry.id }}"><button class="btn small" type="submit">Remove</button></form></article>{% empty %}<div class="empty">Your timetable is empty. Add your first class above.</div>{% endfor %}
+  </div></section>
+  <section><div class="section-head"><div><span class="eyebrow">STAY ON TRACK</span><h2>Assignments</h2></div></div><div class="planner-list">
+    {% for assignment in assignments %}<article class="content-card planner-item {% if assignment.completed %}is-complete{% endif %}"><div><span class="content-meta">{% if assignment.completed %}COMPLETED{% else %}DUE {{ assignment.due_date|date:"M j, Y"|upper }}{% endif %}{% if assignment.subject %} · {{ assignment.subject }}{% endif %}</span><h3>{{ assignment.title }}</h3>{% if assignment.notes %}<p>{{ assignment.notes }}</p>{% endif %}</div><div class="planner-item-actions"><form method="post">{% csrf_token %}<input type="hidden" name="action" value="toggle_assignment"><input type="hidden" name="entry_id" value="{{ assignment.id }}"><button class="btn small" type="submit">{% if assignment.completed %}Reopen{% else %}Complete{% endif %}</button></form><form method="post">{% csrf_token %}<input type="hidden" name="action" value="delete_assignment"><input type="hidden" name="entry_id" value="{{ assignment.id }}"><button class="btn small" type="submit">Remove</button></form></div></article>{% empty %}<div class="empty">No assignments yet. Add a deadline above.</div>{% endfor %}
+  </div></section>
+</section>
+{% endblock %}

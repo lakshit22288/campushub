@@ -40,6 +40,8 @@
           <a href="{% url 'bookshare' %}" {% if request.resolver_match.url_name == "bookshare" %}class="active" aria-current="page"{% endif %}>BookShare</a>
           <a href="{% url 'skillswap' %}" {% if request.resolver_match.url_name == "skillswap" %}class="active" aria-current="page"{% endif %}>SkillSwap</a>
           <a href="{% url 'help_requests' %}" {% if request.resolver_match.url_name == "help_requests" %}class="active" aria-current="page"{% endif %}>Help board</a>
+          <a href="{% url 'campus_board' %}" {% if request.resolver_match.url_name == "campus_board" %}class="active" aria-current="page"{% endif %}>Campus</a>
+          <a href="{% url 'planner' %}" {% if request.resolver_match.url_name == "planner" %}class="active" aria-current="page"{% endif %}>Planner</a>
           <a href="{% url 'branches' %}" {% if request.resolver_match.url_name == "branches" %}class="active" aria-current="page"{% endif %}>Branches</a>
           {% else %}
           <a href="{% url 'branches' %}" {% if request.resolver_match.url_name == "branches" %}class="active" aria-current="page"{% endif %}>Branches</a>
@@ -47,6 +49,8 @@
           <a href="{% url 'bookshare' %}" {% if request.resolver_match.url_name == "bookshare" %}class="active" aria-current="page"{% endif %}>BookShare</a>
           <a href="{% url 'skillswap' %}" {% if request.resolver_match.url_name == "skillswap" %}class="active" aria-current="page"{% endif %}>SkillSwap</a>
           <a href="{% url 'help_requests' %}" {% if request.resolver_match.url_name == "help_requests" %}class="active" aria-current="page"{% endif %}>Help board</a>
+          <a href="{% url 'campus_board' %}" {% if request.resolver_match.url_name == "campus_board" %}class="active" aria-current="page"{% endif %}>Campus</a>
+          <a href="{% url 'planner' %}" {% if request.resolver_match.url_name == "planner" %}class="active" aria-current="page"{% endif %}>Planner</a>
           <a href="{% url 'search' %}" {% if request.resolver_match.url_name == "search" %}class="active" aria-current="page"{% endif %}>Search</a>
           <a href="{% url 'project_ideas' %}" {% if request.resolver_match.url_name == "project_ideas" %}class="active" aria-current="page"{% endif %}>Ideas</a>
           <a href="{% url 'compiler' %}" {% if request.resolver_match.url_name == "compiler" %}class="active" aria-current="page"{% endif %}>Code Lab</a>

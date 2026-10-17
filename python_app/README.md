@@ -62,6 +62,12 @@ python_app\.venv\Scripts\python.exe python_app\manage.py test portal --verbosity
 - Help requests and owner resolution, a project idea catalog/submissions, and staff content/role administration.
 - PDF/PNG/JPG academic-resource and campus-notice uploads plus ZIP/PDF/PNG/JPG student project attachments to Supabase Storage (10 MB maximum; MIME/extension and file-signature checks).
 
+## Campus board and student planner
+
+The campus board at `/campus/` reuses existing announcements and displays upcoming campus events. Staff can publish events from the admin page; teachers are limited to their assigned branch. Student timetables and assignment trackers are private per account at `/planner/`.
+
+These features use three additive PostgreSQL tables and do not alter existing tables. Before deploying this feature to a Supabase environment, run `python_app/sql/add_campus_features.sql` against that environment. Keep staging and production databases separate. Django models for these existing Supabase tables are unmanaged, so do not run `makemigrations` or `migrate` to create them.
+
 The existing Code Lab route/shell is intentionally kept separate and is not redesigned. Python Code Lab execution was verified in a local browser; the nine OneCompiler-backed languages are mocked in unit tests and have not been run against the external service. Code and stdin for those nine languages are sent to OneCompiler, so the UI warns users not to include private data. The Python Basics Practice utility is a fixed concept quiz and never executes arbitrary code. Features requiring tables absent from the existing schema (for example help replies, quizzes/practicals, team memberships, reports, and notifications) are not claimed as implemented. Database writes, live OAuth, and real Storage uploads still require isolated end-to-end verification.
 
 ## Existing database and deployment safety

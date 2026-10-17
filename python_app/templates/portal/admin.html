@@ -14,6 +14,9 @@
   <section class="content-card"><span class="eyebrow">CAMPUS UPDATE</span><h2>Post an announcement</h2>
     <form method="post" enctype="multipart/form-data" class="form">{% csrf_token %}<input type="hidden" name="action" value="announcement">{% for field in announcement_form %}<label for="{{ field.id_for_label }}">{{ field.label }}{{ field }}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}{% if field.errors %}<span class="error">{{ field.errors }}</span>{% endif %}</label>{% endfor %}<button class="btn primary" type="submit">Publish announcement</button></form>
   </section>
+  <section class="content-card"><span class="eyebrow">CAMPUS CALENDAR</span><h2>Add an event</h2>
+    <form method="post" class="form">{% csrf_token %}<input type="hidden" name="action" value="event">{% for field in event_form %}<label for="{{ field.id_for_label }}">{{ field.label }}{{ field }}{% if field.errors %}<span class="error">{{ field.errors }}</span>{% endif %}</label>{% endfor %}<button class="btn primary" type="submit">Publish event</button></form>
+  </section>
   {% endif %}
   {% if can_manage_subjects %}
   <section class="content-card"><span class="eyebrow">BRANCHHUB CATALOG</span><h2>Add a subject</h2>

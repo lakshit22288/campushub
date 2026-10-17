@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Campus board · CampusHub{% endblock %}
+{% block meta_description %}CampusHub campus notices and upcoming college events.{% endblock %}
+{% block content %}
+<section class="page-header"><div class="container"><span class="eyebrow">CAMPUS LIFE</span><h1>Campus board.</h1><p>Campus notices and upcoming events, with branch-specific updates kept in the right place.</p></div></section>
+{% if not database_configured %}<section class="container"><div class="notice notice-info">Connect this local app to a safe development database to load campus updates.</div></section>{% endif %}
+<section class="container section campus-board-grid">
+  <section><div class="section-head"><div><span class="eyebrow">LATEST UPDATES</span><h2>Notices</h2></div></div>
+    <div class="planner-list">{% for notice in notices %}<article class="content-card"><div class="content-card-top"><span class="content-meta">{% if notice.target_branch %}{{ notice.target_branch.name }}{% else %}ALL STUDENTS{% endif %}</span><span class="muted">{{ notice.created_at|date:"M j, Y" }}</span></div><h3>{{ notice.title }}</h3><p>{{ notice.message }}</p>{% if notice.attachment_url %}<a class="text-link" href="{{ notice.attachment_url }}" target="_blank" rel="noopener noreferrer">Open {{ notice.attachment_name|default:"attachment" }}</a>{% endif %}</article>{% empty %}<div class="empty">No notices are available for your campus yet.</div>{% endfor %}</div>
+  </section>
+  <section><div class="section-head"><div><span class="eyebrow">COMING UP</span><h2>Events</h2></div></div>
+    <div class="planner-list">{% for event in events %}<article class="content-card"><div class="content-card-top"><span class="content-meta">{% if event.target_branch %}{{ event.target_branch.name }}{% else %}ALL STUDENTS{% endif %}</span><span class="muted">{{ event.starts_at|date:"M j, Y" }}</span></div><h3>{{ event.title }}</h3><p>{{ event.description }}</p><div class="planner-event-details"><span>{{ event.starts_at|date:"g:i A" }}–{{ event.ends_at|date:"g:i A" }}</span>{% if event.location %}<span>{{ event.location }}</span>{% endif %}</div></article>{% empty %}<div class="empty">No upcoming events have been posted yet.</div>{% endfor %}</div>
+  </section>
+</section>
+{% endblock %}

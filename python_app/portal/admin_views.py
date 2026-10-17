@@ -6,7 +6,7 @@ from django.utils.text import slugify
 from django.views.decorators.http import require_http_methods
 
 from .features import ADMIN_ROLES, STAFF_ROLES, _uuid_or_none, role_required
-from .forms import AnnouncementForm, NoteForm, SubjectForm
+from .forms import AnnouncementForm, CampusEventForm, NoteForm, SubjectForm
 from .models import (
     Announcement,
     Book,
@@ -119,6 +119,34 @@ def _staff_form(request, user):
             return redirect("admin")
         return "announcement", form
 
+    if action == "event":
+        if user.role not in CONTENT_ROLES:
+            messages.error(request, "You do not have permission to publish campus events.")
+            return redirect("admin")
+        form = CampusEventForm(request.POST)
+        if form.is_valid():
+            event = form.save(commit=False)
+            if user.role == "teacher":
+                if not user.branch_id:
+                    form.add_error(
+                        "target_branch",
+                        "A branch must be assigned to your account before you can publish an event.",
+                    )
+                    return "event", form
+                if event.target_branch_id not in {None, user.branch_id}:
+                    form.add_error(
+                        "target_branch",
+                        "Teachers can only publish events for their assigned branch.",
+                    )
+                    return "event", form
+                event.target_branch_id = user.branch_id
+            event.created_by = user
+            event.created_at = timezone.now()
+            event.save()
+            messages.success(request, "The campus event has been published.")
+            return redirect("admin")
+        return "event", form
+
     if action == "role":
         if user.role != "super_admin":
             messages.error(request, "Only super-admins can manage account roles.")
@@ -192,6 +220,7 @@ def admin_dashboard(request):
             "announcement_form": selected_value if selected_form == "announcement" else AnnouncementForm(
                 user_role=user.role,
             ),
+            "event_form": selected_value if selected_form == "event" else CampusEventForm(),
             "selected_form": selected_form,
             "can_manage_content": user.role in CONTENT_ROLES,
             "can_manage_subjects": user.role in ADMIN_ROLES,
