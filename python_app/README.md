@@ -53,6 +53,7 @@ python_app\.venv\Scripts\python.exe python_app\manage.py test portal --verbosity
 ## Current Python features
 
 - Campus home, branch directory, BranchHub subjects/resources/tools, and cross-campus search.
+- Dedicated branch toolkits for CSE, Mechanical, Electrical, Electronics, Civil and MLT, including stateless calculators, programming practice, circuit/reference helpers, and MLT study practice.
 - Branch-scoped study resources: signed-in students and branch teacher accounts are limited to their assigned branch; teacher uploads display the branch identity.
 - Student calculators and study utilities: percentage, CGPA, general/mechanical unit conversions, Python concept practice, SQL formatting (never executed), Linux command reference, IPv4 subnetting, Ohm's law, power, logic gates, area/volume, and dilution calculations.
 - A restored 10-language Code Lab: Python executes in a browser Web Worker with interactive `input()` and time/output bounds; nine languages use the OneCompiler cloud API.
@@ -61,6 +62,8 @@ python_app\.venv\Scripts\python.exe python_app\manage.py test portal --verbosity
 - SkillSwap teach/learn listings, reciprocal requests, two-sided completion, and feedback.
 - Help requests and owner resolution, a project idea catalog/submissions, and staff content/role administration.
 - PDF/PNG/JPG academic-resource and campus-notice uploads plus ZIP/PDF/PNG/JPG student project attachments to Supabase Storage (10 MB maximum; MIME/extension and file-signature checks).
+
+Branch calculators and short practice sets are processed per request and do not write attempts to PostgreSQL. The HTML playground runs inside an isolated sandboxed iframe with a restrictive Content Security Policy. The MLT tools are educational only and do not provide diagnosis or treatment guidance.
 
 ## Campus board and student planner
 

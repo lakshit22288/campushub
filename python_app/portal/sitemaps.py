@@ -4,6 +4,7 @@ from django.contrib.sitemaps import Sitemap
 from django.urls import reverse
 
 from .tool_views import TOOL_TITLES
+from .branch_tool_catalog import BRANCH_TOOL_SLUGS
 
 CANONICAL_DOMAIN = "campushub-python.vercel.app"
 
@@ -20,6 +21,7 @@ class PublicSitemap(Sitemap):
             "compiler",
             "project_ideas",
             *[("tool_detail", slug) for slug in TOOL_TITLES],
+            *[("branch_tool_detail", slug) for slug in sorted(BRANCH_TOOL_SLUGS)],
         ]
 
     def location(self, item):

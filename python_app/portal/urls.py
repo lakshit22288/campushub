@@ -1,6 +1,7 @@
 from django.urls import path
 
 from . import admin_views
+from . import branch_tool_views
 from . import compiler_views
 from . import features
 from . import planner_views
@@ -13,6 +14,7 @@ urlpatterns = [
     path("branches/", views.branch_list, name="branches"),
     path("search/", features.global_search, name="search"),
     path("tools/<slug:slug>/", tool_views.tool_detail, name="tool_detail"),
+    path("branch-tools/<slug:slug>/", branch_tool_views.branch_tool_detail, name="branch_tool_detail"),
     path("login/", views.login, name="login"),
     path("register/", views.register, name="register"),
     path("auth/google/", views.google_sign_in, name="google_sign_in"),

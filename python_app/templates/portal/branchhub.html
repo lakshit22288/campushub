@@ -30,6 +30,20 @@
       {% if selected_branch %}<a class="filter-reset" href="{% url 'branchhub' %}">Clear filter</a>{% endif %}
     </div>
   </form>
+  <section class="branch-tools-catalog" aria-labelledby="branch-tools-heading">
+    <div class="section-head"><div><span class="eyebrow">BUILT FOR YOUR COURSE</span><h2 id="branch-tools-heading">{% if selected_branch %}{{ selected_branch.code }} tools.{% else %}Branch toolkits.{% endif %}</h2></div></div>
+    <p class="section-intro">Interactive calculators and practice tools matched to each branch. Calculations are processed on request and are not saved to the campus database.</p>
+    {% for group in branch_tool_groups %}
+    <section class="branch-tool-group" aria-labelledby="branch-tools-{{ group.code }}">
+      <div class="branch-tool-group-heading"><span class="branch-code">{{ group.code }}</span><h3 id="branch-tools-{{ group.code }}">{{ group.name }}</h3></div>
+      <div class="subject-tools-grid">
+        {% for tool in group.tools %}
+        <article class="content-card subject-tool-card"><span class="content-meta">{{ group.code }} TOOLKIT</span><h3>{{ tool.name }}</h3><p>{{ tool.description }}</p><a class="text-link" href="{{ tool.route }}">Open tool ↗</a></article>
+        {% endfor %}
+      </div>
+    </section>
+    {% endfor %}
+  </section>
   {% if page_obj.paginator.count %}
   <div class="catalog-toolbar" aria-live="polite">
     <div><span class="catalog-toolbar-label">START SOMEWHERE GOOD</span><strong>{% if selected_branch %}{{ selected_branch.code }} / SUBJECT COLLECTION{% else %}A collection for curious minds{% endif %}</strong></div>

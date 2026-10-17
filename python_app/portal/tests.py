@@ -22,6 +22,8 @@ from django.test import RequestFactory, SimpleTestCase, override_settings
 from django.utils import timezone
 
 from portal import auth
+from portal.branch_tool_catalog import BRANCH_TOOL_CATALOG, BRANCH_TOOL_SLUGS
+from portal.branch_tool_views import BranchToolForm, branch_tool_groups
 from portal.forms import (
     AnnouncementForm,
     AssignmentEntryForm,
@@ -95,6 +97,8 @@ class PortalPageTests(SimpleTestCase):
         self.assertEqual(response["Content-Type"], "application/xml")
         self.assertContains(response, "https://campushub-python.vercel.app/")
         self.assertContains(response, "https://campushub-python.vercel.app/tools/percentage/")
+        self.assertContains(response, "https://campushub-python.vercel.app/branch-tools/stress-strain/")
+        self.assertContains(response, "https://campushub-python.vercel.app/branch-tools/mlt-terminology/")
         self.assertNotContains(response, "/admin/")
         self.assertNotContains(response, "/profile/")
 
@@ -261,6 +265,38 @@ class PortalPageTests(SimpleTestCase):
         self.assertContains(response, "Explore subjects")
         self.assertContains(response, "No subjects are in the catalog yet.")
         self.assertNotContains(response, "onchange=")
+        self.assertContains(response, "Branch toolkits.")
+        self.assertContains(response, "HTML / CSS / JavaScript Playground")
+        self.assertContains(response, "Lab Safety Practice")
+
+    def test_branch_tool_groups_cover_every_live_branch(self):
+        branches = [
+            SimpleNamespace(code=code, name=name)
+            for code, name in (
+                ("CE", "Civil Engineering"),
+                ("CSE", "Computer Science / IT"),
+                ("EE", "Electrical Engineering"),
+                ("ECE", "Electronics Engineering"),
+                ("ME", "Mechanical Engineering"),
+                ("MLT", "Medical Laboratory Technology"),
+            )
+        ]
+
+        groups = branch_tool_groups(branches)
+
+        self.assertEqual({group["code"] for group in groups}, set(BRANCH_TOOL_CATALOG))
+        self.assertTrue(all(len(group["tools"]) >= 5 for group in groups))
+
+    def test_selected_student_branch_gets_only_its_toolkit(self):
+        branches = [
+            SimpleNamespace(code="CSE", name="Computer Science / IT"),
+            SimpleNamespace(code="CE", name="Civil Engineering"),
+        ]
+
+        groups = branch_tool_groups(branches, branches[0])
+
+        self.assertEqual([group["code"] for group in groups], ["CSE"])
+        self.assertIn("/branch-tools/dsa-practice/", [tool["route"] for tool in groups[0]["tools"]])
 
     @patch("portal.views.Branch.objects.all")
     @override_settings(SUPABASE_DATABASE_CONFIGURED=True)
@@ -1957,6 +1993,140 @@ class CampusToolTests(SimpleTestCase):
         response = self.client.get("/tools/not-a-real-tool/")
 
         self.assertEqual(response.status_code, 404)
+
+    def test_each_branch_tool_route_renders(self):
+        for slug in sorted(BRANCH_TOOL_SLUGS):
+            with self.subTest(slug=slug):
+                response = self.client.get(f"/branch-tools/{slug}/")
+                self.assertEqual(response.status_code, 200)
+
+    def test_engineering_and_civil_calculators_return_expected_results(self):
+        cases = (
+            (
+                "stress-strain",
+                {"force": "100", "area": "10", "length": "100", "extension": "0.1"},
+                "Young&#x27;s modulus: 10.0000 GPa",
+            ),
+            (
+                "gear-ratio",
+                {"driver_teeth": "20", "driven_teeth": "40", "input_speed": "1200"},
+                "Ideal output speed: 600.00 rpm",
+            ),
+            (
+                "heat-transfer",
+                {"mass": "2", "specific_heat": "4", "temperature_change": "-5"},
+                "Sensible heat transfer: -40.0000 kJ",
+            ),
+            (
+                "concrete-volume",
+                {"length": "2", "width": "3", "depth": "0.2", "allowance": "5"},
+                "With allowance: 1.2600 m³",
+            ),
+            (
+                "survey-level",
+                {"benchmark_rl": "100", "backsight": "1.5", "staff_reading": "2"},
+                "Reduced level: 99.5000 m",
+            ),
+            ("quantity-estimator", {"quantity": "5", "unit_rate": "120"}, "₹600.00"),
+            ("slope-grade", {"rise": "3", "run": "4"}, "Grade: 75.0000%"),
+        )
+        for slug, data, expected in cases:
+            with self.subTest(slug=slug):
+                response = self.client.post(f"/branch-tools/{slug}/", data)
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, expected)
+
+    def test_electrical_and_electronics_calculators_return_expected_results(self):
+        cases = (
+            (
+                "resistor-network",
+                {"values": "100, 200", "voltage": "12"},
+                "Series: Req 300.0000 Ω",
+            ),
+            (
+                "ac-power",
+                {"voltage": "230", "current": "2", "power_factor": "0.8"},
+                "Real power: 368.0000 W",
+            ),
+            (
+                "transformer-ratio",
+                {"primary_voltage": "230", "primary_turns": "100", "secondary_turns": "50"},
+                "Ideal secondary voltage: 115.0000 V",
+            ),
+            (
+                "resistor-colour-code",
+                {"band1": "red", "band2": "violet", "multiplier": "orange", "tolerance": "gold"},
+                "Nominal resistance: 27,000 Ω",
+            ),
+            (
+                "led-resistor",
+                {"supply_voltage": "5", "forward_voltage": "2", "current_ma": "20"},
+                "Calculated resistance: 150.00 Ω",
+            ),
+            (
+                "rc-time-constant",
+                {"resistance": "10000", "capacitance_uf": "10"},
+                "Time constant τ: 100.0000 ms",
+            ),
+            ("number-base", {"value": "255"}, "Hexadecimal: FF"),
+        )
+        for slug, data, expected in cases:
+            with self.subTest(slug=slug):
+                response = self.client.post(f"/branch-tools/{slug}/", data)
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, expected)
+
+    def test_branch_practice_tools_explain_answers_and_advance(self):
+        response = self.client.post(
+            "/branch-tools/dsa-practice/",
+            {"question": "0", "answer": "1"},
+        )
+
+        self.assertContains(response, "Correct.")
+        self.assertContains(response, "What is the average lookup complexity")
+
+    def test_branch_practice_handles_malformed_question_indices(self):
+        for question_index in ("invalid", "99"):
+            with self.subTest(question_index=question_index):
+                response = self.client.post(
+                    "/branch-tools/dsa-practice/",
+                    {"question": question_index, "answer": "1"},
+                )
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, "Which structure follows FIFO order?")
+
+    def test_git_helper_only_displays_commands_and_web_playground_is_sandboxed(self):
+        helper = self.client.post("/branch-tools/git-helper/", {"task": "inspect"})
+        playground = self.client.get("/branch-tools/web-playground/")
+
+        self.assertContains(helper, "git status")
+        self.assertContains(helper, "Commands are shown for learning only")
+        self.assertContains(playground, 'sandbox="allow-scripts"')
+        self.assertContains(playground, "Content Security Policy")
+        self.assertContains(playground, "/static/python/branch-web-playground.js?v=1")
+
+    def test_calculator_validation_rejects_invalid_inputs(self):
+        ac_power = self.client.post(
+            "/branch-tools/ac-power/",
+            {"voltage": "230", "current": "2", "power_factor": "1.2"},
+        )
+        circuit = self.client.post(
+            "/branch-tools/resistor-network/",
+            {"values": "100,0", "voltage": "12"},
+        )
+        extreme_circuit = self.client.post(
+            "/branch-tools/resistor-network/",
+            {"values": "1e99999999", "voltage": "12"},
+        )
+        concrete = self.client.post(
+            "/branch-tools/concrete-volume/",
+            {"length": "2", "width": "3", "depth": "0.2", "allowance": "101"},
+        )
+
+        self.assertContains(ac_power, "Ensure this value is less than or equal to 1.")
+        self.assertContains(circuit, "Enter 1–12 resistor values")
+        self.assertContains(extreme_circuit, "Enter 1–12 resistor values")
+        self.assertContains(concrete, "Ensure this value is less than or equal to 100.")
 
 
 class CompilerTests(SimpleTestCase):

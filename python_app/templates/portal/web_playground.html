@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · CampusHub{% endblock %}
+{% block meta_description %}Build and preview HTML, CSS and JavaScript in an isolated sandbox on CampusHub.{% endblock %}
+{% block content %}
+<section class="page-header"><div class="container"><span class="eyebrow">CSE / WEB DEVELOPMENT</span><h1>HTML, CSS &amp; JS Playground.</h1><p>Experiment with a small web page and preview it inside an isolated browser frame. Its Content Security Policy blocks external requests; your code is not saved or sent to a compiler service.</p></div></section>
+<section class="container section">
+  <div class="web-playground">
+    <div class="web-playground-editors">
+      <label>HTML<textarea id="web-html" rows="12" spellcheck="false"><main>
+  <h1>Hello, CampusHub</h1>
+  <p>Edit this page, then run the preview.</p>
+  <button onclick="document.querySelector('p').textContent = 'It works!'">Try interaction</button>
+</main></textarea></label>
+      <label>CSS<textarea id="web-css" rows="12" spellcheck="false">body { font: 16px system-ui; padding: 2rem; color: #21134f; }
+button { padding: .65rem 1rem; border: 0; border-radius: .6rem; background: #c8ff3d; }</textarea></label>
+      <label>JavaScript<textarea id="web-js" rows="12" spellcheck="false">console.log("Hello from the isolated preview");</textarea></label>
+    </div>
+    <div class="web-playground-actions"><button class="btn primary" id="web-run" type="button">Run preview</button><button class="btn" id="web-reset" type="button">Reset example</button><span>Preview is sandboxed; external requests and parent-page access are blocked.</span></div>
+    <iframe class="web-playground-preview" id="web-preview" title="Your isolated HTML playground preview" sandbox="allow-scripts" referrerpolicy="no-referrer"></iframe>
+  </div>
+</section>
+{% load static %}<script src="{% static 'python/branch-web-playground.js' %}?v=1" defer></script>
+{% endblock %}

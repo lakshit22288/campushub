@@ -14,6 +14,8 @@ from django.utils import timezone
 from django.views.decorators.http import require_http_methods, require_POST
 
 from . import auth
+from .branch_tool_catalog import BRANCH_TOOL_CATALOG
+from .branch_tool_views import branch_tool_groups
 from .storage import (
     StorageUploadError,
     sign_storage_references,
@@ -174,6 +176,7 @@ def branchhub(request):
             "page_obj": page_obj,
             "selected_branch": selected_branch,
             "branch_filter": str(selected_branch.id) if selected_branch else "",
+            "branch_tool_groups": branch_tool_groups(branches, selected_branch),
         },
     )
 
@@ -872,6 +875,25 @@ def global_search(request):
                 if tool.branch_id:
                     context.append(tool.branch.code)
                 add_result("Tool", tool.name, tool.description, " · ".join(context), route)
+            for branch_code, branch_data in BRANCH_TOOL_CATALOG.items():
+                for name, description, route in branch_data["tools"]:
+                    searchable = " ".join(
+                        (branch_code, branch_data["name"], name, description)
+                    ).casefold()
+                    if (
+                        all(term.casefold() in searchable for term in terms)
+                        and not any(
+                            item["kind"] == "Tool" and item["title"] == name
+                            for item in results
+                        )
+                    ):
+                        add_result(
+                            "Tool",
+                            name,
+                            description,
+                            f"{branch_code} · Branch toolkit",
+                            route,
+                        )
 
         if include("books"):
             book_matches = (
