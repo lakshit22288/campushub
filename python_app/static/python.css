@@ -24,13 +24,12 @@
 }
 .campus-page .brand { gap: 12px; }
 .campus-page .brand-mark {
-  width: 42px;
-  height: 42px;
-  border: 1px solid rgba(200, 255, 61, .36);
-  border-radius: 14px;
-  color: #21134f;
-  background: #c8ff3d;
-  box-shadow: 0 8px 28px rgba(200, 255, 61, .15);
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  box-shadow: none;
 }
 .campus-page .brand strong { color: #2d1b69; font-size: 15px; letter-spacing: .02em; }
 .campus-page .brand div > span { color: var(--new-muted); font-size: 11px; }
@@ -560,9 +559,9 @@
   }
   .campus-page .topbar { background: rgba(248, 246, 240, .95); }
   .campus-page .brand-mark {
-    border-color: rgba(104, 133, 45, .3);
-    background: #b7df60;
-    box-shadow: 0 7px 21px rgba(104, 133, 45, .12);
+    border: 0;
+    background: transparent;
+    box-shadow: none;
   }
   .campus-page .nav a:hover,
   .campus-page .nav-btn:hover {
@@ -917,9 +916,11 @@
   backdrop-filter: blur(16px);
 }
 .campus-page .brand-mark {
-  border-color: rgba(200, 255, 61, .42);
-  background: #c8ff3d;
-  box-shadow: 0 7px 20px rgba(45, 27, 105, .1);
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 .campus-page .brand strong { color: #2d1b69; }
 .campus-page .brand div > span { color: #777386; }

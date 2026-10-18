@@ -50,16 +50,14 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 }
 .brand { display: flex; gap: 11px; align-items: center; }
 .brand-mark {
-  width: 42px;
-  height: 42px;
-  display: grid;
-  place-items: center;
-  border-radius: 14px;
-  color: var(--accent-ink);
-  background: var(--accent);
-  box-shadow: 0 8px 28px rgba(200, 255, 61, .2);
+  display: block;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  object-fit: contain;
 }
 .brand strong { display: block; font-size: 15px; letter-spacing: .2px; }
+.brand strong .brand-z { display: inline; margin: 0; color: #5b3df5; font-size: inherit; font-weight: 900; }
 .brand span { display: block; margin-top: 2px; color: #c3b9e4; font-size: 11px; }
 .nav { display: flex; align-items: center; gap: 7px; }
 .nav a, .nav-btn {
@@ -475,16 +473,11 @@ footer { margin-top: auto; padding: 28px; border-top: 1px solid rgba(226, 218, 2
 }
 
 .brand .brand-mark {
-  display: grid;
-  width: 42px;
-  height: 42px;
+  display: block;
+  width: 44px;
+  height: 44px;
   margin: 0;
   border-radius: 10px;
-  color: var(--accent-ink);
-  font-size: 13px;
-  font-weight: 900;
-  letter-spacing: -.08em;
-  line-height: 1;
 }
 .nav a, .nav-btn { font-size: 13px; font-weight: 650; }
 .menu-btn { padding: 8px 0 8px 12px; color: var(--accent); font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
@@ -696,10 +689,6 @@ body {
 }
 .brand strong { color: var(--text); }
 .brand span { color: #6f6877; }
-.brand .brand-mark {
-  background: #c8ff3d;
-  box-shadow: none;
-}
 .nav a, .nav-btn { color: #534b61; }
 .nav a.active, .nav a:hover, .nav-btn:hover {
   border-color: #d8d2c5;

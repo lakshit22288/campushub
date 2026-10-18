@@ -9,6 +9,7 @@
   <meta name="robots" content="{% block robots %}index,follow{% endblock %}">
   <meta name="google-site-verification" content="NxuHJKI0DXW3RZZak_86nkclsPrbCCLeY8rQG4729Yc">
   <link rel="canonical" href="https://campushub-python.vercel.app{{ request.path }}">
+  <link rel="icon" type="image/svg+xml" href="{% static 'python/campuzhub-mark.svg' %}">
   <title>{% block title %}CampuZHub{% endblock %}</title>
   {% block structured_data %}{% endblock %}
   <link rel="stylesheet" href="{% static 'styles/global.css' %}">
@@ -18,8 +19,8 @@
   <div class="app-shell">
     <header class="topbar">
       <a class="brand" href="/">
-        <span class="brand-mark" aria-hidden="true">CZ</span>
-        <div><strong>CampuZHub</strong><span>Your campus, in one place.</span></div>
+        <img class="brand-mark" src="{% static 'python/campuzhub-mark.svg' %}" alt="" aria-hidden="true">
+        <div><strong>Campu<span class="brand-z">Z</span>Hub</strong><span>Your campus, in one place.</span></div>
       </a>
       <details class="mobile-menu">
         <summary class="menu-btn">Menu</summary>

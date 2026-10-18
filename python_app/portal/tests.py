@@ -64,7 +64,9 @@ class PortalPageTests(SimpleTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "CampuZHub")
-        self.assertContains(response, '<span class="brand-mark" aria-hidden="true">CZ</span>')
+        self.assertContains(response, '<img class="brand-mark" src="/static/python/campuzhub-mark.svg" alt="" aria-hidden="true">')
+        self.assertContains(response, '<link rel="icon" type="image/svg+xml" href="/static/python/campuzhub-mark.svg">')
+        self.assertContains(response, '<strong>Campu<span class="brand-z">Z</span>Hub</strong>')
         self.assertContains(response, '"name":"CampuZHub"')
         self.assertContains(response, "YOUR CAMPUS, IN MOTION")
         self.assertContains(response, "Learn something.")
@@ -245,7 +247,7 @@ class PortalPageTests(SimpleTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '<body class="code-lab-page">')
-        self.assertContains(response, '<span class="brand-mark" aria-hidden="true">CZ</span>')
+        self.assertContains(response, '<img class="brand-mark" src="/static/python/campuzhub-mark.svg" alt="" aria-hidden="true">')
         self.assertContains(response, "CampuZHub • Open-source student ecosystem • Built for campus use")
 
     @override_settings(SUPABASE_DATABASE_CONFIGURED=False)
@@ -2139,7 +2141,7 @@ class CompilerTests(SimpleTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '<body class="code-lab-page">')
-        self.assertContains(response, '<span class="brand-mark" aria-hidden="true">CZ</span>')
+        self.assertContains(response, '<img class="brand-mark" src="/static/python/campuzhub-mark.svg" alt="" aria-hidden="true">')
         self.assertContains(response, "Run Python interactively in your browser")
         self.assertContains(response, "Run code")
         self.assertContains(response, "compiler.js")
