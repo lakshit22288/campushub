@@ -64,16 +64,17 @@ class PortalPageTests(SimpleTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "CampuZHub")
-        self.assertContains(response, '<img class="brand-mark" src="/static/python/campuzhub-mark.svg" alt="" aria-hidden="true">')
+        self.assertContains(response, '<a class="brand" href="/" aria-label="CampuZHub home">')
+        self.assertContains(response, '<img class="brand-wordmark" src="/static/python/campuzhub-wordmark.png" alt="CampuZHub">')
         self.assertContains(response, '<link rel="icon" type="image/svg+xml" href="/static/python/campuzhub-mark.svg">')
-        self.assertContains(response, '<strong>Campu<span class="brand-z">Z</span>Hub</strong>')
+        self.assertContains(response, "Your campus, in one place.")
         self.assertContains(response, '"name":"CampuZHub"')
         self.assertContains(response, "YOUR CAMPUS, IN MOTION")
         self.assertContains(response, "Learn something.")
         self.assertContains(response, "QUICK START / PYTHON")
         self.assertContains(response, "Computer Science / IT")
         self.assertContains(response, "/static/styles/global.css")
-        self.assertContains(response, "/static/python/python.css?v=32")
+        self.assertContains(response, "/static/python/python.css?v=33")
         self.assertContains(response, 'name="description"')
         self.assertContains(
             response,
@@ -247,7 +248,7 @@ class PortalPageTests(SimpleTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '<body class="code-lab-page">')
-        self.assertContains(response, '<img class="brand-mark" src="/static/python/campuzhub-mark.svg" alt="" aria-hidden="true">')
+        self.assertContains(response, '<img class="brand-wordmark" src="/static/python/campuzhub-wordmark.png" alt="CampuZHub">')
         self.assertContains(response, "CampuZHub • Open-source student ecosystem • Built for campus use")
 
     @override_settings(SUPABASE_DATABASE_CONFIGURED=False)
@@ -2141,7 +2142,7 @@ class CompilerTests(SimpleTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '<body class="code-lab-page">')
-        self.assertContains(response, '<img class="brand-mark" src="/static/python/campuzhub-mark.svg" alt="" aria-hidden="true">')
+        self.assertContains(response, '<img class="brand-wordmark" src="/static/python/campuzhub-wordmark.png" alt="CampuZHub">')
         self.assertContains(response, "Run Python interactively in your browser")
         self.assertContains(response, "Run code")
         self.assertContains(response, "compiler.js")

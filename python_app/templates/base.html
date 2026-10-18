@@ -13,14 +13,16 @@
   <title>{% block title %}CampuZHub{% endblock %}</title>
   {% block structured_data %}{% endblock %}
   <link rel="stylesheet" href="{% static 'styles/global.css' %}">
-  <link rel="stylesheet" href="{% static 'python/python.css' %}?v=32">
+  <link rel="stylesheet" href="{% static 'python/python.css' %}?v=33">
 </head>
 <body class="{% block body_class %}campus-page{% endblock %}">
   <div class="app-shell">
     <header class="topbar">
-      <a class="brand" href="/">
-        <img class="brand-mark" src="{% static 'python/campuzhub-mark.svg' %}" alt="" aria-hidden="true">
-        <div><strong>Campu<span class="brand-z">Z</span>Hub</strong><span>Your campus, in one place.</span></div>
+      <a class="brand" href="/" aria-label="CampuZHub home">
+        <div class="brand-copy">
+          <img class="brand-wordmark" src="{% static 'python/campuzhub-wordmark.png' %}" alt="CampuZHub">
+          <span>Your campus, in one place.</span>
+        </div>
       </a>
       <details class="mobile-menu">
         <summary class="menu-btn">Menu</summary>

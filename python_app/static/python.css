@@ -22,15 +22,7 @@
   border-color: var(--new-border);
   background: rgba(255, 253, 250, .94);
 }
-.campus-page .brand { gap: 12px; }
-.campus-page .brand-mark {
-  width: 44px;
-  height: 44px;
-  border: 0;
-  border-radius: 12px;
-  background: transparent;
-  box-shadow: none;
-}
+.campus-page .brand { gap: 0; }
 .campus-page .brand strong { color: #2d1b69; font-size: 15px; letter-spacing: .02em; }
 .campus-page .brand div > span { color: var(--new-muted); font-size: 11px; }
 .campus-page .mobile-menu { display: flex; align-items: center; }
@@ -558,11 +550,6 @@
       var(--new-canvas);
   }
   .campus-page .topbar { background: rgba(248, 246, 240, .95); }
-  .campus-page .brand-mark {
-    border: 0;
-    background: transparent;
-    box-shadow: none;
-  }
   .campus-page .nav a:hover,
   .campus-page .nav-btn:hover {
     border-color: rgba(104, 133, 45, .24);
@@ -915,13 +902,6 @@
   background: rgba(255, 253, 247, .94);
   backdrop-filter: blur(16px);
 }
-.campus-page .brand-mark {
-  width: 44px;
-  height: 44px;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-}
 .campus-page .brand strong { color: #2d1b69; }
 .campus-page .brand div > span { color: #777386; }
 .campus-page .mobile-menu { position: relative; display: flex; align-items: center; }
@@ -1174,7 +1154,6 @@
 @media (max-width: 600px) {
   .campus-page .container { width: min(100% - 36px, 520px); }
   .campus-page .topbar { height: 68px; padding-inline: 18px; }
-  .campus-page .brand-mark { width: 39px; height: 39px; }
   .campus-page .home-intro { background: #f5f3ec; }
   .campus-page .home-hero { gap: 25px; padding: 43px 0 37px; }
   .campus-page .home-eyebrow { font-size: 9px; letter-spacing: .14em; }
