@@ -164,7 +164,7 @@ def execute_code(request):
 
     upstream_payload = {
         "name": runtime["name"],
-        "title": f"CampusHub-{uuid4()}",
+        "title": f"CampuZHub-{uuid4()}",
         "mode": runtime["mode"],
         "extension": runtime["extension"],
         "languageType": "programming",

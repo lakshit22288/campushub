@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% block title %}CampusHub — Learn • Share • Build • Grow{% endblock %}
-{% block meta_description %}CampusHub is a student platform for college branches, study resources, practical project ideas, academic tools, student skill exchange, and a multi-language Code Lab.{% endblock %}
-{% block structured_data %}<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"CampusHub","url":"https://campushub-python.vercel.app/","description":"A student platform for learning, sharing resources, building projects, and running code."}</script>{% endblock %}
+{% block title %}CampuZHub — Learn • Share • Build • Grow{% endblock %}
+{% block meta_description %}CampuZHub is a student platform for college branches, study resources, practical project ideas, academic tools, student skill exchange, and a multi-language Code Lab.{% endblock %}
+{% block structured_data %}<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"CampuZHub","url":"https://campushub-python.vercel.app/","description":"A student platform for learning, sharing resources, building projects, and running code."}</script>{% endblock %}
 {% block content %}
 <section class="home-intro">
   <div class="container">
@@ -30,7 +30,7 @@
           <div class="home-lab-output"><span>OUTPUT</span><strong>Let's build.</strong></div>
           <a class="home-lab-link" href="{% url 'compiler' %}">Try it in Code Lab <span aria-hidden="true">↗</span></a>
         </div>
-        <div class="home-code-caption"><span>One campus. More ways to learn.</span><span>CAMPUSHUB / 2026</span></div>
+        <div class="home-code-caption"><span>One campus. More ways to learn.</span><span>CAMPUZHUB / 2026</span></div>
       </aside>
     </div>
   </div>
@@ -105,7 +105,7 @@
       {% endfor %}
     </div>
     {% else %}
-    <div class="home-branch-empty">{% if database_configured %}No branches are available in the connected database yet.{% else %}Connect to CampusHub to see your branch communities.{% endif %}</div>
+    <div class="home-branch-empty">{% if database_configured %}No branches are available in the connected database yet.{% else %}Connect to CampuZHub to see your branch communities.{% endif %}</div>
     {% endif %}
   </div>
 </section>

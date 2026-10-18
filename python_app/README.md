@@ -1,10 +1,10 @@
-# CampusHub Python edition
+# CampuZHub Python edition
 
-The Django app is the maintained CampusHub application, deployed at `https://campushub-python.vercel.app` from the `python_app` Vercel project root. The Vercel Function is pinned to `bom1` (Mumbai), near the production Supabase database region, to avoid cross-continent database round trips. The legacy `https://campushub-opal.vercel.app` domain remains a compatibility alias that forwards to the Python Render production service. The app uses Supabase PostgreSQL through unmanaged models; do not run Django migrations against that database.
+The Django app is the maintained CampuZHub application, deployed at `https://campushub-python.vercel.app` from the `python_app` Vercel project root. The public website address is unchanged by the CampuZHub branding. The Vercel Function is pinned to `bom1` (Mumbai), near the production Supabase database region, to avoid cross-continent database round trips. The legacy `https://campushub-opal.vercel.app` domain remains a compatibility alias that forwards to the Python Render production service. The app uses Supabase PostgreSQL through unmanaged models; do not run Django migrations against that database.
 
 ## Google Search visibility
 
-The app publishes a crawlable `robots.txt` and `sitemap.xml`, canonical URLs for `campushub-python.vercel.app`, descriptive page metadata, and marks account-only pages `noindex`. After a successful production deployment, add the URL-prefix property `https://campushub-python.vercel.app/` in [Google Search Console](https://search.google.com/search-console), complete Google's ownership verification, and submit `https://campushub-python.vercel.app/sitemap.xml`. Google decides when to crawl and index pages; submission is not a guarantee of indexing or ranking. A custom domain is recommended if CampusHub gets one, because the current address is a shared `vercel.app` subdomain.
+The app publishes a crawlable `robots.txt` and `sitemap.xml`, canonical URLs for `campushub-python.vercel.app`, descriptive page metadata, and marks account-only pages `noindex`. After a successful production deployment, add the URL-prefix property `https://campushub-python.vercel.app/` in [Google Search Console](https://search.google.com/search-console), complete Google's ownership verification, and submit `https://campushub-python.vercel.app/sitemap.xml`. Google decides when to crawl and index pages; submission is not a guarantee of indexing or ranking. A custom domain is recommended if CampuZHub gets one, because the current address is a shared `vercel.app` subdomain.
 
 ## Staging deployment
 
@@ -22,9 +22,9 @@ Configure the production service with the existing production Supabase PostgreSQ
 
 ### Email ownership verification
 
-Email/password signups use the existing Supabase Auth project. In Supabase Auth settings, enable email confirmations for the Email provider and configure production SMTP for reliable delivery. Set the Site URL to `https://campushub-python.vercel.app` and add `https://campushub-python.vercel.app/auth/email/confirm/` to the allowed redirect URLs. Add the matching local confirmation URL while developing locally. Do not disable email confirmations: the app refuses to create a CampusHub account if Supabase returns an immediate session instead of requiring confirmation.
+Email/password signups use the existing Supabase Auth project. In Supabase Auth settings, enable email confirmations for the Email provider and configure production SMTP for reliable delivery. Set the Site URL to `https://campushub-python.vercel.app` and add `https://campushub-python.vercel.app/auth/email/confirm/` to the allowed redirect URLs. Add the matching local confirmation URL while developing locally. Do not disable email confirmations: the app refuses to create a CampuZHub account if Supabase returns an immediate session instead of requiring confirmation.
 
-New accounts are created in CampusHub only after the confirmation link returns a verified Supabase identity. Existing email/password CampusHub accounts are prompted to verify their email on their next successful password login before the app establishes a session. Google sign-in remains verified by Google/Supabase. The login page can resend a pending confirmation email.
+New accounts are created in CampuZHub only after the confirmation link returns a verified Supabase identity. Existing email/password CampuZHub accounts are prompted to verify their email on their next successful password login before the app establishes a session. Google sign-in remains verified by Google/Supabase. The login page can resend a pending confirmation email.
 
 The production health endpoint, database connection, Google OAuth provider redirect, and private bucket upload/signed-download path have been smoke-tested. Complete an account-based sign-in and authenticated workflow acceptance test after deployment; do not create test accounts or write sample records to the production database. Retain the legacy Vercel alias and Render compatibility service unless they are deliberately retired.
 

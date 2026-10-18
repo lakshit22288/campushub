@@ -96,7 +96,7 @@ def signed_in_user(view):
         session_user = request.session.get("campushub_user")
         user_id = session_user.get("id") if isinstance(session_user, dict) else None
         if not user_id:
-            messages.info(request, "Please log in to your CampusHub account first.")
+            messages.info(request, "Please log in to your CampuZHub account first.")
             return redirect("login")
         user_id = _uuid_or_none(user_id)
         if not user_id:

@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Code Lab · CampusHub{% endblock %}
+{% block title %}Code Lab · CampuZHub{% endblock %}
 {% block body_class %}code-lab-page{% endblock %}
 {% block content %}
 <div class="compiler-page" id="compiler-page" data-execute-url="{% url 'compiler_execute' %}">
   <section class="compiler-intro">
     <div>
-      <span class="eyebrow">CAMPUSHUB CODE LAB</span>
+      <span class="eyebrow">CAMPUZHUB CODE LAB</span>
       <h2>Think it.<br><em>Run it.</em></h2>
       <p>Run Python interactively in your browser, with nine more languages available through cloud execution.</p>
     </div>
@@ -48,7 +48,7 @@
         </div>
       </section>
       <label class="compiler-input" id="compiler-stdin-label" for="compiler-stdin">Program input <span class="compiler-input-hint">Enter input before Run · one value per line</span>
-        <textarea id="compiler-stdin" maxlength="{{ max_input_length }}" placeholder="For example: CampusHub">CampusHub
+        <textarea id="compiler-stdin" maxlength="{{ max_input_length }}" placeholder="For example: CampuZHub">CampuZHub
 </textarea>
       </label>
       <section class="compiler-output" id="compiler-output" aria-live="polite">

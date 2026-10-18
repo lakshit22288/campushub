@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Finish student profile · CampusHub{% endblock %}
+{% block title %}Finish student profile · CampuZHub{% endblock %}
 {% block robots %}noindex,nofollow{% endblock %}
 {% block content %}
 <div class="auth-wrap">
@@ -8,12 +8,12 @@
     <h1>Make it<br><em>yours.</em></h1>
     <p>Tell us your branch so we can shape your campus experience around you.</p>
     <div class="auth-story-rule"></div>
-    <span class="auth-story-caption">CAMPUSHUB / YOUR COMMUNITY</span>
+    <span class="auth-story-caption">CAMPUZHUB / YOUR COMMUNITY</span>
   </aside>
   <section class="auth-card">
     <span class="eyebrow">GOOGLE SIGN-IN</span>
     <h2>Finish your profile</h2>
-    <p>Google verified {{ profile.email }}. Choose your branch so CampusHub can show the right resources.</p>
+    <p>Google verified {{ profile.email }}. Choose your branch so CampuZHub can show the right resources.</p>
     {% if not database_configured %}
     <div class="error" role="alert">Connect to the existing Supabase database to complete your profile.</div>
     {% else %}

@@ -1,21 +1,21 @@
 {% extends "base.html" %}
-{% block title %}{% if feature == "Code Lab" %}Code Lab · CampusHub Python{% else %}{{ feature }} · CampusHub{% endif %}{% endblock %}
+{% block title %}{% if feature == "Code Lab" %}Code Lab · CampuZHub Python{% else %}{{ feature }} · CampuZHub{% endif %}{% endblock %}
 {% block robots %}noindex,nofollow{% endblock %}
 {% block body_class %}{% if feature == "Code Lab" %}code-lab-page{% else %}campus-page{% endif %}{% endblock %}
 {% block content %}
 {% if feature == "Code Lab" %}
-<section class="page-header"><div class="container"><div class="eyebrow">PYTHON EDITION · IN PROGRESS</div><h1>{{ feature }}</h1><p>This feature is being migrated into the Python version. The original live CampusHub app remains available while the port is tested.</p><a class="btn primary" href="/">Back to Python edition</a></div></section>
+<section class="page-header"><div class="container"><div class="eyebrow">PYTHON EDITION · IN PROGRESS</div><h1>{{ feature }}</h1><p>This feature is being migrated into the Python version. The original live CampuZHub app remains available while the port is tested.</p><a class="btn primary" href="/">Back to Python edition</a></div></section>
 {% else %}
 <section class="feature-hero">
   <div class="feature-hero-inner">
-    <a class="back-link" href="{% url 'home' %}">← Back to CampusHub</a>
+    <a class="back-link" href="{% url 'home' %}">← Back to CampuZHub</a>
     <span class="eyebrow">A BETTER WAY TO {{ feature|upper }}</span>
     <h1>{{ feature }}<span>.</span></h1>
     <p class="feature-lede">{% if feature == "BranchHub" %}Your course, organized. Find study resources and the tools you need for each subject.{% elif feature == "BookShare" %}Good books should keep moving. Share what helped you with someone who needs it next.{% elif feature == "SkillSwap" %}Everyone knows something worth sharing. Find a peer, trade skills and grow together.{% elif feature == "Project ideas" %}Start with a question. Find an idea, bring your people together and make it real.{% else %}A dedicated space for campus communities to keep things moving.{% endif %}</p>
-    <div class="feature-status-card"><span class="status-line"></span><div><strong>Taking shape</strong><p>This space is being built for the Python edition. Your existing live CampusHub is unchanged.</p></div></div>
+    <div class="feature-status-card"><span class="status-line"></span><div><strong>Taking shape</strong><p>This space is being built for the Python edition. Your existing live CampuZHub is unchanged.</p></div></div>
     <a class="btn primary" href="{% url 'branches' %}">Explore your branches <span aria-hidden="true">↗</span></a>
   </div>
-  <div class="feature-hero-index"><span>01</span><span>CAMPUSHUB / STUDENT TOOLS</span></div>
+  <div class="feature-hero-index"><span>01</span><span>CAMPUZHUB / STUDENT TOOLS</span></div>
 </section>
 {% endif %}
 {% endblock %}

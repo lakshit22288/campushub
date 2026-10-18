@@ -105,7 +105,7 @@ def begin_email_signup(request, email, password, metadata):
         )
     if result.get("session") or user.get("email_confirmed_at"):
         raise SupabaseAuthError(
-            "Email verification is not enabled for CampusHub yet. Please contact an administrator."
+            "Email verification is not enabled for CampuZHub yet. Please contact an administrator."
         )
     if user.get("identities") == []:
         raise SupabaseAuthError(

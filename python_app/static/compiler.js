@@ -62,7 +62,7 @@
     stdinLabel.hidden = language === "python";
     privacyNote.textContent = language === "python"
       ? "Python runs in your browser; input() pauses for your response. The Pyodide runtime downloads from jsDelivr on first use; your code stays in this browser."
-      : "Your source code and pre-entered input are sent to OneCompiler through CampusHub. Do not include passwords, keys, or private data.";
+      : "Your source code and pre-entered input are sent to OneCompiler through CampuZHub. Do not include passwords, keys, or private data.";
     languageSelect.disabled = running;
     runButton.hidden = running;
     stopButton.hidden = !running;
@@ -268,7 +268,7 @@
   languageSelect.addEventListener("change", () => {
     language = languageSelect.value;
     codeEditor.value = languages[language].template;
-    inputEditor.value = "CampusHub\n";
+    inputEditor.value = "CampuZHub\n";
     result = null;
     error = "";
     liveOutput = "";
@@ -291,7 +291,7 @@
   });
   resetButton.addEventListener("click", () => {
     codeEditor.value = languages[language].template;
-    inputEditor.value = "CampusHub\n";
+    inputEditor.value = "CampuZHub\n";
     result = null;
     error = "";
     liveOutput = "";

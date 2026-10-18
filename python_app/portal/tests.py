@@ -63,7 +63,9 @@ class PortalPageTests(SimpleTestCase):
         response = self.client.get("/")
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "CampusHub")
+        self.assertContains(response, "CampuZHub")
+        self.assertContains(response, '<span class="brand-mark" aria-hidden="true">CZ</span>')
+        self.assertContains(response, '"name":"CampuZHub"')
         self.assertContains(response, "YOUR CAMPUS, IN MOTION")
         self.assertContains(response, "Learn something.")
         self.assertContains(response, "QUICK START / PYTHON")
@@ -243,15 +245,15 @@ class PortalPageTests(SimpleTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '<body class="code-lab-page">')
-        self.assertContains(response, '<span class="brand-mark">CH</span>')
-        self.assertContains(response, "CampusHub • Open-source student ecosystem • Built for campus use")
+        self.assertContains(response, '<span class="brand-mark" aria-hidden="true">CZ</span>')
+        self.assertContains(response, "CampuZHub • Open-source student ecosystem • Built for campus use")
 
     @override_settings(SUPABASE_DATABASE_CONFIGURED=False)
     def test_home_explains_database_is_not_configured(self):
         response = self.client.get("/")
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Connect to CampusHub to see your branch communities.")
+        self.assertContains(response, "Connect to CampuZHub to see your branch communities.")
 
     @patch("portal.features.Subject.objects.select_related", return_value=[])
     @patch("portal.features.Branch.objects.all", return_value=[])
@@ -1246,7 +1248,7 @@ class FeaturePermissionTests(SimpleTestCase):
 
         self.assertContains(
             response,
-            "Please log in to your CampusHub account first.",
+            "Please log in to your CampuZHub account first.",
             status_code=503,
         )
 
@@ -2137,7 +2139,7 @@ class CompilerTests(SimpleTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '<body class="code-lab-page">')
-        self.assertContains(response, '<span class="brand-mark">CH</span>')
+        self.assertContains(response, '<span class="brand-mark" aria-hidden="true">CZ</span>')
         self.assertContains(response, "Run Python interactively in your browser")
         self.assertContains(response, "Run code")
         self.assertContains(response, "compiler.js")
@@ -2164,7 +2166,7 @@ class CompilerTests(SimpleTestCase):
         response_context = MagicMock()
         response = response_context.__enter__.return_value
         response.iter_bytes.return_value = [
-            b'{"stdout":"Hello, CampusHub!\\\\n","stderr":"","exception":null,"executionTime":1.25}'
+            b'{"stdout":"Hello, CampuZHub!\\\\n","stderr":"","exception":null,"executionTime":1.25}'
         ]
         response.status_code = 200
 
@@ -2174,16 +2176,16 @@ class CompilerTests(SimpleTestCase):
             result = self.client.post(
                 "/compiler/execute/",
                 data=json.dumps(
-                    {"language": "c", "code": "int main(void) { return 0; }", "stdin": "CampusHub"}
+                    {"language": "c", "code": "int main(void) { return 0; }", "stdin": "CampuZHub"}
                 ),
                 content_type="application/json",
             )
 
         self.assertEqual(result.status_code, 200)
-        self.assertEqual(result.json()["stdout"], "Hello, CampusHub!\\n")
+        self.assertEqual(result.json()["stdout"], "Hello, CampuZHub!\\n")
         upstream_payload = client.stream.call_args.kwargs["json"]
         self.assertEqual(upstream_payload["mode"], "c_cpp")
-        self.assertEqual(upstream_payload["properties"]["stdin"], "CampusHub")
+        self.assertEqual(upstream_payload["properties"]["stdin"], "CampuZHub")
         self.assertEqual(
             upstream_payload["properties"]["files"][0]["name"],
             "Main.c",

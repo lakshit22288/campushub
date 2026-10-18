@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% block title %}{% if query %}Search: {{ query }}{% else %}Search CampusHub{% endif %}{% endblock %}
+{% block title %}{% if query %}Search: {{ query }}{% else %}Search CampuZHub{% endif %}{% endblock %}
 {% block robots %}noindex,nofollow{% endblock %}
 {% block content %}
 <section class="page-header"><div class="container"><span class="eyebrow">ONE SEARCH, ALL YOUR CAMPUS</span><h1>Find what you need.</h1><p>Explore subjects, learning materials, campus tools, peer listings and project inspiration.</p></div></section>
 <section class="container section">
   <form method="get" class="global-search-form">
-    <label for="global-query">Search CampusHub</label>
+    <label for="global-query">Search CampuZHub</label>
     <div class="global-search-controls">
       <input id="global-query" name="q" value="{{ query }}" maxlength="120" placeholder="Try Python basics, circuit design, or a book title">
       <select name="category" aria-label="Search category">
@@ -26,7 +26,7 @@
           <h2>{{ result.title }}</h2>
           <p>{{ result.description }}</p>
           {% if result.detail %}<span class="search-detail">{{ result.detail }}</span>{% endif %}
-          <span class="text-link">Explore in CampusHub <span aria-hidden="true">→</span></span>
+          <span class="text-link">Explore in CampuZHub <span aria-hidden="true">→</span></span>
         </a>
       {% empty %}
         <div class="empty search-empty"><strong>No matches in {{ selected_category_label }}.</strong><span>{% if search_empty_hint %}{{ search_empty_hint }}{% else %}Try “{{ query }}” under Everything, or search with fewer or different words.{% endif %}</span></div>

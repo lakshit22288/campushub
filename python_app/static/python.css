@@ -32,7 +32,6 @@
   background: #c8ff3d;
   box-shadow: 0 8px 28px rgba(200, 255, 61, .15);
 }
-.campus-page .brand-mark svg { width: 31px; height: 31px; }
 .campus-page .brand strong { color: #2d1b69; font-size: 15px; letter-spacing: .02em; }
 .campus-page .brand div > span { color: var(--new-muted); font-size: 11px; }
 .campus-page .mobile-menu { display: flex; align-items: center; }

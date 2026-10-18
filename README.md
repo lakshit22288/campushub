@@ -1,6 +1,6 @@
-# CampusHub
+# CampuZHub
 
-CampusHub is a student platform for learning, sharing resources, finding project ideas, and running code. The maintained application is the Django edition in `python_app/`.
+CampuZHub is a student platform for learning, sharing resources, finding project ideas, and running code. The maintained application is the Django edition in `python_app/`. The public website address remains `campushub-python.vercel.app` while the displayed product branding changes.
 
 ## Production
 

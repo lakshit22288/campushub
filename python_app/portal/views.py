@@ -92,7 +92,7 @@ def branch_list(request):
 def health(request):
     if not settings.SUPABASE_DATABASE_CONFIGURED:
         return JsonResponse(
-            {"ok": False, "service": "CampusHub Python", "database": "not_configured"},
+            {"ok": False, "service": "CampuZHub Python", "database": "not_configured"},
             status=503,
         )
     try:
@@ -100,11 +100,11 @@ def health(request):
     except (OperationalError, ProgrammingError):
         logger.exception("Python app health check could not connect to PostgreSQL")
         return JsonResponse(
-            {"ok": False, "service": "CampusHub Python", "database": "disconnected"},
+            {"ok": False, "service": "CampuZHub Python", "database": "disconnected"},
             status=503,
         )
     return JsonResponse(
-        {"ok": True, "service": "CampusHub Python", "database": "connected"}
+        {"ok": True, "service": "CampuZHub Python", "database": "connected"}
     )
 
 
@@ -190,7 +190,7 @@ def login(request):
                         )
                 elif identity:
                     error = (
-                        "This email has been verified, but no CampusHub account is linked to it. "
+                        "This email has been verified, but no CampuZHub account is linked to it. "
                         "Please create an account."
                     )
                 else:
@@ -290,7 +290,7 @@ def complete_email_confirmation(request):
         or metadata.get("campushub_signup") is not True
     ):
         return JsonResponse(
-            {"error": "This verified email is not linked to a CampusHub signup."},
+            {"error": "This verified email is not linked to a CampuZHub signup."},
             status=400,
         )
 
@@ -342,7 +342,7 @@ def complete_email_confirmation(request):
         except IntegrityError:
             user = auth.find_user_by_email(email.strip().lower())
             if not user:
-                logger.exception("Could not create a verified CampusHub student")
+                logger.exception("Could not create a verified CampuZHub student")
                 return JsonResponse(
                     {"error": "We could not finish account setup. Please try again."},
                     status=500,
@@ -422,7 +422,7 @@ def google_profile(request):
                     values["semester"],
                 )
             except IntegrityError:
-                logger.exception("Could not create a CampusHub student after verified Google sign-in")
+                logger.exception("Could not create a CampuZHub student after verified Google sign-in")
                 form.add_error(None, "We could not create your account. Please try again shortly.")
             else:
                 auth.set_user_session(request, user)

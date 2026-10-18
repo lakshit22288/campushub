@@ -501,7 +501,7 @@ footer { margin-top: auto; padding: 28px; border-top: 1px solid rgba(226, 218, 2
   top: 44px;
   right: max(32px, calc((100vw - 1240px) / 2));
   color: rgba(200, 255, 61, .12);
-  content: "CH / 01";
+  content: "CZ / 01";
   font-size: 11px;
   font-weight: 800;
   letter-spacing: .14em;
@@ -835,7 +835,7 @@ footer { border-top-color: #dedacf; color: #756e7c; }
   .hero-card { padding: 0 0 0 18px; }
 }
 
-/* CampusHub editorial refresh */
+/* CampuZHub editorial refresh */
 .topbar {
   position: sticky;
   height: 74px;
@@ -1308,7 +1308,7 @@ footer { padding-block: 24px; }
   .idea-controls .btn { margin: 2px 0 0; }
 }
 
-/* Crisp CampusHub surfaces with lively, reduced-motion-aware interactions. */
+/* Crisp CampuZHub surfaces with lively, reduced-motion-aware interactions. */
 .topbar {
   border-bottom-color: #dedacf;
   background: #fffdf7;

@@ -51,7 +51,7 @@
           <h3>{{ note.title }}</h3>
           {% if note.description %}<p>{{ note.description }}</p>{% endif %}
           <div class="study-resource-footer">
-            <span>{% if note.created_by %}Uploaded by {{ note.created_by.name }}{% else %}CampusHub Study Studio{% endif %}</span>
+            <span>{% if note.created_by %}Uploaded by {{ note.created_by.name }}{% else %}CampuZHub Study Studio{% endif %}</span>
             {% if note.file_url %}<a class="text-link" href="{{ note.file_url }}" target="_blank" rel="noopener noreferrer">Open {{ note.file_name|default:"study guide" }} ↗</a>{% endif %}
           </div>
         </article>
