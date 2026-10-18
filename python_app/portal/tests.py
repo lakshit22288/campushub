@@ -286,6 +286,8 @@ class PortalPageTests(SimpleTestCase):
 
         self.assertEqual({group["code"] for group in groups}, set(BRANCH_TOOL_CATALOG))
         self.assertTrue(all(len(group["tools"]) >= 5 for group in groups))
+        cse_tools = next(group["tools"] for group in groups if group["code"] == "CSE")
+        self.assertNotIn("/tools/subnet/", [tool["route"] for tool in cse_tools])
 
     def test_selected_student_branch_gets_only_its_toolkit(self):
         branches = [

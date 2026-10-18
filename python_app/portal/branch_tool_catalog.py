@@ -8,7 +8,6 @@ BRANCH_TOOL_CATALOG = {
             ("DSA Practice", "Check core data-structure and algorithm concepts with short questions.", "/branch-tools/dsa-practice/"),
             ("Linux Command Practice", "Review common Linux commands and their purpose.", "/tools/linux/"),
             ("Git & GitHub Helper", "Choose a common version-control task and review the safe command sequence.", "/branch-tools/git-helper/"),
-            ("IPv4 Subnet Calculator", "Practice CIDR, network address, broadcast address and usable range.", "/tools/subnet/"),
         ),
     },
     "ME": {
