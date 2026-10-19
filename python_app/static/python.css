@@ -22,7 +22,12 @@
   border-color: var(--new-border);
   background: rgba(255, 253, 250, .94);
 }
-.campus-page .brand { gap: 0; }
+.campus-page .brand {
+  gap: 0;
+  min-height: 52px;
+}
+.campus-page .brand-wordmark { width: clamp(128px, 10vw, 180px); max-height: 44px; height: auto; }
+.campus-page .brand { padding: 6px 8px; }
 .campus-page .brand strong { color: #2d1b69; font-size: 15px; letter-spacing: .02em; }
 .campus-page .brand div > span { color: var(--new-muted); font-size: 11px; }
 .campus-page .mobile-menu { display: flex; align-items: center; }
@@ -446,7 +451,6 @@
   .campus-page *::before,
   .campus-page *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
 }
-
   .campus-page .campus-hero {
     color: #2d1b69;
     background: linear-gradient(115deg, rgba(200, 255, 61, .09), transparent 70%);
@@ -3138,4 +3142,219 @@ body.campus-page main .ideas-peer-card:focus-within {
   body.campus-page main .skillswap-directory-heading {
     align-items: flex-start;
   }
+}
+
+body.campus-page .topbar,
+body.code-lab-page .topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  width: 100%;
+  height: 76px;
+  margin: 0;
+  padding: 0 max(32px, calc((100vw - 1320px) / 2));
+  overflow: visible;
+  border: 0;
+  border-bottom: 1px solid rgba(45, 27, 105, .12);
+  border-radius: 0;
+  background: rgba(255, 253, 250, .97);
+  box-shadow: 0 4px 18px rgba(45, 27, 105, .035);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+body.campus-page .brand,
+body.code-lab-page .brand {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 42px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: #2d1b69;
+}
+body.campus-page .brand-wordmark,
+body.code-lab-page .brand-wordmark {
+  width: 148px;
+  max-height: 42px;
+}
+body.campus-page .mobile-menu,
+body.code-lab-page .mobile-menu {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+body.campus-page .topbar .nav,
+body.code-lab-page .topbar .nav {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: clamp(4px, .7vw, 12px);
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+body.campus-page .topbar .nav a,
+body.campus-page .topbar .nav-btn,
+body.code-lab-page .topbar .nav a,
+body.code-lab-page .topbar .nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  min-height: 44px;
+  padding: 8px 7px;
+  border: 0;
+  border-radius: 0;
+  color: #514b5d;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.15;
+  white-space: nowrap;
+  transition: color .18s ease;
+}
+body.campus-page .topbar .nav a:hover,
+body.campus-page .topbar .nav-btn:hover,
+body.code-lab-page .topbar .nav a:hover,
+body.code-lab-page .topbar .nav-btn:hover {
+  color: #2d1b69;
+  background: transparent;
+}
+body.campus-page .topbar .nav a.active:not(.nav-join),
+body.code-lab-page .topbar .nav a.active:not(.nav-join) {
+  color: #2d1b69;
+  background: transparent;
+  font-weight: 800;
+}
+body.campus-page .topbar .nav a.active:not(.nav-join)::after,
+body.code-lab-page .topbar .nav a.active:not(.nav-join)::after {
+  position: absolute;
+  right: 7px;
+  bottom: 2px;
+  left: 7px;
+  height: 2px;
+  border-radius: 2px;
+  background: #8fbf00;
+  content: "";
+}
+body.campus-page .topbar .nav .nav-join,
+body.campus-page .topbar .nav .nav-join:hover,
+body.code-lab-page .topbar .nav .nav-join,
+body.code-lab-page .topbar .nav .nav-join:hover {
+  margin-left: 5px;
+  padding: 11px 17px;
+  border: 0;
+  color: #21134f;
+  background: #c8ff3d;
+  border-radius: 999px;
+  box-shadow: none;
+}
+body.campus-page .topbar .nav .nav-join:hover,
+body.code-lab-page .topbar .nav .nav-join:hover {
+  background: #dcff7a;
+}
+body.campus-page .topbar .nav form,
+body.code-lab-page .topbar .nav form {
+  margin: 0;
+}
+body.campus-page .topbar .menu-btn,
+body.code-lab-page .topbar .menu-btn {
+  display: none;
+  padding: 10px 0 10px 14px;
+  border: 0;
+  border-radius: 0;
+  color: #2d1b69;
+  background: transparent;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 1180px) {
+  body.campus-page .topbar,
+  body.code-lab-page .topbar {
+    height: 70px;
+    padding-inline: 24px;
+  }
+  body.campus-page .topbar .menu-btn,
+  body.code-lab-page .topbar .menu-btn {
+    display: block;
+    cursor: pointer;
+  }
+  body.campus-page .topbar .nav,
+  body.code-lab-page .topbar .nav {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    left: auto;
+    display: none;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 3px;
+    width: min(310px, calc(100vw - 36px));
+    max-height: min(75vh, 560px);
+    overflow: auto;
+    padding: 8px;
+    border: 1px solid rgba(45, 27, 105, .12);
+    border-radius: 12px;
+    background: #fffdfa;
+    box-shadow: 0 16px 36px rgba(45, 27, 105, .12);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  body.campus-page .topbar .mobile-menu[open] > .nav,
+  body.code-lab-page .topbar .mobile-menu[open] > .nav {
+    display: flex;
+  }
+  body.campus-page .topbar .nav a,
+  body.campus-page .topbar .nav-btn,
+  body.code-lab-page .topbar .nav a,
+  body.code-lab-page .topbar .nav-btn {
+    justify-content: flex-start;
+    width: 100%;
+    min-height: 40px;
+    padding: 10px 12px;
+    border-radius: 7px;
+    font-size: 13px;
+  }
+  body.campus-page .topbar .nav a.active:not(.nav-join)::after,
+  body.code-lab-page .topbar .nav a.active:not(.nav-join)::after {
+    right: auto;
+    bottom: 9px;
+    left: 3px;
+    width: 3px;
+    height: 22px;
+    border-radius: 3px;
+  }
+  body.campus-page .topbar .nav .nav-join,
+  body.code-lab-page .topbar .nav .nav-join {
+    justify-content: center;
+    margin: 4px 0 0;
+  }
+  body.campus-page .topbar .nav form,
+  body.code-lab-page .topbar .nav form { width: 100%; }
+}
+
+@media (max-width: 600px) {
+  body.campus-page .topbar,
+  body.code-lab-page .topbar {
+    height: 64px;
+    padding-inline: 18px;
+  }
+  body.campus-page .brand-wordmark,
+  body.code-lab-page .brand-wordmark {
+    width: 132px;
+    max-height: 38px;
+  }
+  body.campus-page .topbar .menu-btn,
+  body.code-lab-page .topbar .menu-btn { padding: 9px 12px; }
 }

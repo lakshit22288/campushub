@@ -12,17 +12,14 @@
   <link rel="icon" type="image/svg+xml" href="{% static 'python/campuzhub-mark.svg' %}">
   <title>{% block title %}CampuZHub{% endblock %}</title>
   {% block structured_data %}{% endblock %}
-  <link rel="stylesheet" href="{% static 'styles/global.css' %}">
-  <link rel="stylesheet" href="{% static 'python/python.css' %}?v=33">
+  <link rel="stylesheet" href="{% static 'styles/global.css' %}?v=41">
+  <link rel="stylesheet" href="{% static 'python/python.css' %}?v=41">
 </head>
 <body class="{% block body_class %}campus-page{% endblock %}">
   <div class="app-shell">
     <header class="topbar">
       <a class="brand" href="/" aria-label="CampuZHub home">
-        <div class="brand-copy">
-          <img class="brand-wordmark" src="{% static 'python/campuzhub-wordmark.png' %}" alt="CampuZHub">
-          <span>Your campus, in one place.</span>
-        </div>
+        <img class="brand-wordmark" src="{% static 'python/campuzhub-wordmark.png' %}" alt="CampuZHub">
       </a>
       <details class="mobile-menu">
         <summary class="menu-btn">Menu</summary>
@@ -78,7 +75,7 @@
     (function () {
       var menu = document.querySelector(".mobile-menu");
       if (!menu || !window.matchMedia) return;
-      var desktop = window.matchMedia("(min-width: 981px)");
+      var desktop = window.matchMedia("(min-width: 1181px)");
       var syncMenu = function () { menu.open = desktop.matches; };
       syncMenu();
       if (desktop.addEventListener) desktop.addEventListener("change", syncMenu);

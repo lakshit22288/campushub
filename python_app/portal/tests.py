@@ -67,14 +67,15 @@ class PortalPageTests(SimpleTestCase):
         self.assertContains(response, '<a class="brand" href="/" aria-label="CampuZHub home">')
         self.assertContains(response, '<img class="brand-wordmark" src="/static/python/campuzhub-wordmark.png" alt="CampuZHub">')
         self.assertContains(response, '<link rel="icon" type="image/svg+xml" href="/static/python/campuzhub-mark.svg">')
-        self.assertContains(response, "Your campus, in one place.")
+        self.assertNotContains(response, "Your campus, in one place.")
         self.assertContains(response, '"name":"CampuZHub"')
         self.assertContains(response, "YOUR CAMPUS, IN MOTION")
         self.assertContains(response, "Learn something.")
         self.assertContains(response, "QUICK START / PYTHON")
         self.assertContains(response, "Computer Science / IT")
         self.assertContains(response, "/static/styles/global.css")
-        self.assertContains(response, "/static/python/python.css?v=33")
+        self.assertContains(response, "/static/styles/global.css?v=41")
+        self.assertContains(response, "/static/python/python.css?v=41")
         self.assertContains(response, 'name="description"')
         self.assertContains(
             response,
