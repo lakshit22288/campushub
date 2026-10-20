@@ -114,15 +114,18 @@ SQL_EXAMPLES = {
 
 LINUX_COMMANDS = (
     ("pwd", "Print the current directory"),
-    ("ls -la", "List files, including hidden entries"),
+    ("ls", "List files and directories"),
     ("cd <directory>", "Change the current directory"),
     ("mkdir <directory>", "Create a directory"),
     ("touch <file>", "Create an empty file"),
     ("cat <file>", "Print a file's contents"),
     ("grep <text> <file>", "Find matching lines in a file"),
+    ("echo <text> > <file>", "Write text into a file"),
     ("cp <source> <destination>", "Copy a file"),
     ("mv <source> <destination>", "Move or rename a file"),
     ("rm <file>", "Remove a file in this simulated terminal only"),
+    ("clear", "Clear the terminal output"),
+    ("help", "Show supported commands"),
 )
 
 SQL_ALLOWED_TABLES = {"students", "subjects", "enrollments"}

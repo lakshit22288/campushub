@@ -8,6 +8,7 @@
   const input = form.querySelector("input[name='command']");
   const output = terminal.querySelector(".linux-terminal-output");
   const clear = terminal.querySelector(".linux-clear");
+  const prompt = terminal.querySelector("#linux-prompt");
   const initialFiles = {
     "home": {
       "student": {
@@ -69,6 +70,19 @@
     return "/" + path.join("/");
   }
 
+  function displayPromptPath(path) {
+    const home = ["home", "student"];
+    if (path.length >= home.length && home.every((part, index) => path[index] === part)) {
+      const suffix = path.slice(home.length);
+      return suffix.length ? "~/" + suffix.join("/") : "~";
+    }
+    return displayPath(path);
+  }
+
+  function updatePrompt() {
+    prompt.textContent = "student@campushub:" + displayPromptPath(currentPath) + "$";
+  }
+
   function print(text, className) {
     const line = document.createElement("p");
     line.textContent = text;
@@ -83,7 +97,7 @@
     if (!command) return;
 
     if (command === "help") {
-      return "Commands: pwd, ls [-la] [path], cd <path>, cat <file>, grep <text> <file>, mkdir <dir>, touch <file>, echo <text> > <file>, cp <file> <file>, mv <file> <file>, rm <file>, clear.";
+      return "Commands: pwd, ls [path], cd <path>, cat <file>, grep <text> <file>, mkdir <dir>, touch <file>, echo <text> > <file>, cp <file> <destination>, mv <file> <destination>, rm <file>, clear.";
     }
     if (command === "pwd") return displayPath(currentPath);
     if (command === "ls") {
@@ -97,7 +111,8 @@
       const target = resolvePath(args[0] || "~");
       if (!target.node || typeof target.node !== "object") return "cd: directory not found";
       currentPath = args[0] === "~" ? ["home", "student"] : target.segments;
-      return "";
+      updatePrompt();
+      return "Directory changed to " + displayPromptPath(currentPath);
     }
     if (command === "cat") {
       const target = resolvePath(args[0] || "");
@@ -116,7 +131,9 @@
       if (!target) return command + ": invalid path";
       if (target.parent[target.name] !== undefined) return command + ": path already exists";
       target.parent[target.name] = command === "mkdir" ? {} : "";
-      return "";
+      return command === "mkdir"
+        ? "Created directory: " + target.name
+        : "Created file: " + target.name;
     }
     if (command === "echo") {
       const redirectIndex = args.indexOf(">");
@@ -127,7 +144,7 @@
         return "echo: destination must be a file path";
       }
       target.parent[target.name] = args.slice(0, redirectIndex).join(" ");
-      return "";
+      return "Saved text to " + path;
     }
     if (command === "cp" || command === "mv") {
       const source = parentFor(args[0] || "");
@@ -145,7 +162,7 @@
       ) return command + ": source and destination are the same file";
       destination.parent[destination.name] = source.parent[source.name];
       if (command === "mv") delete source.parent[source.name];
-      return "";
+      return (command === "cp" ? "Copied " : "Moved ") + source.name + " to " + destination.name;
     }
     if (command === "rm") {
       const target = parentFor(args[0] || "");
@@ -164,7 +181,7 @@
     event.preventDefault();
     const command = input.value.trim();
     if (!command) return;
-    print("student@campushub:" + (currentPath.join("/") === "home/student" ? "~" : displayPath(currentPath)) + "$ " + command, "linux-terminal-command");
+    print(prompt.textContent + " " + command, "linux-terminal-command");
     const result = run(command);
     if (result) print(result);
     input.value = "";

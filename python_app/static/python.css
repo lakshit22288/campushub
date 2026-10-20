@@ -1892,6 +1892,7 @@ body.campus-page main .linux-terminal-output code { color: #c8ff3d; }
 body.campus-page main .linux-terminal-output .linux-terminal-command { color: #c8ff3d; }
 body.campus-page main .linux-terminal-form {
   display: grid;
+  width: 100%;
   grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 8px;

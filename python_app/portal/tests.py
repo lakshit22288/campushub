@@ -2173,6 +2173,8 @@ class CampusToolTests(SimpleTestCase):
         self.assertContains(response, "Simulated Linux terminal")
         self.assertContains(response, "data-linux-terminal")
         self.assertContains(response, "temporary virtual filesystem")
+        self.assertContains(response, 'id="linux-prompt"')
+        self.assertContains(response, "Write text into a file")
         self.assertContains(response, "/static/python/linux-practice.js?v=1")
 
     def test_unknown_tool_slugs_return_not_found(self):
