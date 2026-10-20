@@ -28,7 +28,9 @@ New accounts are created in CampuZHub only after the confirmation link returns a
 
 The production health endpoint, database connection, Google OAuth provider redirect, and private bucket upload/signed-download path have been smoke-tested. Complete an account-based sign-in and authenticated workflow acceptance test after deployment; do not create test accounts or write sample records to the production database. Retain the legacy Vercel alias and Render compatibility service unless they are deliberately retired.
 
-The approved branch-specific diploma subject catalogs can be applied together with [`sql/replace_all_branch_subjects.sql`](sql/replace_all_branch_subjects.sql). It replaces subjects for CSE, Civil, Electrical, ECE, Mechanical, and MLT with the supplied branch-specific lists plus only the common subjects mapped to each branch. It does not add semester labels or unlisted general subjects. The transaction stops if any required branch is missing or any current subject has linked study notes; existing tools are detached from replaced subjects.
+The approved branch-specific diploma subject catalogs can be applied together with [`sql/replace_all_branch_subjects.sql`](sql/replace_all_branch_subjects.sql). It replaces subjects for CSE, Civil, Electrical, ECE, Mechanical, and MLT with the supplied branch-specific lists plus only the common subjects mapped to each branch. Repeated subject names automatically include their branch code. It does not add semester labels or unlisted general subjects. The transaction stops if any required branch is missing or any current subject has linked study notes; existing tools are detached from replaced subjects.
+
+[`sql/rename_duplicate_subjects_with_branch_code.sql`](sql/rename_duplicate_subjects_with_branch_code.sql) adds branch-code suffixes to the current duplicated subject names without changing subject IDs or linked records.
 
 [`sql/remove_cse_elective.sql`](sql/remove_cse_elective.sql) removes only the CSE Elective entry from that catalog; it refuses to run if study notes are attached.
 

@@ -37,10 +37,7 @@ WHERE branch_id IN (
   SELECT id FROM branches WHERE code IN ('CSE', 'CE', 'EE', 'ECE', 'ME', 'MLT')
 );
 
-INSERT INTO subjects (branch_id, name, slug)
-SELECT branches.id, catalog.name, catalog.slug
-FROM branches
-JOIN (
+WITH catalog(code, name, slug) AS (
   VALUES
     ('CSE', 'Computer Fundamentals', 'computer-fundamentals'),
     ('CSE', 'Programming in C', 'programming-in-c'),
@@ -175,7 +172,24 @@ JOIN (
     ('MLT', 'Clinical Biochemistry - IV', 'clinical-biochemistry-iv'),
     ('MLT', 'Histopathology & Cytology - II', 'histopathology-and-cytology-ii'),
     ('MLT', 'Medical Laboratory Management', 'medical-laboratory-management')
-) AS catalog(code, name, slug) ON catalog.code = branches.code
+),
+shared_subjects AS (
+  SELECT name
+  FROM catalog
+  GROUP BY name
+  HAVING COUNT(DISTINCT code) > 1
+)
+INSERT INTO subjects (branch_id, name, slug)
+SELECT
+  branches.id,
+  CASE
+    WHEN shared_subjects.name IS NOT NULL THEN catalog.name || ' (' || catalog.code || ')'
+    ELSE catalog.name
+  END,
+  catalog.slug
+FROM branches
+JOIN catalog ON catalog.code = branches.code
+LEFT JOIN shared_subjects ON shared_subjects.name = catalog.name
 WHERE branches.code IN ('CSE', 'CE', 'EE', 'ECE', 'ME', 'MLT');
 
 COMMIT;
