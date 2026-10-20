@@ -163,6 +163,73 @@ class PortalPageTests(SimpleTestCase):
         self.assertIn("skill_name__icontains', 'design'", search_filter)
         self.assertNotIn("Python design", search_filter)
 
+    @patch("portal.features._session_user")
+    @patch("portal.features.Subject.objects.select_related")
+    def test_global_search_finds_subjects_across_branches(
+        self, subjects_query, user_query
+    ):
+        user_query.return_value = SimpleNamespace(
+            role="student", branch_id=uuid.uuid4()
+        )
+        subject = SimpleNamespace(
+            id=uuid.uuid4(),
+            name="Applied Mathematics (ECE)",
+            branch=SimpleNamespace(name="Electronics and Communication Engineering", code="ECE"),
+        )
+        subjects_query.return_value.filter.return_value = [subject]
+
+        response = self.client.get(
+            "/search/", {"q": "Applied Mathematics", "category": "subjects"}
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Applied Mathematics (ECE)")
+        self.assertContains(response, "ECE · Subject hub")
+        subjects_query.return_value.filter.assert_called_once()
+
+    @patch("portal.features._session_user", return_value=None)
+    @patch("portal.features.CampusEvent.objects.select_related")
+    def test_global_search_includes_public_campus_events(
+        self, events_query, user_query
+    ):
+        event = SimpleNamespace(
+            title="Engineering open day",
+            description="Meet the campus engineering clubs.",
+            location="Main hall",
+            target_branch=None,
+        )
+        query = MagicMock()
+        query.filter.return_value = query
+        query.__getitem__.return_value = [event]
+        events_query.return_value = query
+
+        response = self.client.get(
+            "/search/", {"q": "engineering", "category": "events"}
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Engineering open day")
+        self.assertContains(response, "Main hall · Campus-wide")
+        self.assertContains(response, "/campus/")
+        self.assertIn("target_branch__isnull", repr(query.filter.call_args_list))
+
+    @patch("portal.features._session_user", return_value=None)
+    @patch("portal.features.Announcement.objects.select_related")
+    def test_global_search_only_includes_public_announcements_for_guests(
+        self, announcements_query, user_query
+    ):
+        query = MagicMock()
+        query.filter.return_value = query
+        query.__getitem__.return_value = []
+        announcements_query.return_value = query
+
+        response = self.client.get(
+            "/search/", {"q": "exam", "category": "announcements"}
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("target_branch__isnull", repr(query.filter.call_args_list))
+
     @patch("portal.features.Skill.objects.select_related")
     def test_global_search_category_filter_has_a_useful_empty_state(self, skills_query):
         skills_query.return_value.filter.return_value = []

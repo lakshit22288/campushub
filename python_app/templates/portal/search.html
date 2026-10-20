@@ -2,7 +2,7 @@
 {% block title %}{% if query %}Search: {{ query }}{% else %}Search CampuZHub{% endif %}{% endblock %}
 {% block robots %}noindex,nofollow{% endblock %}
 {% block content %}
-<section class="page-header search-page-header"><div class="container"><span class="eyebrow">ONE SEARCH, ALL YOUR CAMPUS</span><h1>Find what you need.</h1><p>Explore subjects, learning materials, campus tools, peer listings and project inspiration.</p></div></section>
+<section class="page-header search-page-header"><div class="container"><span class="eyebrow">ONE SEARCH, ALL YOUR CAMPUS</span><h1>Find what you need.</h1><p>Explore subjects, learning materials, campus tools and events, peer listings and project inspiration.</p></div></section>
 <section class="container section search-page-content">
   <form method="get" class="global-search-form">
     <label for="global-query">Search CampuZHub</label>
@@ -34,7 +34,7 @@
     </div>
     {% if has_more_results %}<p class="search-limit-note">Showing the most relevant 60 matches. Choose a category to narrow your results.</p>{% endif %}
   {% else %}
-    <div class="search-hint"><span class="eyebrow">SEARCH TIPS</span><p>Use a few words rather than an exact sentence. Search checks titles and useful context across subjects, study resources, tools, available books, skills, student projects, help requests, announcements, branches and project ideas.</p></div>
+    <div class="search-hint"><span class="eyebrow">SEARCH TIPS</span><p>Use a few words rather than an exact sentence. Search checks titles and useful context across subjects in every branch, study resources, tools, campus events, available books, skills, student projects, help requests, announcements, branches and project ideas.</p></div>
   {% endif %}
 </section>
 {% endblock %}

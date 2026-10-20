@@ -27,6 +27,7 @@
           {% if request.resolver_match.url_name == "compiler" %}
           <a href="{% url 'branchhub' %}" {% if request.resolver_match.url_name == "branchhub" or request.resolver_match.url_name == "subject_detail" %}class="active" aria-current="page"{% endif %}>BranchHub</a>
           <a href="{% url 'compiler' %}" {% if request.resolver_match.url_name == "compiler" %}class="active" aria-current="page"{% endif %}>Code Lab</a>
+          <a href="{% url 'search' %}" {% if request.resolver_match.url_name == "search" %}class="active" aria-current="page"{% endif %}>Search</a>
           <a href="{% url 'project_ideas' %}" {% if request.resolver_match.url_name == "project_ideas" %}class="active" aria-current="page"{% endif %}>Project ideas</a>
           <a href="{% url 'bookshare' %}" {% if request.resolver_match.url_name == "bookshare" %}class="active" aria-current="page"{% endif %}>BookShare</a>
           <a href="{% url 'skillswap' %}" {% if request.resolver_match.url_name == "skillswap" %}class="active" aria-current="page"{% endif %}>SkillSwap</a>

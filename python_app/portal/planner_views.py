@@ -1,11 +1,15 @@
 from django.contrib import messages
 from django.conf import settings
-from django.db.models import Q
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
-from .features import ADMIN_ROLES, _session_user, _uuid_or_none, signed_in_user
+from .features import (
+    _for_visible_campus_branch,
+    _session_user,
+    _uuid_or_none,
+    signed_in_user,
+)
 from .forms import AssignmentEntryForm, ScheduleEntryForm
 from .models import Announcement, AssignmentEntry, CampusEvent, ScheduleEntry
 from .storage import sign_storage_references
@@ -28,18 +32,8 @@ def campus_board(request):
     events = CampusEvent.objects.select_related("target_branch").filter(
         ends_at__gte=timezone.now()
     )
-    branch_id = user.branch_id if user else None
-    if not user or user.role not in ADMIN_ROLES:
-        if branch_id:
-            notices = notices.filter(
-                Q(target_branch_id=branch_id) | Q(target_branch__isnull=True)
-            )
-            events = events.filter(
-                Q(target_branch_id=branch_id) | Q(target_branch__isnull=True)
-            )
-        else:
-            notices = notices.filter(target_branch__isnull=True)
-            events = events.filter(target_branch__isnull=True)
+    notices = _for_visible_campus_branch(notices, user)
+    events = _for_visible_campus_branch(events, user)
     notices = list(notices.order_by("-created_at")[:30])
     if sign_storage_references(notices, "attachment_url"):
         messages.error(

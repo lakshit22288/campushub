@@ -35,6 +35,7 @@ from .models import (
     Book,
     BookRequest,
     Branch,
+    CampusEvent,
     HelpRequest,
     Note,
     Project,
@@ -66,6 +67,7 @@ SEARCH_CATEGORIES = (
     ("subjects", "Subjects"),
     ("resources", "Study resources"),
     ("tools", "Tools"),
+    ("events", "Campus events"),
     ("books", "BookShare"),
     ("skills", "SkillSwap"),
     ("projects", "Projects"),
@@ -88,6 +90,16 @@ def _search_filter(terms, fields):
             term_match |= Q(**{f"{field}__icontains": term})
         combined &= term_match
     return combined
+
+
+def _for_visible_campus_branch(queryset, user):
+    if user and user.role in ADMIN_ROLES:
+        return queryset
+    if user and user.branch_id:
+        return queryset.filter(
+            Q(target_branch_id=user.branch_id) | Q(target_branch__isnull=True)
+        )
+    return queryset.filter(target_branch__isnull=True)
 
 
 def signed_in_user(view):
@@ -784,12 +796,6 @@ def global_search(request):
             subject_matches = Subject.objects.select_related("branch").filter(
                 _search_filter(terms, ("name", "slug", "branch__name", "branch__code"))
             )
-            if search_user and search_user.role not in ADMIN_ROLES:
-                subject_matches = (
-                    subject_matches.filter(branch_id=search_user.branch_id)
-                    if search_user.branch_id
-                    else subject_matches.none()
-                )
             subjects = take_first_results(subject_matches)
             for subject in subjects:
                 add_result(
@@ -979,9 +985,42 @@ def global_search(request):
                     f"/help/?q={quote(help_request.title)}",
                 )
 
+        if include("events"):
+            events = CampusEvent.objects.select_related("target_branch").filter(
+                ends_at__gte=timezone.now()
+            )
+            events = _for_visible_campus_branch(events, search_user)
+            events = take_first_results(
+                events.filter(
+                    _search_filter(
+                        terms,
+                        (
+                            "title",
+                            "description",
+                            "location",
+                            "target_branch__name",
+                            "target_branch__code",
+                        ),
+                    )
+                )
+            )
+            for event in events:
+                branch = event.target_branch.code if event.target_branch else "Campus-wide"
+                add_result(
+                    "Campus event",
+                    event.title,
+                    event.description,
+                    f"{event.location} · {branch}" if event.location else branch,
+                    "/campus/",
+                )
+
         if include("announcements"):
+            announcement_matches = Announcement.objects.select_related("target_branch")
+            announcement_matches = _for_visible_campus_branch(
+                announcement_matches, search_user
+            )
             announcements = take_first_results(
-                Announcement.objects.select_related("target_branch").filter(
+                announcement_matches.filter(
                     _search_filter(
                         terms,
                         ("title", "message", "target_branch__name", "target_branch__code"),
