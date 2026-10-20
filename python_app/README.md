@@ -30,6 +30,8 @@ The production health endpoint, database connection, Google OAuth provider redir
 
 The approved Civil Engineering diploma subject catalog can be applied with [`sql/replace_civil_subjects.sql`](sql/replace_civil_subjects.sql). It replaces CE subjects with the supplied syllabus list, excludes Applied Mathematics, Applied Physics, and Applied Chemistry, and does not add semester labels. The script stops if the CE branch is missing or if its existing subjects have linked study notes; existing tools are detached from replaced subjects.
 
+The approved Computer Science Engineering diploma catalog can be applied with [`sql/replace_cse_subjects.sql`](sql/replace_cse_subjects.sql). It replaces CSE subjects with the supplied syllabus list, including Applied Mathematics, Applied Physics, Industrial Training, and Elective, without semester labels. The script stops if the CSE branch is missing or existing subjects have linked study notes; existing tools are detached from replaced subjects.
+
 ## Local setup
 
 From the repository root in PowerShell:
