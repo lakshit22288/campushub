@@ -28,6 +28,8 @@ New accounts are created in CampuZHub only after the confirmation link returns a
 
 The production health endpoint, database connection, Google OAuth provider redirect, and private bucket upload/signed-download path have been smoke-tested. Complete an account-based sign-in and authenticated workflow acceptance test after deployment; do not create test accounts or write sample records to the production database. Retain the legacy Vercel alias and Render compatibility service unless they are deliberately retired.
 
+The approved Civil Engineering diploma subject catalog can be applied with [`sql/replace_civil_subjects.sql`](sql/replace_civil_subjects.sql). It replaces CE subjects with the supplied syllabus list, excludes Applied Mathematics, Applied Physics, and Applied Chemistry, and does not add semester labels. The script stops if the CE branch is missing or if its existing subjects have linked study notes; existing tools are detached from replaced subjects.
+
 ## Local setup
 
 From the repository root in PowerShell:
