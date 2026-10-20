@@ -75,7 +75,7 @@ class PortalPageTests(SimpleTestCase):
         self.assertContains(response, "Computer Science / IT")
         self.assertContains(response, "/static/styles/global.css")
         self.assertContains(response, "/static/styles/global.css?v=44")
-        self.assertContains(response, "/static/python/python.css?v=44")
+        self.assertContains(response, "/static/python/python.css?v=45")
         self.assertContains(response, 'name="description"')
         self.assertContains(
             response,

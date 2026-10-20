@@ -3683,3 +3683,13 @@ body.campus-page main .campus-board-content .planner-list > .empty {
   body.campus-page main .campus-board-content { width: min(100% - 36px, 560px); }
   body.campus-page main .campus-board-content { grid-template-columns: 1fr; gap: 28px; }
 }
+
+body.campus-page .topbar .nav .nav-logout,
+body.campus-page .topbar .nav .nav-logout:hover {
+  border: 0;
+  border-radius: 999px;
+  color: #fff;
+  background: #dc3545;
+  font-weight: 750;
+}
+body.campus-page .topbar .nav .nav-logout:hover { background: #bb2d3b; }

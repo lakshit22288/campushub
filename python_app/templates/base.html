@@ -13,7 +13,7 @@
   <title>{% block title %}CampuZHub{% endblock %}</title>
   {% block structured_data %}{% endblock %}
   <link rel="stylesheet" href="{% static 'styles/global.css' %}?v=44">
-  <link rel="stylesheet" href="{% static 'python/python.css' %}?v=44">
+  <link rel="stylesheet" href="{% static 'python/python.css' %}?v=45">
 </head>
 <body class="{% block body_class %}campus-page{% endblock %}">
   <div class="app-shell">
@@ -50,7 +50,7 @@
           {% if campushub_user %}
           {% if request.resolver_match.url_name != "compiler" %}<a href="{% url 'profile' %}">My profile</a>{% endif %}
           {% if campushub_user.role == "admin" or campushub_user.role == "super_admin" or campushub_user.role == "teacher" or campushub_user.role == "moderator" %}<a href="{% url 'admin' %}">Admin</a>{% endif %}
-          <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="nav-btn" type="submit">Log out</button></form>
+          <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="nav-btn nav-logout" type="submit">Log out</button></form>
           {% else %}
           <a href="{% url 'login' %}">Log in</a>
           {% if request.resolver_match.url_name == "compiler" %}
