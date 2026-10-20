@@ -74,8 +74,8 @@ class PortalPageTests(SimpleTestCase):
         self.assertContains(response, "QUICK START / PYTHON")
         self.assertContains(response, "Computer Science / IT")
         self.assertContains(response, "/static/styles/global.css")
-        self.assertContains(response, "/static/styles/global.css?v=41")
-        self.assertContains(response, "/static/python/python.css?v=41")
+        self.assertContains(response, "/static/styles/global.css?v=44")
+        self.assertContains(response, "/static/python/python.css?v=44")
         self.assertContains(response, 'name="description"')
         self.assertContains(
             response,
@@ -381,7 +381,7 @@ class PortalPageTests(SimpleTestCase):
     @patch("portal.features.User.objects.filter")
     @patch("portal.features.Branch.objects.all")
     @patch("portal.features.Subject.objects.select_related")
-    def test_branchhub_ignores_another_branch_filter_for_students(
+    def test_branchhub_allows_students_to_filter_another_branch(
         self, subjects_query, branches_query, user_query
     ):
         own_branch_id, other_branch_id = uuid.uuid4(), uuid.uuid4()
@@ -415,9 +415,9 @@ class PortalPageTests(SimpleTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             [subject.name for subject in response.context["page_obj"].object_list],
-            ["Algorithms"],
+            ["Circuits"],
         )
-        self.assertEqual(response.context["branch_filter"], str(own_branch_id))
+        self.assertEqual(response.context["branch_filter"], str(other_branch_id))
 
     @patch("portal.features.Tool.objects.filter", return_value=[])
     @patch("portal.features.User.objects.filter")
@@ -476,8 +476,9 @@ class PortalPageTests(SimpleTestCase):
     @patch("portal.features.Note.objects.filter")
     @patch("portal.features.get_object_or_404")
     @patch("portal.features.User.objects.filter")
-    def test_subject_detail_denies_students_from_other_branches(
-        self, user_query, get_subject, notes_filter
+    @patch("portal.features.Tool.objects.filter", return_value=[])
+    def test_subject_detail_allows_students_from_other_branches(
+        self, tools_filter, user_query, get_subject, notes_filter
     ):
         user = SimpleNamespace(
             id=uuid.uuid4(),
@@ -487,15 +488,18 @@ class PortalPageTests(SimpleTestCase):
         subject = SimpleNamespace(
             id=uuid.uuid4(),
             branch_id=uuid.uuid4(),
+            branch=SimpleNamespace(name="Electrical Engineering", code="EE"),
         )
         self.set_logged_in_user(user.id)
         user_query.return_value.first.return_value = user
         get_subject.return_value = subject
+        notes_filter.return_value.select_related.return_value = []
 
         response = self.client.get(f"/branchhub/subjects/{subject.id}/")
 
-        self.assertRedirects(response, "/branchhub/", fetch_redirect_response=False)
-        notes_filter.assert_not_called()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["subject"], subject)
+        self.assertEqual(notes_filter.call_count, 2)
 
     def test_teacher_note_form_cannot_choose_ai_material(self):
         teacher_form = NoteForm(user_role="teacher")

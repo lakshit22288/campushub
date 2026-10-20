@@ -1032,6 +1032,7 @@ main { flex: 1; }
 .page-header {
   position: relative;
   width: min(1220px, calc(100% - 64px));
+  margin-inline: auto;
   padding: 68px 0 30px;
 }
 .page-header::after {

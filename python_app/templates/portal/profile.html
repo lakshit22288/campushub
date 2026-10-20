@@ -2,8 +2,8 @@
 {% block title %}My profile · CampuZHub{% endblock %}
 {% block robots %}noindex,nofollow{% endblock %}
 {% block content %}
-<section class="page-header"><div class="container"><span class="eyebrow">YOUR CAMPUS IDENTITY</span><h1>My profile.</h1><p>Keep your branch and semester current so peers can find the right community.</p></div></section>
-<section class="container section profile-layout">
+<section class="page-header profile-page-header"><div class="container"><span class="eyebrow">YOUR CAMPUS IDENTITY</span><h1>My profile.</h1><p>Keep your branch and semester current so peers can find the right community.</p></div></section>
+<section class="container section profile-layout profile-page-layout">
   <form method="post" class="content-card form profile-form">{% csrf_token %}
     {% if form.non_field_errors %}<div class="error" role="alert">{{ form.non_field_errors }}</div>{% endif %}
     {% for field in form %}<label for="{{ field.id_for_label }}">{{ field.label }}{{ field }}{% if field.errors %}<span class="error">{{ field.errors }}</span>{% endif %}</label>{% endfor %}

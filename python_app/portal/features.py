@@ -148,18 +148,7 @@ def branchhub(request):
     selected_branch_id = _uuid_or_none(request.GET.get("branch"))
     selected_branch = None
     subjects = Subject.objects.select_related("branch")
-    user = _session_user(request)
-    if user and user.role not in ADMIN_ROLES:
-        selected_branch_id = user.branch_id
-        if selected_branch_id:
-            selected_branch = next(
-                (branch for branch in branches if branch.id == selected_branch_id),
-                None,
-            )
-            subjects = subjects.filter(branch_id=selected_branch_id)
-        else:
-            subjects = subjects.none()
-    elif selected_branch_id:
+    if selected_branch_id:
         selected_branch = next(
             (branch for branch in branches if branch.id == selected_branch_id),
             None,
@@ -184,12 +173,6 @@ def branchhub(request):
 @signed_in_user
 def subject_detail(request, subject_id):
     subject = get_object_or_404(Subject.objects.select_related("branch"), id=subject_id)
-    user = request.campushub_user
-    if user.role not in ADMIN_ROLES and (
-        not user.branch_id or user.branch_id != subject.branch_id
-    ):
-        messages.error(request, "You can only access study resources for your assigned branch.")
-        return redirect("branchhub")
     teacher_notes = Note.objects.filter(
         subject=subject,
         source_type=Note.SOURCE_TEACHER,
