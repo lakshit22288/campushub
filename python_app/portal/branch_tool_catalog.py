@@ -31,7 +31,7 @@ BRANCH_TOOL_CATALOG = {
         ),
     },
     "ECE": {
-        "name": "Electronics Engineering",
+        "name": "Electronics and Communication Engineering (ECE)",
         "tools": (
             ("Logic Gate Helper", "Inspect truth-table outputs for common logic gates.", "/tools/logic-gates/"),
             ("Resistor Colour Code", "Decode a four-band resistor value and tolerance.", "/branch-tools/resistor-colour-code/"),

@@ -282,7 +282,7 @@ class PortalPageTests(SimpleTestCase):
                 ("CE", "Civil Engineering"),
                 ("CSE", "Computer Science / IT"),
                 ("EE", "Electrical Engineering"),
-                ("ECE", "Electronics Engineering"),
+                ("ECE", "Electronics and Communication Engineering (ECE)"),
                 ("ME", "Mechanical Engineering"),
                 ("MLT", "Medical Laboratory Technology"),
             )
