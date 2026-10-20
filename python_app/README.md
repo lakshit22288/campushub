@@ -30,6 +30,8 @@ The production health endpoint, database connection, Google OAuth provider redir
 
 The approved branch-specific diploma subject catalogs can be applied together with [`sql/replace_all_branch_subjects.sql`](sql/replace_all_branch_subjects.sql). It replaces subjects for CSE, Civil, Electrical, ECE, Mechanical, and MLT with the supplied branch-specific lists plus only the common subjects mapped to each branch. It does not add semester labels or unlisted general subjects. The transaction stops if any required branch is missing or any current subject has linked study notes; existing tools are detached from replaced subjects.
 
+[`sql/remove_cse_elective.sql`](sql/remove_cse_elective.sql) removes only the CSE Elective entry from that catalog; it refuses to run if study notes are attached.
+
 The ECE branch display name can be updated with [`sql/rename_ece_branch.sql`](sql/rename_ece_branch.sql), which renames its existing `ECE` record without changing its ID or code.
 
 ## Local setup

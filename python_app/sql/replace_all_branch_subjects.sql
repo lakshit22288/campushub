@@ -65,8 +65,6 @@ JOIN (
     ('CSE', 'Fundamental of Electrical and Electronics Engineering', 'fundamental-electrical-and-electronics-engineering'),
     ('CSE', 'Computer Networks', 'computer-networks'),
     ('CSE', 'Microprocessor and Peripheral Devices', 'microprocessor-and-peripheral-devices'),
-    ('CSE', 'Elective', 'elective'),
-
     ('CE', 'Applied Mechanics', 'applied-mechanics'),
     ('CE', 'Fluid Mechanics', 'fluid-mechanics'),
     ('CE', 'Structural Mechanics', 'structural-mechanics'),
