@@ -1,6 +1,7 @@
 import ipaddress
 import math
 import re
+import sqlite3
 from decimal import Decimal, DivisionByZero, InvalidOperation
 
 from django import forms
@@ -13,8 +14,8 @@ TOOL_TITLES = {
     "cgpa": "CGPA Calculator",
     "units": "Unit Converter",
     "python": "Python Basics Practice",
-    "sql": "SQL Query Practice",
-    "linux": "Linux Command Helper",
+    "sql": "SQL Query Lab",
+    "linux": "Linux Command Practice",
     "subnet": "IPv4 Subnet Calculator",
     "ohms-law": "Ohm's Law Calculator",
     "power": "Power Calculator",
@@ -95,28 +96,44 @@ PYTHON_EXERCISES = (
 )
 
 SQL_EXAMPLES = {
-    "select": "SELECT name, branch FROM students WHERE semester = 4 ORDER BY name;",
+    "select": "SELECT name, branch, semester, cgpa\nFROM students\nWHERE semester >= 3\nORDER BY cgpa DESC;",
     "join": (
-        "SELECT students.name, branches.name AS branch\n"
+        "SELECT students.name, subjects.name AS subject, enrollments.score\n"
         "FROM students\n"
-        "JOIN branches ON students.branch_id = branches.id;"
+        "JOIN enrollments ON enrollments.student_id = students.id\n"
+        "JOIN subjects ON subjects.id = enrollments.subject_id\n"
+        "ORDER BY students.name, subjects.name;"
     ),
     "aggregate": (
-        "SELECT branch_id, COUNT(*) AS student_count\n"
+        "SELECT branch, COUNT(*) AS student_count, ROUND(AVG(cgpa), 2) AS average_cgpa\n"
         "FROM students\n"
-        "GROUP BY branch_id;"
+        "GROUP BY branch\n"
+        "ORDER BY student_count DESC;"
     ),
 }
 
 LINUX_COMMANDS = (
-    ("ls", "List files"),
-    ("cd", "Change directory"),
-    ("pwd", "Show current directory"),
-    ("mkdir", "Create directory"),
-    ("cp", "Copy files"),
-    ("mv", "Move or rename files"),
-    ("rm", "Remove files"),
-    ("grep", "Search text"),
+    ("pwd", "Print the current directory"),
+    ("ls -la", "List files, including hidden entries"),
+    ("cd <directory>", "Change the current directory"),
+    ("mkdir <directory>", "Create a directory"),
+    ("touch <file>", "Create an empty file"),
+    ("cat <file>", "Print a file's contents"),
+    ("grep <text> <file>", "Find matching lines in a file"),
+    ("cp <source> <destination>", "Copy a file"),
+    ("mv <source> <destination>", "Move or rename a file"),
+    ("rm <file>", "Remove a file in this simulated terminal only"),
+)
+
+SQL_ALLOWED_TABLES = {"students", "subjects", "enrollments"}
+SQL_ALLOWED_FUNCTIONS = {
+    "abs", "avg", "coalesce", "count", "ifnull", "length", "lower", "max",
+    "min", "round", "substr", "sum", "upper",
+}
+SQL_EXAMPLE_OPTIONS = (
+    ("select", "Filter and sort students"),
+    ("join", "Join enrollment tables"),
+    ("aggregate", "Group and aggregate students"),
 )
 
 
@@ -246,7 +263,7 @@ class PythonPracticeForm(forms.Form):
 class SqlPracticeForm(forms.Form):
     example = forms.ChoiceField(
         label="Example",
-        choices=(("select", "Filter and sort"), ("join", "Join tables"), ("aggregate", "Group and count")),
+        choices=SQL_EXAMPLE_OPTIONS,
         initial="select",
     )
     query = forms.CharField(
@@ -395,12 +412,30 @@ def _calculate_dilution(data):
 
 
 def _format_sql(query):
-    query = re.sub(r"\s+", " ", query.strip())
+    protected = []
+
+    def replace_protected(match):
+        protected.append(match.group(0))
+        return f"__CHSQLTOKEN{len(protected) - 1}__"
+
+    token_pattern = re.compile(
+        r"'(?:''|[^'])*'|\"(?:\"\"|[^\"])*\"|`(?:``|[^`])*`|\[[^\]]*\]"
+        r"|--[^\r\n]*(?:\r?\n|$)|/\*[\s\S]*?\*/"
+    )
+    prefix = "__CHSQLTOKEN"
+    while prefix in query:
+        prefix += "X"
+    query = token_pattern.sub(
+        lambda match: replace_protected(match).replace("__CHSQLTOKEN", prefix),
+        query.strip(),
+    )
+    query = re.sub(r"\s+", " ", query)
     keywords = (
         "LEFT JOIN|RIGHT JOIN|INNER JOIN|GROUP BY|ORDER BY|INSERT INTO|DELETE FROM|"
-        "SELECT|FROM|WHERE|JOIN|ON|HAVING|LIMIT|VALUES|SET|AS|AND|OR|DESC|ASC"
+        "SELECT|FROM|WHERE|JOIN|ON|HAVING|LIMIT|VALUES|SET|AS|AND|OR|DESC|ASC|"
+        "UPDATE|CREATE TABLE|DROP TABLE|UNION ALL|UNION"
     )
-    return re.sub(
+    formatted = re.sub(
         rf"\b({keywords})\b",
         lambda match: f"\n{match.group(1).upper()}" if match.group(1).upper() in {
             "FROM", "WHERE", "JOIN", "LEFT JOIN", "RIGHT JOIN", "INNER JOIN",
@@ -409,6 +444,99 @@ def _format_sql(query):
         query,
         flags=re.IGNORECASE,
     ).strip()
+    for index, value in enumerate(protected):
+        formatted = formatted.replace(f"{prefix}{index}__", value)
+    return formatted
+
+
+def _run_sql_demo(query):
+    if not re.match(r"^(SELECT|WITH)\b", query.lstrip(), flags=re.IGNORECASE):
+        return None, None, False, "Only SELECT queries and read-only CTEs are allowed."
+
+    connection = sqlite3.connect(":memory:")
+    try:
+        connection.executescript(
+            """
+            CREATE TABLE students (
+                id INTEGER PRIMARY KEY,
+                name TEXT NOT NULL,
+                branch TEXT NOT NULL,
+                semester INTEGER NOT NULL,
+                cgpa REAL NOT NULL
+            );
+            CREATE TABLE subjects (
+                id INTEGER PRIMARY KEY,
+                name TEXT NOT NULL,
+                branch TEXT NOT NULL,
+                credits INTEGER NOT NULL
+            );
+            CREATE TABLE enrollments (
+                student_id INTEGER NOT NULL,
+                subject_id INTEGER NOT NULL,
+                score INTEGER NOT NULL
+            );
+            INSERT INTO students VALUES
+                (1, 'Aarav Shah', 'CSE', 3, 8.6),
+                (2, 'Diya Patel', 'CSE', 4, 9.1),
+                (3, 'Kabir Rao', 'ECE', 3, 7.8),
+                (4, 'Meera Singh', 'CSE', 5, 8.9),
+                (5, 'Ishaan Das', 'EE', 4, 8.2);
+            INSERT INTO subjects VALUES
+                (1, 'Data Structures', 'CSE', 4),
+                (2, 'Database Systems', 'CSE', 3),
+                (3, 'Computer Networks', 'CSE', 4),
+                (4, 'Digital Electronics', 'ECE', 3);
+            INSERT INTO enrollments VALUES
+                (1, 1, 86), (1, 2, 82), (2, 1, 94), (2, 2, 91),
+                (3, 4, 79), (4, 2, 88), (4, 3, 92), (5, 4, 84);
+            """
+        )
+
+        def authorize(action, first, second, _database, _source):
+            if action == sqlite3.SQLITE_SELECT:
+                return sqlite3.SQLITE_OK
+            if action == sqlite3.SQLITE_READ and first in SQL_ALLOWED_TABLES:
+                return sqlite3.SQLITE_OK
+            if (
+                action == sqlite3.SQLITE_FUNCTION
+                and (second or "").lower() in SQL_ALLOWED_FUNCTIONS
+            ):
+                return sqlite3.SQLITE_OK
+            recursive_action = getattr(sqlite3, "SQLITE_RECURSIVE", None)
+            if recursive_action is not None and action == recursive_action:
+                return sqlite3.SQLITE_OK
+            return sqlite3.SQLITE_DENY
+
+        for limit_name, limit_value in (
+            ("SQLITE_LIMIT_LENGTH", 16_384),
+            ("SQLITE_LIMIT_SQL_LENGTH", 5_000),
+            ("SQLITE_LIMIT_COLUMN", 50),
+            ("SQLITE_LIMIT_COMPOUND_SELECT", 10),
+        ):
+            limit = getattr(sqlite3, limit_name, None)
+            if limit is not None:
+                connection.setlimit(limit, limit_value)
+        connection.set_authorizer(authorize)
+        remaining_steps = [100]
+
+        def stop_expensive_query():
+            remaining_steps[0] -= 1
+            return remaining_steps[0] <= 0
+
+        connection.set_progress_handler(stop_expensive_query, 1_000)
+        cursor = connection.execute(query)
+        if cursor.description is None:
+            return None, None, False, "This query did not return a result table."
+        columns = [column[0] for column in cursor.description]
+        if len(columns) > 50:
+            return None, None, False, "Results can contain at most 50 columns."
+        rows = cursor.fetchmany(51)
+        truncated = len(rows) > 50
+        return columns, rows[:50], truncated, None
+    except sqlite3.Error as error:
+        return None, None, False, f"Query could not run: {error}"
+    finally:
+        connection.close()
 
 
 @require_http_methods(["GET", "POST"])
@@ -420,6 +548,10 @@ def tool_detail(request, slug):
     form = None
     result = None
     result_detail = None
+    sql_columns = None
+    sql_rows = None
+    sql_truncated = False
+    sql_error = None
     exercise = None
     if slug == "percentage":
         form = NumberInputForm(request.POST or None)
@@ -454,8 +586,13 @@ def tool_detail(request, slug):
     elif slug == "sql":
         form = SqlPracticeForm(request.POST or None)
         if request.method == "POST" and form.is_valid():
-            result = _format_sql(form.cleaned_data["query"]) or "Your formatted query will appear here."
-            result_detail = "code"
+            if request.POST.get("action") == "format":
+                result = _format_sql(form.cleaned_data["query"]) or "Enter a query to format."
+                result_detail = "code"
+            else:
+                sql_columns, sql_rows, sql_truncated, sql_error = _run_sql_demo(
+                    form.cleaned_data["query"]
+                )
     elif slug == "linux":
         result_detail = LINUX_COMMANDS
     elif slug == "subnet":
@@ -521,6 +658,10 @@ def tool_detail(request, slug):
             "form": form,
             "result": result,
             "result_detail": result_detail,
+            "sql_columns": sql_columns,
+            "sql_rows": sql_rows,
+            "sql_truncated": sql_truncated,
+            "sql_error": sql_error,
             "exercise": exercise,
         },
     )

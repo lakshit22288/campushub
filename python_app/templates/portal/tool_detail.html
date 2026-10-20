@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 {% block title %}{{ title }} · CampuZHub{% endblock %}
 {% block content %}
-<section class="page-header"><div class="container"><span class="eyebrow">MINI TOOLS LAB</span><h1>{{ title }}</h1><p>Practical, browser-based tools for learning and everyday calculations.</p></div></section>
+<section class="page-header"><div class="container"><span class="eyebrow">{% if slug == "sql" or slug == "linux" %}CSE / DEVELOPER TOOLS{% else %}MINI TOOLS LAB{% endif %}</span><h1>{{ title }}</h1><p>{% if slug == "sql" %}Explore relational queries against a safe sample campus dataset.{% elif slug == "linux" %}Learn Linux basics in an interactive, isolated shell simulation.{% else %}Practical, browser-based tools for learning and everyday calculations.{% endif %}</p></div></section>
 <section class="container section">
   <div class="simple-tool">
     {% if slug == "percentage" %}<h2>What percent is A of B?</h2><p>Enter non-negative values. B must be greater than zero.</p>
     {% elif slug == "cgpa" %}<h2>Average GPA</h2><p>Enter 1–30 GPA values from 0 to 10, separated by commas.</p>
     {% elif slug == "units" or slug == "mechanical-units" %}<h2>Convert a measurement</h2><p>Choose compatible units from the same measurement group.</p>
     {% elif slug == "python" %}<h2>Python Basics Practice</h2><p>This practice tool checks concepts and does not execute arbitrary code.</p>
-    {% elif slug == "sql" %}<h2>SQL Query Practice</h2><p>Practice or format a query locally. SQL is not executed or sent to the database.</p>
-    {% elif slug == "linux" %}<h2>Common commands</h2><p>Quick reference for frequently used terminal commands.</p>
+    {% elif slug == "sql" %}<h2>SQL Query Lab</h2><p>Run read-only SQL against a fresh in-memory practice database. Queries never touch or leave this demo dataset.</p>
+    {% elif slug == "linux" %}<h2>Simulated Linux terminal</h2><p>Practice common shell commands in a temporary virtual filesystem. Nothing runs on your device or server.</p>
     {% elif slug == "subnet" %}<h2>IPv4 subnet range</h2><p>Calculate the network range from an IPv4 address and CIDR prefix.</p>
     {% elif slug == "ohms-law" %}<h2>Ohm's Law</h2><p>Enter any two values to calculate the third and electrical power.</p>
     {% elif slug == "power" %}<h2>DC power: P = V × I</h2><p>Enter voltage and current to calculate power.</p>
@@ -20,7 +20,7 @@
 
     {% if exercise %}<p class="tool-prompt">{{ exercise.prompt }}</p>{% endif %}
     {% if form %}
-    <form method="post" class="form tool-form">
+    <form method="post" class="form tool-form{% if slug == 'sql' %} sql-lab-form{% endif %}">
       {% csrf_token %}
       {% for error in form.non_field_errors %}<div class="error">{{ error }}</div>{% endfor %}
       {% for field in form %}
@@ -29,16 +29,65 @@
         {% for error in field.errors %}<span class="error">{{ error }}</span>{% endfor %}
       </label>
       {% endfor %}
-      <button class="btn primary" type="submit">{% if slug == "python" %}Check answer{% elif slug == "sql" %}Format query{% else %}Calculate{% endif %}</button>
+      {% if slug == "sql" %}
+      <div class="sql-lab-actions">
+        <button class="btn primary" type="submit" name="action" value="run">Run query</button>
+        <button class="btn" type="submit" name="action" value="format">Format query</button>
+      </div>
+      {% else %}
+      <button class="btn primary" type="submit">{% if slug == "python" %}Check answer{% else %}Calculate{% endif %}</button>
+      {% endif %}
     </form>
     {% endif %}
 
-    {% if result and slug == "sql" %}<div class="result"><span>Formatted preview</span><pre>{{ result }}</pre></div>
-    {% elif result %}<div class="result{% if result_detail == 'success' %} notice-success{% elif result_detail == 'error' %} notice-error{% endif %}" aria-live="polite"><span>Result</span><strong>{{ result }}</strong></div>{% endif %}
+    {% if slug == "sql" %}
+    <details class="sql-schema">
+      <summary>Practice database schema</summary>
+      <div class="sql-schema-grid">
+        <article><strong>students</strong><code>id, name, branch, semester, cgpa</code></article>
+        <article><strong>subjects</strong><code>id, name, branch, credits</code></article>
+        <article><strong>enrollments</strong><code>student_id, subject_id, score</code></article>
+      </div>
+      <p>Use JOINs, filtering, sorting, grouping and aggregate functions. Five fictional students and sample course records reset for every run.</p>
+    </details>
+    {% if result and result_detail == "code" %}<div class="result"><span>Formatted query</span><pre>{{ result }}</pre></div>{% endif %}
+    {% if sql_error %}<div class="result notice-error" role="alert"><span>Query error</span><strong>{{ sql_error }}</strong></div>{% endif %}
+    {% if sql_columns %}
+    <div class="sql-result">
+      <div class="sql-result-heading"><strong>Query results</strong><span>{{ sql_rows|length }}{% if sql_truncated %}+{% endif %} rows</span></div>
+      <div class="sql-result-scroll">
+        <table>
+          <thead><tr>{% for column in sql_columns %}<th scope="col">{{ column }}</th>{% endfor %}</tr></thead>
+          <tbody>{% for row in sql_rows %}<tr>{% for value in row %}<td>{{ value|default_if_none:"NULL" }}</td>{% endfor %}</tr>{% empty %}<tr><td colspan="{{ sql_columns|length }}">Query completed with no matching rows.</td></tr>{% endfor %}</tbody>
+        </table>
+      </div>
+      {% if sql_truncated %}<p>Showing the first 50 rows. Narrow the query to see a smaller result set.</p>{% endif %}
+    </div>
+    {% endif %}
+    {% load static %}<script src="{% static 'python/sql-practice.js' %}?v=1" defer></script>
+    {% endif %}
+    {% if result and slug != "sql" and slug != "git-helper" %}<div class="result{% if result_detail == 'success' %} notice-success{% elif result_detail == 'error' %} notice-error{% endif %}" aria-live="polite"><span>Result</span><strong>{{ result }}</strong></div>{% endif %}
+    {% if result and slug == "git-helper" %}<div class="result"><span>Safe example sequence</span><pre>{{ result }}</pre><strong>{{ result_detail }}</strong></div>{% endif %}
     {% if result_detail and slug == "subnet" or result_detail and slug == "logic-gates" %}
     <div class="resource-list">{% for label, value in result_detail %}<article class="resource"><strong>{{ label }}</strong><span>{{ value }}</span></article>{% endfor %}</div>
     {% endif %}
-    {% if result_detail and slug == "linux" %}<div class="cmd-grid">{% for command, description in result_detail %}<article class="cmd"><code>{{ command }}</code><span>{{ description }}</span></article>{% endfor %}</div>{% endif %}
+    {% if slug == "linux" %}
+    <div class="linux-terminal" data-linux-terminal>
+      <div class="linux-terminal-bar"><strong>student@campushub</strong><span>isolated practice shell</span></div>
+      <div class="linux-terminal-output" role="log" aria-live="polite" aria-label="Simulated terminal output"><p>Welcome! Type <code>help</code> to see available commands.</p></div>
+      <form class="linux-terminal-form">
+        <label for="linux-command"><span aria-hidden="true">student@campushub:~$</span><input id="linux-command" name="command" autocomplete="off" spellcheck="false" aria-label="Linux command"></label>
+        <button class="btn primary" type="submit">Run command</button>
+        <button class="btn linux-clear" type="button">Clear</button>
+      </form>
+      <p class="linux-terminal-note">This is a simulated file system. Commands cannot access your files or run on the server.</p>
+    </div>
+    <details class="linux-command-reference">
+      <summary>Command reference</summary>
+      <div class="cmd-grid">{% for command, description in result_detail %}<article class="cmd"><code>{{ command }}</code><span>{{ description }}</span></article>{% endfor %}</div>
+    </details>
+    {% load static %}<script src="{% static 'python/linux-practice.js' %}?v=1" defer></script>
+    {% endif %}
   </div>
 </section>
 {% endblock %}

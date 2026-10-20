@@ -4,10 +4,10 @@ BRANCH_TOOL_CATALOG = {
         "tools": (
             ("Multi-language Code Lab", "Run Python in the browser and other supported languages through the hosted compiler.", "/compiler/"),
             ("HTML / CSS / JavaScript Playground", "Build a small web page in an isolated browser preview.", "/branch-tools/web-playground/"),
-            ("SQL Query Practice", "Format and review SQL locally; queries are never executed on campus data.", "/tools/sql/"),
-            ("DSA Practice", "Check core data-structure and algorithm concepts with short questions.", "/branch-tools/dsa-practice/"),
-            ("Linux Command Practice", "Review common Linux commands and their purpose.", "/tools/linux/"),
-            ("Git & GitHub Helper", "Choose a common version-control task and review the safe command sequence.", "/branch-tools/git-helper/"),
+            ("SQL Query Practice", "Run read-only SQL against a fictional, in-memory dataset and inspect results.", "/tools/sql/"),
+            ("DSA Practice", "Practice data structures, algorithms, graph traversal and complexity with explained questions.", "/branch-tools/dsa-practice/"),
+            ("Linux Command Practice", "Use a simulated terminal to practice shell commands in a temporary virtual filesystem.", "/tools/linux/"),
+            ("Git & GitHub Helper", "Review safe, step-by-step workflows for common Git tasks; commands are never run.", "/branch-tools/git-helper/"),
         ),
     },
     "ME": {

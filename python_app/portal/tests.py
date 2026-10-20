@@ -23,7 +23,7 @@ from django.utils import timezone
 
 from portal import auth
 from portal.branch_tool_catalog import BRANCH_TOOL_CATALOG, BRANCH_TOOL_SLUGS
-from portal.branch_tool_views import BranchToolForm, branch_tool_groups
+from portal.branch_tool_views import BranchToolForm, QUIZZES, branch_tool_groups
 from portal.forms import (
     AnnouncementForm,
     AssignmentEntryForm,
@@ -2068,6 +2068,113 @@ class CampusToolTests(SimpleTestCase):
         self.assertContains(temperature, "absolute zero")
         self.assertNotContains(temperature, "-26.85 K")
 
+    def test_sql_lab_runs_queries_against_the_demo_database(self):
+        cases = (
+            (
+                "select",
+                "SELECT name FROM students WHERE branch = 'CSE' ORDER BY name;",
+                ("Aarav Shah", "Diya Patel", "Meera Singh"),
+            ),
+            (
+                "join",
+                "SELECT students.name, subjects.name AS subject "
+                "FROM students JOIN enrollments ON students.id = enrollments.student_id "
+                "JOIN subjects ON subjects.id = enrollments.subject_id "
+                "WHERE students.name = 'Aarav Shah' ORDER BY subject;",
+                ("Data Structures", "Database Systems"),
+            ),
+            (
+                "aggregate",
+                "SELECT branch, COUNT(*) AS student_count "
+                "FROM students GROUP BY branch ORDER BY branch;",
+                ("CSE", "3"),
+            ),
+        )
+        for example, query, expected_values in cases:
+            with self.subTest(example=example):
+                response = self.client.post(
+                    "/tools/sql/",
+                    {"example": example, "query": query, "action": "run"},
+                )
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, "Query results")
+                for value in expected_values:
+                    self.assertContains(response, value)
+
+    def test_sql_lab_blocks_mutating_queries_and_formats_without_running_them(self):
+        write_query = self.client.post(
+            "/tools/sql/",
+            {
+                "example": "select",
+                "query": "DELETE FROM students;",
+                "action": "run",
+            },
+        )
+        format_query = self.client.post(
+            "/tools/sql/",
+            {
+                "example": "select",
+                "query": "select 'from WHERE select' AS note from students order by name;",
+                "action": "format",
+            },
+        )
+
+        self.assertContains(write_query, "Only SELECT queries and read-only CTEs are allowed.")
+        self.assertContains(format_query, "Formatted query")
+        self.assertContains(format_query, "SELECT")
+        self.assertContains(format_query, "from WHERE select")
+        self.assertNotContains(format_query, "Query results")
+
+    def test_sql_lab_rejects_database_access_outside_demo_tables(self):
+        response = self.client.post(
+            "/tools/sql/",
+            {
+                "example": "select",
+                "query": "SELECT name FROM sqlite_master;",
+                "action": "run",
+            },
+        )
+
+        self.assertContains(response, "Query could not run")
+
+    def test_sql_lab_authorizer_blocks_mutations_inside_a_cte(self):
+        response = self.client.post(
+            "/tools/sql/",
+            {
+                "example": "select",
+                "query": "WITH target AS (SELECT id FROM students) DELETE FROM students;",
+                "action": "run",
+            },
+        )
+
+        self.assertContains(response, "Query could not run")
+
+    def test_sql_lab_supports_read_only_ctes_and_caps_result_rows(self):
+        response = self.client.post(
+            "/tools/sql/",
+            {
+                "example": "select",
+                "query": (
+                    "WITH RECURSIVE numbers(value) AS ("
+                    "SELECT 1 UNION ALL SELECT value + 1 FROM numbers WHERE value < 60"
+                    ") SELECT value FROM numbers ORDER BY value;"
+                ),
+                "action": "run",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Showing the first 50 rows.")
+        self.assertContains(response, "50+ rows")
+
+    def test_linux_practice_offers_a_simulated_shell_and_command_examples(self):
+        response = self.client.get("/tools/linux/")
+
+        self.assertContains(response, "Simulated Linux terminal")
+        self.assertContains(response, "data-linux-terminal")
+        self.assertContains(response, "temporary virtual filesystem")
+        self.assertContains(response, "/static/python/linux-practice.js?v=1")
+
     def test_unknown_tool_slugs_return_not_found(self):
         response = self.client.get("/tools/not-a-real-tool/")
 
@@ -2163,6 +2270,7 @@ class CampusToolTests(SimpleTestCase):
 
         self.assertContains(response, "Correct.")
         self.assertContains(response, "What is the average lookup complexity")
+        self.assertContains(response, f"Question 2 of {len(QUIZZES['dsa-practice'])}")
 
     def test_branch_practice_handles_malformed_question_indices(self):
         for question_index in ("invalid", "99"):
@@ -2183,6 +2291,17 @@ class CampusToolTests(SimpleTestCase):
         self.assertContains(playground, 'sandbox="allow-scripts"')
         self.assertContains(playground, "Content Security Policy")
         self.assertContains(playground, "/static/python/branch-web-playground.js?v=1")
+
+    def test_git_helper_explains_safe_version_control_workflows(self):
+        unstage = self.client.post(
+            "/branch-tools/git-helper/", {"task": "unstage"}
+        )
+        sync = self.client.post("/branch-tools/git-helper/", {"task": "sync"})
+
+        self.assertContains(unstage, "git restore --staged")
+        self.assertContains(unstage, "without discarding its working-copy edits")
+        self.assertContains(sync, "git fetch origin")
+        self.assertContains(sync, "git rebase origin/&lt;base-branch&gt;")
 
     def test_calculator_validation_rejects_invalid_inputs(self):
         ac_power = self.client.post(

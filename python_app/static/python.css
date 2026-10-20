@@ -1801,6 +1801,124 @@ body.campus-page main .branch-card:hover .branch-arrow { transform: translate(3p
 body.campus-page .nav a:hover:not(.active) { color: #4c337f; background: rgba(91, 61, 245, .07); }
 body.campus-page .nav .nav-join:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(45, 27, 105, .1); }
 
+body.campus-page main .sql-lab-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  grid-column: 1 / -1;
+}
+body.campus-page main .sql-schema,
+body.campus-page main .linux-command-reference {
+  padding: 15px 17px;
+  border: 1px solid rgba(45, 27, 105, .12);
+  border-radius: 13px;
+  background: #fff;
+}
+body.campus-page main .sql-schema summary,
+body.campus-page main .linux-command-reference summary {
+  color: #2d1b69;
+  font-size: 13px;
+  font-weight: 750;
+  cursor: pointer;
+}
+body.campus-page main .sql-schema-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 13px;
+}
+body.campus-page main .sql-schema-grid article {
+  display: grid;
+  gap: 7px;
+  padding: 12px;
+  border: 1px solid rgba(45, 27, 105, .1);
+  border-radius: 10px;
+  background: #fbfaff;
+}
+body.campus-page main .sql-schema-grid strong { color: #5540be; font-size: 12px; }
+body.campus-page main .sql-schema-grid code { color: #625b71; font-size: 11px; line-height: 1.6; }
+body.campus-page main .sql-schema > p,
+body.campus-page main .sql-result > p { margin: 12px 0 0; }
+body.campus-page main .sql-result {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid rgba(45, 27, 105, .12);
+  border-radius: 14px;
+  background: #fff;
+}
+body.campus-page main .sql-result-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+body.campus-page main .sql-result-heading strong { color: #2d1b69; }
+body.campus-page main .sql-result-heading span { color: #6e687a; font-size: 12px; }
+body.campus-page main .sql-result-scroll { overflow: auto; max-width: 100%; border: 1px solid rgba(45, 27, 105, .11); border-radius: 9px; }
+body.campus-page main .sql-result table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: left; }
+body.campus-page main .sql-result th,
+body.campus-page main .sql-result td { padding: 10px 12px; border-bottom: 1px solid rgba(45, 27, 105, .08); white-space: nowrap; }
+body.campus-page main .sql-result th { color: #44356c; background: #f3f0fa; font-weight: 750; }
+body.campus-page main .sql-result td { color: #514b60; }
+body.campus-page main .sql-result tbody tr:last-child td { border-bottom: 0; }
+body.campus-page main .linux-terminal {
+  overflow: hidden;
+  border: 1px solid rgba(45, 27, 105, .18);
+  border-radius: 14px;
+  color: #ebe9f1;
+  background: #1e1c27;
+  box-shadow: 0 14px 30px rgba(31, 27, 46, .1);
+}
+body.campus-page main .linux-terminal-bar {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, .1);
+  color: #c8ff3d;
+  font-size: 11px;
+}
+body.campus-page main .linux-terminal-bar span { color: #aaa4b7; }
+body.campus-page main .linux-terminal-output {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  min-height: 190px;
+  max-height: 330px;
+  overflow: auto;
+  padding: 15px 17px;
+  color: #e8e4ef;
+  font: 12px/1.65 Consolas, "Cascadia Code", monospace;
+}
+body.campus-page main .linux-terminal-output p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+body.campus-page main .linux-terminal-output code { color: #c8ff3d; }
+body.campus-page main .linux-terminal-output .linux-terminal-command { color: #c8ff3d; }
+body.campus-page main .linux-terminal-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 13px;
+  border-top: 1px solid rgba(255, 255, 255, .1);
+}
+body.campus-page main .linux-terminal-form label { display: flex; align-items: center; gap: 9px; min-width: 0; color: #c8ff3d; font: 11px Consolas, "Cascadia Code", monospace; }
+body.campus-page main .linux-terminal-form input { width: 100%; min-width: 0; padding: 8px 0; border: 0; outline: 0; color: #fff; background: transparent; font: inherit; }
+body.campus-page main .linux-terminal-form .btn { min-height: 35px; padding: 8px 11px; font-size: 11px; }
+body.campus-page main .linux-terminal-note { padding: 0 16px 13px; color: #aaa4b7 !important; font-size: 11px !important; }
+body.campus-page main .linux-command-reference .cmd-grid { margin-top: 12px; }
+body.campus-page main .practice-progress {
+  justify-self: start;
+  padding: 7px 10px;
+  border: 1px solid rgba(91, 61, 245, .15);
+  border-radius: 999px;
+  color: #5540be !important;
+  background: #f3f0fa;
+  font-size: 11px !important;
+  font-weight: 750;
+}
+@media (max-width: 720px) {
+  body.campus-page main .sql-schema-grid { grid-template-columns: 1fr; }
+  body.campus-page main .linux-terminal-form { grid-template-columns: 1fr 1fr; }
+  body.campus-page main .linux-terminal-form label { grid-column: 1 / -1; }
+}
+
 body.campus-page main .branchhub-hero {
   padding: 30px 0 13px;
   background: #f5f3ec;

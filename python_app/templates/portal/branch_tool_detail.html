@@ -6,6 +6,7 @@
 <section class="container section">
   <div class="simple-tool branch-tool-panel">
     <a class="back-link" href="{% url 'branchhub' %}">← Back to BranchHub tools</a>
+    {% if slug == "dsa-practice" %}<p class="practice-progress">Question {{ question_number }} of {{ question_total }}</p>{% endif %}
     {% if question %}<h2 class="branch-practice-question">{{ question }}</h2>{% endif %}
     <form method="post" class="form tool-form">
       {% csrf_token %}

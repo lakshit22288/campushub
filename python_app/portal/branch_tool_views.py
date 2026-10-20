@@ -8,8 +8,8 @@ from django.shortcuts import render
 from .branch_tool_catalog import BRANCH_TOOL_CATALOG
 
 TOOL_DETAILS = {
-    "dsa-practice": ("DSA Practice", "Check core data-structure and algorithm concepts. This short practice set runs locally and does not store attempts."),
-    "git-helper": ("Git & GitHub Helper", "Review safe command sequences for common version-control tasks. Commands are examples only; they are never executed."),
+    "dsa-practice": ("DSA Practice", "Practice data structures, algorithms, graph traversal and complexity with an explained question set."),
+    "git-helper": ("Git & GitHub Helper", "Choose a version-control workflow to see a reviewed command sequence and safe next steps. Commands are examples only; they are never executed."),
     "stress-strain": ("Stress & Strain Calculator", "Axial-load learning calculator. Use consistent dimensions and compare assumptions with your course material."),
     "gear-ratio": ("Gear Ratio Calculator", "An ideal gear-speed estimate. Real mechanisms have losses and design constraints not represented here."),
     "heat-transfer": ("Heat Transfer Calculator", "Basic sensible heat using Q = m c ΔT. This is not a full thermodynamic-cycle solver."),
@@ -128,6 +128,15 @@ QUIZZES = {
         ("Which data structure is commonly used for breadth-first search?", ("Queue", "Stack", "Heap"), 0, "A queue processes discovered vertices in first-in, first-out order."),
         ("What is the worst-case time complexity of binary search on a sorted array?", ("O(log n)", "O(n)", "O(1)"), 0, "Binary search halves the remaining search interval on each comparison."),
         ("Which structure is best suited to last-in, first-out processing?", ("Queue", "Stack", "Graph"), 1, "A stack removes the most recently added item first."),
+        ("Which operation is O(1) for an array when the index is known?", ("Read an element", "Insert at the beginning", "Search an unsorted value"), 0, "Direct indexing accesses an array element in constant time."),
+        ("What is the worst-case time complexity of merge sort?", ("O(n)", "O(n log n)", "O(n²)"), 1, "Merge sort divides the input into logarithmically many levels and merges each level in O(n)."),
+        ("What must be true before binary search can be used correctly?", ("The data is sorted", "The data has no duplicates", "The array length is even"), 0, "Binary search uses ordering to discard half the remaining search space."),
+        ("Which traversal visits a node before its left and right subtrees?", ("In-order", "Pre-order", "Post-order"), 1, "Pre-order traversal processes the current node before its subtrees."),
+        ("Which approach is commonly used to detect a cycle in a linked list with O(1) extra space?", ("Two pointers at different speeds", "Sorting the list", "A queue"), 0, "Floyd's tortoise-and-hare algorithm advances two pointers at different speeds."),
+        ("What is the average time complexity of inserting into a well-sized hash table?", ("O(1)", "O(log n)", "O(n)"), 0, "With a suitable hash function and controlled load factor, insertion is average O(1)."),
+        ("Which algorithmic technique solves a problem by combining solutions to smaller subproblems?", ("Divide and conquer", "Linear probing", "Breadth-first search"), 0, "Divide and conquer splits a problem, solves its parts, and combines the results."),
+        ("Which data structure is most suitable for repeatedly retrieving the smallest item?", ("Min-heap", "Stack", "Linked list"), 0, "A min-heap keeps the smallest item at its root for efficient retrieval."),
+        ("In an undirected graph, what does the sum of all vertex degrees equal?", ("The number of edges", "Twice the number of edges", "The number of vertices"), 1, "Every undirected edge contributes one degree to each of its two endpoints."),
     ),
     "lab-safety": (
         ("A chemical splashes into your eyes. What should you do first?", ("Keep working and report later", "Use the eyewash station and alert the supervisor", "Rub your eyes"), 1, "Follow the lab emergency procedure, use the eyewash station, and alert the supervisor immediately."),
@@ -142,11 +151,38 @@ QUIZZES = {
 }
 
 GIT_TASKS = {
-    "inspect": ("git status", "Check which files are modified, staged, or untracked."),
-    "stage": ("git add <file>", "Stage only the file you intend to include in the next commit."),
-    "commit": ('git commit -m "Describe the change"', "Create a local commit from staged changes."),
-    "sync": ("git pull --rebase", "Rebase your local work on the configured upstream; review conflicts before continuing."),
-    "branch": ("git switch -c <branch-name>", "Create and switch to a new feature branch."),
+    "inspect": (
+        "git status\ngit diff\ngit diff --staged",
+        "Review the worktree and both unstaged and staged changes before making a commit.",
+    ),
+    "stage": (
+        "git add <file>\ngit diff --staged",
+        "Stage a specific file, then inspect exactly what will enter the next commit.",
+    ),
+    "unstage": (
+        "git restore --staged <file>",
+        "Remove a file from the staging area without discarding its working-copy edits.",
+    ),
+    "commit": (
+        'git commit -m "Describe the change"',
+        "Create a local commit from staged changes. Review git status first.",
+    ),
+    "branch": (
+        "git switch -c <branch-name>",
+        "Create and switch to a feature branch before starting independent work.",
+    ),
+    "publish": (
+        "git push -u origin <branch-name>",
+        "Publish your current branch and set its upstream. Check the branch name first.",
+    ),
+    "sync": (
+        "git status\ngit fetch origin\ngit rebase origin/<base-branch>",
+        "Start with a clean worktree. Fetch updates, then rebase your feature branch onto the intended base branch.",
+    ),
+    "conflicts": (
+        "git status\ngit diff\n# edit and review each conflicted file\ngit add <resolved-file>\ngit rebase --continue",
+        "Resolve conflicts carefully and stage only reviewed files. Use git rebase --abort if you need to return to the pre-rebase state.",
+    ),
 }
 
 
@@ -355,6 +391,7 @@ def branch_tool_detail(request, slug):
     result = None
     result_detail = None
     question = None
+    question_number = 1
     form = BranchToolForm(slug, request.POST or None)
     if request.method == "POST" and form.is_valid():
         values = form.cleaned_data
@@ -369,6 +406,7 @@ def branch_tool_detail(request, slug):
             next_index = (question_index + 1) % len(QUIZZES[slug])
             form = BranchToolForm(slug, initial={"question": next_index})
             question = QUIZZES[slug][next_index][0]
+            question_number = next_index + 1
         else:
             try:
                 result = _calculate(slug, values)
@@ -385,6 +423,7 @@ def branch_tool_detail(request, slug):
             if question_index not in range(len(QUIZZES[slug])):
                 question_index = 0
             question = QUIZZES[slug][question_index][0]
+            question_number = question_index + 1
 
     return render(
         request,
@@ -397,6 +436,8 @@ def branch_tool_detail(request, slug):
             "result": result,
             "result_detail": result_detail,
             "question": question,
+            "question_number": question_number,
+            "question_total": len(QUIZZES.get(slug, ())),
         },
     )
 
