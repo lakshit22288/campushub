@@ -307,6 +307,7 @@
   width: min(940px, calc(100% - 48px));
   margin: 65px auto 80px;
 }
+.campus-page .auth-wrap-recovery { grid-template-columns: minmax(0, 430px); justify-content: center; }
 .campus-page .auth-story {
   display: flex;
   min-height: 460px;
