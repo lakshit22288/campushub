@@ -156,7 +156,11 @@ class SkillSwapRequestWorkflowTests(SimpleTestCase):
             ),
         )
 
-        self.assertIn('href="mailto:learner%40example.edu?subject=CampuZHub%20SkillSwap%20-%20Python"', html)
+        self.assertIn(
+            'href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=learner%40example.edu&amp;su=CampuZHub%20SkillSwap%20-%20Python"',
+            html,
+        )
+        self.assertIn('target="_blank" rel="noopener noreferrer"', html)
         self.assertIn("Your SkillSwap request is accepted.", html)
         self.assertIn("Confirm completed", html)
 
@@ -173,5 +177,9 @@ class SkillSwapRequestWorkflowTests(SimpleTestCase):
             ),
         )
 
-        self.assertIn('href="mailto:teacher%40example.edu?subject=CampuZHub%20SkillSwap%20-%20Python"', html)
+        self.assertIn(
+            'href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=teacher%40example.edu&amp;su=CampuZHub%20SkillSwap%20-%20Python"',
+            html,
+        )
+        self.assertIn('target="_blank" rel="noopener noreferrer"', html)
         self.assertIn("Email Teacher", html)
