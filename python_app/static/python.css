@@ -3693,3 +3693,19 @@ body.campus-page .topbar .nav .nav-logout:hover {
   font-weight: 750;
 }
 body.campus-page .topbar .nav .nav-logout:hover { background: #bb2d3b; }
+
+body.campus-page h1,
+body.campus-page h2,
+body.campus-page h3,
+body.campus-page h4,
+body.campus-page h5,
+body.campus-page h6,
+body.code-lab-page h1,
+body.code-lab-page h2,
+body.code-lab-page h3,
+body.code-lab-page h4,
+body.code-lab-page h5,
+body.code-lab-page h6 {
+  font-family: var(--site-heading-font);
+  font-style: normal;
+}

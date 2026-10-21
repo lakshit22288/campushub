@@ -12,8 +12,8 @@
   <link rel="icon" type="image/svg+xml" href="{% static 'python/campuzhub-mark.svg' %}">
   <title>{% block title %}CampuZHub{% endblock %}</title>
   {% block structured_data %}{% endblock %}
-  <link rel="stylesheet" href="{% static 'styles/global.css' %}?v=44">
-  <link rel="stylesheet" href="{% static 'python/python.css' %}?v=45">
+  <link rel="stylesheet" href="{% static 'styles/global.css' %}?v=49">
+  <link rel="stylesheet" href="{% static 'python/python.css' %}?v=50">
 </head>
 <body class="{% block body_class %}campus-page{% endblock %}">
   <div class="app-shell">
@@ -83,5 +83,6 @@
       else desktop.addListener(syncMenu);
     })();
   </script>
+  <script src="{% static 'styles/font-preview.js' %}?v=3" defer></script>
 </body>
 </html>
