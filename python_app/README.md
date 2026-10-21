@@ -22,7 +22,7 @@ Configure the production service with the existing production Supabase PostgreSQ
 
 ### Email ownership verification
 
-Email/password signups use the existing Supabase Auth project. In Supabase Auth settings, enable email confirmations for the Email provider and configure production SMTP for reliable delivery. Set the Site URL to `https://campushub-python.vercel.app` and add `https://campushub-python.vercel.app/auth/email/confirm/` to the allowed redirect URLs. Add the matching local confirmation URL while developing locally. Do not disable email confirmations: the app refuses to create a CampuZHub account if Supabase returns an immediate session instead of requiring confirmation.
+Email/password signups and password recovery use the existing Supabase Auth project. In Supabase Auth settings, enable email confirmations for the Email provider and configure production SMTP for reliable delivery. Set the Site URL to `https://campushub-python.vercel.app` and add `https://campushub-python.vercel.app/auth/email/confirm/` and `https://campushub-python.vercel.app/auth/password/reset/` to the allowed redirect URLs. Add the matching local confirmation and password-reset URLs while developing locally. Do not disable email confirmations: the app refuses to create a CampuZHub account if Supabase returns an immediate session instead of requiring confirmation.
 
 New accounts are created in CampuZHub only after the confirmation link returns a verified Supabase identity. Existing email/password CampuZHub accounts are prompted to verify their email on their next successful password login before the app establishes a session. Google sign-in remains verified by Google/Supabase. The login page can resend a pending confirmation email.
 

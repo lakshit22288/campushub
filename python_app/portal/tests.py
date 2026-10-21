@@ -30,6 +30,8 @@ from portal.forms import (
     BookListingForm,
     CampusEventForm,
     NoteForm,
+    PasswordResetCompleteForm,
+    PasswordResetRequestForm,
     ProjectForm,
     ScheduleEntryForm,
 )
@@ -114,6 +116,30 @@ class PortalPageTests(SimpleTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '<meta name="robots" content="noindex,nofollow">')
+
+    @override_settings(SUPABASE_DATABASE_CONFIGURED=True)
+    def test_login_offers_password_recovery(self):
+        response = self.client.get("/login/")
+
+        self.assertContains(response, "Forgot your password?")
+        self.assertContains(response, "/password/reset/")
+
+    @override_settings(SUPABASE_DATABASE_CONFIGURED=True)
+    def test_password_recovery_request_page_renders(self):
+        response = self.client.get("/password/reset/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Enter the email address linked to your CampuZHub account")
+        self.assertContains(response, 'name="csrfmiddlewaretoken"')
+
+    @override_settings(SUPABASE_DATABASE_CONFIGURED=True)
+    def test_password_recovery_confirmation_handles_supabase_tokens(self):
+        response = self.client.get("/auth/password/reset/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'fragment.get("access_token")')
+        self.assertContains(response, 'recoveryType !== "recovery"')
+        self.assertContains(response, "window.history.replaceState")
 
     def test_email_confirmation_page_handles_supabase_redirect_tokens(self):
         response = self.client.get("/auth/email/confirm/")
@@ -1287,6 +1313,134 @@ class EmailVerificationTests(SimpleTestCase):
             client.get.call_args.kwargs["headers"]["Authorization"],
             "Bearer verified-access-token",
         )
+
+
+class PasswordResetTests(SimpleTestCase):
+    @override_settings(
+        SUPABASE_URL="https://campus-project.supabase.co",
+        SUPABASE_ANON_KEY="public-anon-key",
+        DJANGO_PUBLIC_URL="https://campushub.example",
+    )
+    def test_recovery_email_uses_the_configured_public_callback(self):
+        request = RequestFactory().post("/password/reset/")
+        client = MagicMock()
+        client.post.return_value = SimpleNamespace(status_code=200)
+
+        with patch("portal.auth.httpx.Client") as client_factory:
+            client_factory.return_value.__enter__.return_value = client
+            auth.request_password_reset(request, "student@example.edu")
+
+        self.assertEqual(
+            client.post.call_args.args[0],
+            "https://campus-project.supabase.co/auth/v1/recover",
+        )
+        self.assertEqual(
+            client.post.call_args.kwargs["params"]["redirect_to"],
+            "https://campushub.example/auth/password/reset/",
+        )
+        self.assertEqual(
+            client.post.call_args.kwargs["json"],
+            {"email": "student@example.edu"},
+        )
+
+    @override_settings(
+        SUPABASE_URL="https://campus-project.supabase.co",
+        SUPABASE_ANON_KEY="public-anon-key",
+    )
+    def test_recovery_request_does_not_reveal_supabase_account_status(self):
+        client = MagicMock()
+        client.post.return_value = SimpleNamespace(status_code=429)
+
+        with patch("portal.auth.httpx.Client") as client_factory:
+            client_factory.return_value.__enter__.return_value = client
+            with self.assertRaisesRegex(
+                auth.SupabaseAuthError,
+                "could not send a password reset email",
+            ):
+                auth.request_password_reset(
+                    RequestFactory().post("/password/reset/"),
+                    "student@example.edu",
+                )
+
+    @override_settings(
+        SUPABASE_URL="https://campus-project.supabase.co",
+        SUPABASE_ANON_KEY="public-anon-key",
+    )
+    def test_password_update_uses_recovery_access_token(self):
+        client = MagicMock()
+        client.put.return_value = SimpleNamespace(status_code=200)
+
+        with patch("portal.auth.httpx.Client") as client_factory:
+            client_factory.return_value.__enter__.return_value = client
+            auth.update_password_with_recovery_token(
+                "recovery-access-token",
+                "new-student-password",
+            )
+
+        self.assertEqual(
+            client.put.call_args.args[0],
+            "https://campus-project.supabase.co/auth/v1/user",
+        )
+        self.assertEqual(
+            client.put.call_args.kwargs["headers"]["Authorization"],
+            "Bearer recovery-access-token",
+        )
+        self.assertEqual(
+            client.put.call_args.kwargs["json"],
+            {"password": "new-student-password"},
+        )
+
+    @override_settings(SUPABASE_DATABASE_CONFIGURED=True)
+    @patch("portal.views.auth.request_password_reset")
+    def test_reset_request_shows_same_success_message_for_any_email(
+        self, request_password_reset
+    ):
+        response = self.client.post(
+            "/password/reset/",
+            {"email": "student@example.edu"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "If an account exists for that email")
+        self.assertNotContains(response, "student@example.edu")
+        request_password_reset.assert_called_once()
+
+    @override_settings(SUPABASE_DATABASE_CONFIGURED=True)
+    @patch("portal.views.auth.update_password_with_recovery_token")
+    def test_password_reset_updates_password_with_verified_recovery_token(
+        self, update_password
+    ):
+        response = self.client.post(
+            "/auth/password/reset/",
+            {
+                "access_token": "verified-recovery-token",
+                "password": "new-student-password",
+                "confirm_password": "new-student-password",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Your password has been changed")
+        update_password.assert_called_once_with(
+            "verified-recovery-token",
+            "new-student-password",
+        )
+
+    @override_settings(SUPABASE_DATABASE_CONFIGURED=True)
+    @patch("portal.views.auth.update_password_with_recovery_token")
+    def test_password_reset_rejects_mismatched_passwords(self, update_password):
+        response = self.client.post(
+            "/auth/password/reset/",
+            {
+                "access_token": "verified-recovery-token",
+                "password": "new-student-password",
+                "confirm_password": "a-different-password",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "The passwords do not match.")
+        update_password.assert_not_called()
 
 
 class FeaturePermissionTests(SimpleTestCase):

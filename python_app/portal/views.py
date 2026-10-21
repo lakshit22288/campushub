@@ -6,13 +6,19 @@ import bcrypt
 from django.conf import settings
 from django.contrib import messages
 from django.db import IntegrityError, OperationalError, ProgrammingError, connection, transaction
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import HttpResponseNotAllowed, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
 from . import auth
-from .forms import GoogleProfileForm, LoginForm, RegistrationForm
+from .forms import (
+    GoogleProfileForm,
+    LoginForm,
+    PasswordResetCompleteForm,
+    PasswordResetRequestForm,
+    RegistrationForm,
+)
 from .models import Announcement, Branch
 from .models import User
 from .storage import sign_storage_references
@@ -201,7 +207,106 @@ def login(request):
     return render(
         request,
         "portal/login.html",
-        {"form": form, "error": error, "database_configured": True},
+        {
+            "form": form,
+            "error": error,
+            "database_configured": True,
+        },
+    )
+
+
+def password_reset_request(request):
+    if not settings.SUPABASE_DATABASE_CONFIGURED:
+        return render(
+            request,
+            "portal/password_reset_request.html",
+            {"database_configured": False},
+            status=503,
+        )
+
+    form = PasswordResetRequestForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        email = form.cleaned_data["email"].strip().lower()
+        try:
+            auth.request_password_reset(request, email)
+        except auth.SupabaseAuthError as error:
+            return render(
+                request,
+                "portal/password_reset_request.html",
+                {
+                    "database_configured": True,
+                    "form": form,
+                    "error": str(error),
+                },
+            )
+        return render(
+            request,
+            "portal/password_reset_request.html",
+            {"database_configured": True, "request_sent": True},
+        )
+
+    if request.method not in ("GET", "POST"):
+        return HttpResponseNotAllowed(["GET", "POST"])
+    return render(
+        request,
+        "portal/password_reset_request.html",
+        {"database_configured": True, "form": form},
+    )
+
+
+def password_reset_confirm(request):
+    if not settings.SUPABASE_DATABASE_CONFIGURED:
+        return render(
+            request,
+            "portal/password_reset_confirm.html",
+            {"database_configured": False},
+            status=503,
+        )
+
+    if request.method == "POST":
+        form = PasswordResetCompleteForm(request.POST)
+        if form.is_valid():
+            try:
+                auth.update_password_with_recovery_token(
+                    form.cleaned_data["access_token"],
+                    form.cleaned_data["password"],
+                )
+            except auth.SupabaseAuthError as error:
+                return render(
+                    request,
+                    "portal/password_reset_confirm.html",
+                    {
+                        "database_configured": True,
+                        "form": form,
+                        "error": str(error),
+                        "show_password_form": True,
+                    },
+                )
+            return render(
+                request,
+                "portal/password_reset_confirm.html",
+                {"database_configured": True, "password_reset": True},
+            )
+        return render(
+            request,
+            "portal/password_reset_confirm.html",
+            {
+                "database_configured": True,
+                "form": form,
+                "show_password_form": bool(request.POST.get("access_token")),
+            },
+        )
+
+    if request.method != "GET":
+        return HttpResponseNotAllowed(["GET", "POST"])
+    return render(
+        request,
+        "portal/password_reset_confirm.html",
+        {
+            "database_configured": True,
+            "form": PasswordResetCompleteForm(),
+            "show_password_form": False,
+        },
     )
 
 

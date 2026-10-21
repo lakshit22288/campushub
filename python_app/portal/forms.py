@@ -24,6 +24,43 @@ class LoginForm(forms.Form):
     password = forms.CharField(strip=False, widget=forms.PasswordInput)
 
 
+class PasswordResetRequestForm(forms.Form):
+    email = forms.EmailField(max_length=254)
+
+
+class PasswordResetCompleteForm(forms.Form):
+    access_token = forms.CharField(
+        max_length=4096,
+        strip=False,
+        widget=forms.HiddenInput,
+    )
+    password = forms.CharField(
+        min_length=6,
+        max_length=72,
+        strip=False,
+        widget=forms.PasswordInput,
+    )
+    confirm_password = forms.CharField(
+        min_length=6,
+        max_length=72,
+        strip=False,
+        widget=forms.PasswordInput,
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password = cleaned_data.get("password")
+        confirmation = cleaned_data.get("confirm_password")
+        if password and confirmation and password != confirmation:
+            self.add_error("confirm_password", "The passwords do not match.")
+        if password and len(password.encode("utf-8")) > 72:
+            self.add_error(
+                "password",
+                "The password cannot exceed 72 bytes when encoded as UTF-8.",
+            )
+        return cleaned_data
+
+
 class RegistrationForm(forms.Form):
     name = forms.CharField(max_length=120)
     email = forms.EmailField(max_length=254)

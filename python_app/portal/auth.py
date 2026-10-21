@@ -49,15 +49,25 @@ def begin_google_oauth(request):
     return authorize_url
 
 
-def _auth_headers(api_key, access_token=None):
-    headers = {"apikey": api_key, "Accept": "application/json"}
-    if access_token:
-        headers["Authorization"] = f"Bearer {access_token}"
+def _auth_headers(api_key):
+    return {"apikey": api_key, "Accept": "application/json"}
+
+
+def _user_auth_headers(api_key, access_token):
+    headers = _auth_headers(api_key)
+    headers["Authorization"] = "Bearer " + access_token
     return headers
 
 
 def _email_confirmation_url(request):
     callback_path = reverse("email_confirmation")
+    if settings.DJANGO_PUBLIC_URL:
+        return f"{settings.DJANGO_PUBLIC_URL}{callback_path}"
+    return request.build_absolute_uri(callback_path)
+
+
+def _password_reset_url(request):
+    callback_path = reverse("password_reset_confirm")
     if settings.DJANGO_PUBLIC_URL:
         return f"{settings.DJANGO_PUBLIC_URL}{callback_path}"
     return request.build_absolute_uri(callback_path)
@@ -147,6 +157,71 @@ def resend_email_confirmation(request, email):
         )
 
 
+def request_password_reset(request, email):
+    supabase_url, api_key = _supabase_config()
+    try:
+        with httpx.Client(timeout=12) as client:
+            response = client.post(
+                f"{supabase_url}/auth/v1/recover",
+                params={"redirect_to": _password_reset_url(request)},
+                headers=_auth_headers(api_key),
+                json={"email": email},
+            )
+    except httpx.TimeoutException as error:
+        logger.warning("Supabase Auth timed out while requesting password recovery")
+        raise SupabaseAuthError(
+            "We could not send a password reset email right now. Please try again."
+        ) from error
+    except httpx.RequestError as error:
+        logger.exception("Supabase Auth request failed while requesting password recovery")
+        raise SupabaseAuthError(
+            "We could not send a password reset email right now. Please try again."
+        ) from error
+
+    if response.status_code != 200:
+        logger.warning(
+            "Supabase Auth rejected a password recovery request with status %s",
+            response.status_code,
+        )
+        raise SupabaseAuthError(
+            "We could not send a password reset email right now. Please try again later."
+        )
+
+
+def update_password_with_recovery_token(access_token, password):
+    supabase_url, api_key = _supabase_config()
+    try:
+        with httpx.Client(timeout=12) as client:
+            response = client.put(
+                f"{supabase_url}/auth/v1/user",
+                headers=_user_auth_headers(api_key, access_token),
+                json={"password": password},
+            )
+    except httpx.TimeoutException as error:
+        logger.warning("Supabase Auth timed out while updating a recovered password")
+        raise SupabaseAuthError(
+            "Password reset timed out. Please try the link again."
+        ) from error
+    except httpx.RequestError as error:
+        logger.exception("Supabase Auth request failed while updating a recovered password")
+        raise SupabaseAuthError(
+            "Could not reach the password reset service. Please try again."
+        ) from error
+
+    if response.status_code in (400, 401, 403):
+        raise SupabaseAuthError(
+            "This password reset link is invalid or expired. Request a new one."
+        )
+    if response.status_code != 200:
+        logger.warning(
+            "Supabase Auth rejected a recovered password update with status %s",
+            response.status_code,
+        )
+        raise SupabaseAuthError(
+            "The password could not be updated right now. Please try again."
+        )
+
+
 def sign_in_with_email_password(email, password):
     supabase_url, api_key = _supabase_config()
     try:
@@ -193,7 +268,7 @@ def sign_in_with_email_password(email, password):
         with httpx.Client(timeout=12) as client:
             user_response = client.get(
                 f"{supabase_url}/auth/v1/user",
-                headers=_auth_headers(api_key, access_token),
+                headers=_user_auth_headers(api_key, access_token),
             )
     except httpx.TimeoutException as error:
         logger.warning("Supabase Auth timed out while checking a signed-in email")
@@ -220,7 +295,7 @@ def get_verified_email_identity(access_token):
         with httpx.Client(timeout=12) as client:
             response = client.get(
                 f"{supabase_url}/auth/v1/user",
-                headers=_auth_headers(api_key, access_token),
+                headers=_user_auth_headers(api_key, access_token),
             )
     except httpx.TimeoutException as error:
         logger.warning("Supabase Auth timed out while verifying an email confirmation")
@@ -265,7 +340,7 @@ def exchange_google_code(request, code):
                 raise SupabaseAuthError("Google did not return a valid sign-in session.")
             user_response = client.get(
                 f"{supabase_url}/auth/v1/user",
-                headers=_auth_headers(api_key, access_token),
+                headers=_user_auth_headers(api_key, access_token),
             )
     except httpx.TimeoutException as error:
         logger.warning("Supabase Auth timed out during Google OAuth exchange: %s", error)

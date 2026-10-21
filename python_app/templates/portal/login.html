@@ -34,6 +34,7 @@
       {{ form.password }}{{ form.password.errors }}
       <button class="btn primary full" type="submit">Log in</button>
     </form>
+    <p class="muted"><a href="{% url 'password_reset_request' %}">Forgot your password?</a></p>
     <p class="muted">New around here? <a href="{% url 'register' %}">Create your account</a></p>
     {% endif %}
   </section>

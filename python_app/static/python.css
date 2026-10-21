@@ -3694,6 +3694,8 @@ body.campus-page .topbar .nav .nav-logout:hover {
 }
 body.campus-page .topbar .nav .nav-logout:hover { background: #bb2d3b; }
 
+body.campus-page .auth-card #password-reset-form[hidden] { display: none; }
+
 body.campus-page h1,
 body.campus-page h2,
 body.campus-page h3,
