@@ -66,7 +66,7 @@ class PortalPageTests(SimpleTestCase):
         self.assertContains(response, "CampuZHub")
         self.assertContains(response, '<a class="brand" href="/" aria-label="CampuZHub home">')
         self.assertContains(response, '<img class="brand-wordmark" src="/static/python/campuzhub-wordmark.png" alt="CampuZHub">')
-        self.assertContains(response, '<link rel="icon" type="image/svg+xml" href="/static/python/campuzhub-mark.svg">')
+        self.assertContains(response, '<link rel="icon" type="image/png" href="/static/python/campuzhub-emblem.png?v=1">')
         self.assertNotContains(response, "Your campus, in one place.")
         self.assertContains(response, '"name":"CampuZHub"')
         self.assertContains(response, "YOUR CAMPUS, IN MOTION")
