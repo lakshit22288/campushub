@@ -7,9 +7,10 @@ from urllib.parse import quote
 
 from django.contrib import messages
 from django.db import IntegrityError, transaction
-from django.db.models import Avg, Count, Q
+from django.db.models import Avg, Case, Count, IntegerField, Q, Value, When
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods, require_POST
 
@@ -422,6 +423,7 @@ def update_book_request(request, request_id):
 @signed_in_user
 def skillswap(request):
     user = request.campushub_user
+    current_user_id = str(user.id)
     if request.method == "POST":
         form = SkillForm(request.POST)
         if form.is_valid():
@@ -430,7 +432,8 @@ def skillswap(request):
             skill.created_at = timezone.now()
             skill.save()
             messages.success(request, "Your skill has been added to your profile.")
-            return redirect("skillswap")
+            return redirect(f"{reverse('skillswap')}#my-skills")
+        messages.error(request, "Please check the details and try adding your skill again.")
     else:
         form = SkillForm()
 
@@ -458,9 +461,21 @@ def skillswap(request):
 
     requests = (
         SkillRequest.objects.filter(Q(requester=user) | Q(skill__user=user))
+        .order_by(
+            Case(
+                When(status="pending", then=Value(0)),
+                default=Value(1),
+                output_field=IntegerField(),
+            ),
+            "-created_at",
+        )
         .select_related("skill", "skill__user", "requester", "offered_skill")
     )
     requests = list(requests[:100])
+    pending_received_count = SkillRequest.objects.filter(
+        skill__user=user,
+        status="pending",
+    ).count()
     feedback = SkillFeedback.objects.filter(reviewee=user).select_related("reviewer")
     feedback_ids = set(
         SkillFeedback.objects.filter(reviewer=user).values_list("request_id", flat=True)
@@ -472,6 +487,7 @@ def skillswap(request):
         "portal/skillswap.html",
         {
             "form": form,
+            "current_user_id": current_user_id,
             "listings": listings[:100],
             "listing_count": listing_count,
             "own_skills": own_skills,
@@ -482,6 +498,7 @@ def skillswap(request):
             "selected_level": level,
             "selected_branch": str(branch_id) if branch_id else "",
             "requests": requests,
+            "pending_received_count": pending_received_count,
             "feedback": feedback,
             "feedback_ids": feedback_ids,
         },
@@ -498,22 +515,31 @@ def request_skill(request, skill_id):
         messages.error(request, "You can only request a skill that another student is offering to teach.")
     elif form.is_valid():
         try:
-            SkillRequest.objects.create(
+            with transaction.atomic():
+                SkillRequest.objects.create(
+                    skill=skill,
+                    requester=user,
+                    offered_skill=form.cleaned_data["offered_skill"],
+                    message=form.cleaned_data["message"].strip(),
+                    status="pending",
+                    created_at=timezone.now(),
+                    updated_at=timezone.now(),
+                )
+        except IntegrityError:
+            if SkillRequest.objects.filter(
                 skill=skill,
                 requester=user,
-                offered_skill=form.cleaned_data["offered_skill"],
-                message=form.cleaned_data["message"].strip(),
-                status="pending",
-                created_at=timezone.now(),
-                updated_at=timezone.now(),
-            )
-        except IntegrityError:
-            messages.error(request, "You already have an active request for this skill.")
+                status__in=["pending", "accepted"],
+            ).exists():
+                messages.error(request, "You already have an active request for this skill.")
+            else:
+                logger.exception("Could not save a SkillSwap learning request")
+                messages.error(request, "We could not send your request. Please try again.")
         else:
             messages.success(request, "Your learning request has been sent.")
     else:
         messages.error(request, "Please check the details in your request.")
-    return redirect("skillswap")
+    return redirect(f"{reverse('skillswap')}#my-requests")
 
 
 @require_POST
@@ -553,7 +579,7 @@ def update_skill_request(request, request_id):
             messages.success(request, "Your completion has been confirmed.")
         else:
             messages.error(request, "This request cannot be updated by your account in its current state.")
-    return redirect("skillswap")
+    return redirect(f"{reverse('skillswap')}#my-requests")
 
 
 @require_POST
@@ -566,11 +592,11 @@ def submit_skill_feedback(request, request_id):
     is_participant = user.id in {skill_request.requester_id, skill_request.skill.user_id}
     if not is_participant or skill_request.status != "completed":
         messages.error(request, "Only participants in a completed SkillSwap connection can leave feedback.")
-        return redirect("skillswap")
+        return redirect(f"{reverse('skillswap')}#my-requests")
     form = SkillFeedbackForm(request.POST)
     if not form.is_valid():
         messages.error(request, "Choose a rating from 1 to 5 and keep your feedback under 500 characters.")
-        return redirect("skillswap")
+        return redirect(f"{reverse('skillswap')}#my-requests")
     reviewee_id = (
         skill_request.skill.user_id
         if skill_request.requester_id == user.id
@@ -589,7 +615,7 @@ def submit_skill_feedback(request, request_id):
         messages.error(request, "You have already left feedback for this connection.")
     else:
         messages.success(request, "Your feedback has been submitted.")
-    return redirect("skillswap")
+    return redirect(f"{reverse('skillswap')}#my-requests")
 
 
 @require_POST

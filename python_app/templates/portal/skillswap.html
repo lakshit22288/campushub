@@ -8,7 +8,7 @@
       <span class="eyebrow">CAMPUS KNOWLEDGE EXCHANGE <span aria-hidden="true">/</span> SKILLSWAP</span>
       <h1>Teach what you know.<br><em>Learn what’s next.</em></h1>
       <p>Find someone to learn with, offer a skill in return, and build confidence together—one connection at a time.</p>
-      <div class="skillswap-hero-actions"><a class="btn primary" href="#skill-directory">Find a skill <span aria-hidden="true">↓</span></a><a class="skillswap-text-link" href="#my-skills">Add your skill <span aria-hidden="true">↗</span></a></div>
+      <div class="skillswap-hero-actions"><a class="btn primary" href="#skill-directory">Find a skill <span aria-hidden="true">↓</span></a><a class="skillswap-text-link" href="#my-skills">Add your skill <span aria-hidden="true">↗</span></a><a class="skillswap-text-link" href="#my-requests">Learning requests{% if pending_received_count %} · {{ pending_received_count }} new{% endif %} <span aria-hidden="true">↗</span></a></div>
     </div>
     <aside class="skillswap-hero-index" aria-label="SkillSwap activity">
       <span>THE CAMPUS EXCHANGE</span>
@@ -21,11 +21,46 @@
   </div>
 </section>
 
+<section class="skillswap-connections-section" id="my-requests">
+  <div class="container section">
+    <div class="skillswap-section-heading"><div><span class="eyebrow">01 / YOUR EXCHANGE INBOX</span><h2>Learning requests</h2><p>Requests to learn your skills appear here. Accept one to unlock direct email contact; your message stays with the request.</p></div><span>{{ pending_received_count }} NEW · {{ requests|length|stringformat:"02d" }} CONNECTIONS</span></div>
+    <div class="skillswap-requests">
+      {% for item in requests %}
+      <article class="skillswap-request-row">
+        <div class="skillswap-request-main">
+          <div class="skillswap-request-top"><span class="skillswap-request-status status-{{ item.status }}">{{ item.status|title }}</span><span class="skillswap-request-type">{% if item.requester_id|stringformat:"s" == current_user_id %}YOU ASKED TO LEARN{% else %}YOUR SKILL WAS REQUESTED{% endif %}</span></div>
+          <h3>{{ item.skill.skill_name }}</h3>
+          <p>{% if item.requester_id|stringformat:"s" == current_user_id %}With {{ item.skill.user.name }}{% else %}From {{ item.requester.name }}{% endif %}{% if item.offered_skill %} <span>· In return: {{ item.offered_skill.skill_name }}</span>{% endif %}</p>
+          {% if item.message %}<blockquote>“{{ item.message }}”</blockquote>{% endif %}
+          {% if item.status == "accepted" %}
+          <div class="skillswap-contact-note">Your SkillSwap request is accepted. Coordinate a time for your exchange by email.</div>
+          {% endif %}
+          {% if item.status == "accepted" %}<div class="skillswap-confirm-progress"><span class="{% if item.requester_completed_at %}is-confirmed{% endif %}">LEARNER {% if item.requester_completed_at %}CONFIRMED{% else %}TO CONFIRM{% endif %}</span><i></i><span class="{% if item.owner_completed_at %}is-confirmed{% endif %}">TEACHER {% if item.owner_completed_at %}CONFIRMED{% else %}TO CONFIRM{% endif %}</span></div>{% endif %}
+        </div>
+        <div class="skillswap-request-actions">
+          {% if item.skill.user_id|stringformat:"s" == current_user_id and item.status == "pending" %}
+          <form method="post" action="{% url 'update_skill_request' item.id %}">{% csrf_token %}<button class="btn primary small" name="action" value="accept">Accept request</button><button class="btn small skillswap-decline" name="action" value="reject">Decline</button></form>
+          {% elif item.status == "accepted" %}
+          {% if item.requester_id|stringformat:"s" == current_user_id %}<a class="btn primary small" href="mailto:{{ item.skill.user.email|urlencode }}?subject=CampuZHub%20SkillSwap%20-%20{{ item.skill.skill_name|urlencode }}">Email {{ item.skill.user.name }}</a>{% else %}<a class="btn primary small" href="mailto:{{ item.requester.email|urlencode }}?subject=CampuZHub%20SkillSwap%20-%20{{ item.skill.skill_name|urlencode }}">Email {{ item.requester.name }}</a>{% endif %}
+          <form method="post" action="{% url 'update_skill_request' item.id %}">{% csrf_token %}<button class="btn small" name="action" value="confirm-completed">{% if item.requester_id|stringformat:"s" == current_user_id and item.requester_completed_at or item.skill.user_id|stringformat:"s" == current_user_id and item.owner_completed_at %}Confirmed{% else %}Confirm completed{% endif %}</button></form>
+          {% elif item.status == "completed" %}
+          <span class="skillswap-complete-label">EXCHANGE COMPLETE</span>
+          {% if item.id not in feedback_ids %}<form method="post" action="{% url 'submit_skill_feedback' item.id %}" class="skillswap-feedback-form">{% csrf_token %}<label>Rate this exchange<select name="rating" required><option value="">Choose 1–5</option><option value="5">5 · Excellent</option><option value="4">4 · Good</option><option value="3">3 · Okay</option><option value="2">2 · Poor</option><option value="1">1 · Not good</option></select></label><input name="comment" maxlength="500" placeholder="Add a note (optional)"><button class="btn small" type="submit">Share feedback</button></form>{% endif %}
+          {% endif %}
+        </div>
+      </article>
+      {% empty %}
+      <div class="skillswap-requests-empty"><strong>Your request inbox is ready.</strong><p>Your next connection starts with one request. Requests you send and requests for your skills will show here. Accept a request to share email contact and arrange the exchange.</p><a href="#skill-directory">Explore skills <span aria-hidden="true">↗</span></a></div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
 <section class="container section skillswap-main">
   <div class="skillswap-workspace">
     <section class="skillswap-profile-panel" id="my-skills" aria-labelledby="my-skills-heading">
       <header class="skillswap-panel-heading">
-        <span class="skillswap-step">01 / YOUR CONTRIBUTION</span>
+        <span class="skillswap-step">02 / YOUR CONTRIBUTION</span>
         <span class="skillswap-panel-count">{{ own_skills|length|stringformat:"02d" }} LISTED</span>
         <h2 id="my-skills-heading">Put a skill into the mix.</h2>
         <p>Offer something you can teach, or tell the campus what you’re keen to learn.</p>
@@ -46,7 +81,7 @@
     </section>
 
     <section class="skillswap-directory" id="skill-directory" aria-labelledby="skill-directory-heading">
-      <div class="skillswap-directory-heading"><div><span class="eyebrow">02 / FIND YOUR PEOPLE</span><h2 id="skill-directory-heading">Learn something together.</h2><p>Browse what students can teach or are looking to learn.</p></div><span class="skillswap-directory-count">{{ listing_count|stringformat:"02d" }} <small>SKILLS</small></span></div>
+      <div class="skillswap-directory-heading"><div><span class="eyebrow">03 / FIND YOUR PEOPLE</span><h2 id="skill-directory-heading">Learn something together.</h2><p>Browse what students can teach or are looking to learn.</p></div><span class="skillswap-directory-count">{{ listing_count|stringformat:"02d" }} <small>SKILLS</small></span></div>
       <form method="get" class="skillswap-filter">
         <div class="skillswap-filter-fields">
           <label for="skill-query">Skill or topic<input id="skill-query" name="q" value="{{ query }}" maxlength="80" placeholder="e.g. Python, AutoCAD"></label>
@@ -80,37 +115,6 @@
         {% endfor %}
       </div>
     </section>
-  </div>
-</section>
-
-<section class="skillswap-connections-section">
-  <div class="container section">
-    <div class="skillswap-section-heading"><div><span class="eyebrow">03 / YOUR EXCHANGE JOURNAL</span><h2>Learning requests</h2><p>Follow each connection from first hello to both sides confirming the exchange.</p></div><span>{{ requests|length|stringformat:"02d" }} CONNECTIONS</span></div>
-    <div class="skillswap-requests">
-      {% for item in requests %}
-      <article class="skillswap-request-row">
-        <div class="skillswap-request-main">
-          <div class="skillswap-request-top"><span class="skillswap-request-status status-{{ item.status }}">{{ item.status|title }}</span><span class="skillswap-request-type">{% if item.requester_id == campushub_user.id %}YOU ASKED TO LEARN{% else %}YOUR SKILL WAS REQUESTED{% endif %}</span></div>
-          <h3>{{ item.skill.skill_name }}</h3>
-          <p>{% if item.requester_id == campushub_user.id %}With {{ item.skill.user.name }}{% else %}From {{ item.requester.name }}{% endif %}{% if item.offered_skill %} <span>· In return: {{ item.offered_skill.skill_name }}</span>{% endif %}</p>
-          {% if item.message %}<blockquote>“{{ item.message }}”</blockquote>{% endif %}
-          {% if item.status == "accepted" %}<div class="skillswap-confirm-progress"><span class="{% if item.requester_completed_at %}is-confirmed{% endif %}">LEARNER {% if item.requester_completed_at %}CONFIRMED{% else %}TO CONFIRM{% endif %}</span><i></i><span class="{% if item.owner_completed_at %}is-confirmed{% endif %}">TEACHER {% if item.owner_completed_at %}CONFIRMED{% else %}TO CONFIRM{% endif %}</span></div>{% endif %}
-        </div>
-        <div class="skillswap-request-actions">
-          {% if item.skill.user_id == campushub_user.id and item.status == "pending" %}
-          <form method="post" action="{% url 'update_skill_request' item.id %}">{% csrf_token %}<button class="btn primary small" name="action" value="accept">Accept request</button><button class="btn small skillswap-decline" name="action" value="reject">Decline</button></form>
-          {% elif item.status == "accepted" %}
-          <form method="post" action="{% url 'update_skill_request' item.id %}">{% csrf_token %}<button class="btn small" name="action" value="confirm-completed">{% if item.requester_id == campushub_user.id and item.requester_completed_at or item.skill.user_id == campushub_user.id and item.owner_completed_at %}Confirmed{% else %}Confirm completed{% endif %}</button></form>
-          {% elif item.status == "completed" %}
-          <span class="skillswap-complete-label">EXCHANGE COMPLETE</span>
-          {% if item.id not in feedback_ids %}<form method="post" action="{% url 'submit_skill_feedback' item.id %}" class="skillswap-feedback-form">{% csrf_token %}<label>Rate this exchange<select name="rating" required><option value="">Choose 1–5</option><option value="5">5 · Excellent</option><option value="4">4 · Good</option><option value="3">3 · Okay</option><option value="2">2 · Poor</option><option value="1">1 · Not good</option></select></label><input name="comment" maxlength="500" placeholder="Add a note (optional)"><button class="btn small" type="submit">Share feedback</button></form>{% endif %}
-          {% endif %}
-        </div>
-      </article>
-      {% empty %}
-      <div class="skillswap-requests-empty"><strong>Your next connection starts with one request.</strong><p>When you request to learn a skill—or someone asks to learn yours—it’ll be tracked here.</p><a href="#skill-directory">Explore skills <span aria-hidden="true">↗</span></a></div>
-      {% endfor %}
-    </div>
   </div>
 </section>
 
