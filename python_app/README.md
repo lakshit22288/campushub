@@ -68,7 +68,7 @@ python_app\.venv\Scripts\python.exe python_app\manage.py test portal --verbosity
 - Email/password sign-in with bcrypt-compatible hashes, Supabase Google OAuth using PKCE, and student profile editing.
 - BookShare listings and request/accept/reject/return flows.
 - SkillSwap teach/learn listings, reciprocal requests, two-sided completion, and feedback.
-- Help requests and owner resolution, a project idea catalog/submissions, and staff content/role administration.
+- Branch-visible Help Board questions with student/teacher/admin replies and owner/staff resolution, a project idea catalog/submissions, and staff content/role administration.
 - PDF/PNG/JPG academic-resource and campus-notice uploads plus ZIP/PDF/PNG/JPG student project attachments to Supabase Storage (10 MB maximum; MIME/extension and file-signature checks).
 
 Branch calculators and short practice sets are processed per request and do not write attempts to PostgreSQL. The SQL sandbox blocks writes and limits query time and returned rows; its in-memory sample data is recreated on every run. The Linux terminal modifies only its browser-memory practice filesystem. The HTML playground runs inside an isolated sandboxed iframe with a restrictive Content Security Policy. The MLT tools are educational only and do not provide diagnosis or treatment guidance.
@@ -79,11 +79,13 @@ The campus board at `/campus/` reuses existing announcements and displays upcomi
 
 These features use three additive PostgreSQL tables and do not alter existing tables. Before deploying this feature to a Supabase environment, run `python_app/sql/add_campus_features.sql` against that environment. Keep staging and production databases separate. Django models for these existing Supabase tables are unmanaged, so do not run `makemigrations` or `migrate` to create them.
 
-The existing Code Lab route/shell is intentionally kept separate and is not redesigned. Python Code Lab execution was verified in a local browser; the nine OneCompiler-backed languages are mocked in unit tests and have not been run against the external service. Code and stdin for those nine languages are sent to OneCompiler, so the UI warns users not to include private data. The Python Basics Practice utility is a fixed concept quiz and never executes arbitrary code. Features requiring tables absent from the existing schema (for example help replies, quizzes/practicals, team memberships, reports, and notifications) are not claimed as implemented. Database writes, live OAuth, and real Storage uploads still require isolated end-to-end verification.
+The existing Code Lab route/shell is intentionally kept separate and is not redesigned. Python Code Lab execution was verified in a local browser; the nine OneCompiler-backed languages are mocked in unit tests and have not been run against the external service. Code and stdin for those nine languages are sent to OneCompiler, so the UI warns users not to include private data. The Python Basics Practice utility is a fixed concept quiz and never executes arbitrary code. Features requiring tables absent from the existing schema (for example quizzes/practicals, team memberships, reports, and notifications) are not claimed as implemented. Database writes, live OAuth, and real Storage uploads still require isolated end-to-end verification.
 
 ## Existing database and deployment safety
 
-All mapped Supabase models are unmanaged; do not run Django migrations against the existing database. Other than the explicitly approved additive note, project, and announcement fields documented below, do not create or alter production tables.
+All mapped Supabase models are unmanaged; do not run Django migrations against the existing database. Do not create or alter production tables beyond the explicitly approved additive feature tables and fields documented here and below.
+
+Help Board replies use one additive table, `help_request_replies`. Before deploying the reply feature to a Supabase environment, run `python_app/sql/add_help_request_replies.sql` once against that environment. The baseline schema includes this table for fresh databases. Branch-specific questions remain visible to students in that branch and to all teacher/moderator/admin roles; replies are available to signed-in users who can view the question.
 
 The approved teacher/AI resource split adds one `source_type` discriminator to the existing `notes` table. This additive migration has been applied to the configured Supabase database; for another environment, run `sql/add_note_source_type.sql` once before deploying code that reads this field. Existing uploads keep the default `teacher` category. The baseline `sql/schema.sql` includes the field for fresh databases.
 

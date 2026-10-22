@@ -25,6 +25,7 @@ from .storage import (
 from .forms import (
     BookListingForm,
     HelpRequestForm,
+    HelpRequestReplyForm,
     ProfileForm,
     ProjectForm,
     SkillForm,
@@ -38,6 +39,7 @@ from .models import (
     Branch,
     CampusEvent,
     HelpRequest,
+    HelpRequestReply,
     Note,
     Project,
     Skill,
@@ -640,6 +642,18 @@ def close_help_request(request, request_id):
     return redirect("help_requests")
 
 
+def _visible_help_requests(user):
+    items = HelpRequest.objects.select_related("user", "branch").prefetch_related(
+        "replies__user"
+    )
+    if user.role not in STAFF_ROLES:
+        if user.branch_id:
+            items = items.filter(Q(branch_id=user.branch_id) | Q(branch__isnull=True))
+        else:
+            items = items.filter(branch__isnull=True)
+    return items
+
+
 @require_http_methods(["GET", "POST"])
 @signed_in_user
 def help_requests(request):
@@ -656,9 +670,7 @@ def help_requests(request):
             return redirect("help_requests")
     else:
         form = HelpRequestForm()
-    items = HelpRequest.objects.select_related("user", "branch")
-    if user.branch_id:
-        items = items.filter(Q(branch_id=user.branch_id) | Q(branch__isnull=True))
+    items = _visible_help_requests(user)
     query = request.GET.get("q", "").strip()[:120]
     terms = _search_terms(query)
     if terms:
@@ -668,8 +680,38 @@ def help_requests(request):
     return render(
         request,
         "portal/help_requests.html",
-        {"form": form, "help_requests": items[:100]},
+        {
+            "form": form,
+            "help_requests": items[:100],
+            "staff_can_resolve": user.role in STAFF_ROLES,
+            "current_user_id": str(user.id),
+        },
     )
+
+
+@require_POST
+@signed_in_user
+def reply_to_help_request(request, request_id):
+    user = request.campushub_user
+    help_request = get_object_or_404(_visible_help_requests(user), id=request_id)
+    if help_request.status != "open":
+        messages.info(
+            request,
+            "This help request is resolved and no longer accepts replies.",
+        )
+        return redirect("help_requests")
+
+    form = HelpRequestReplyForm(request.POST)
+    if form.is_valid():
+        reply = form.save(commit=False)
+        reply.help_request = help_request
+        reply.user = user
+        reply.created_at = timezone.now()
+        reply.save()
+        messages.success(request, "Your reply has been added to the help request.")
+    else:
+        messages.error(request, "Write a reply of up to 3,000 characters.")
+    return redirect("help_requests")
 
 
 @require_http_methods(["GET", "POST"])

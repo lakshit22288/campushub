@@ -285,6 +285,24 @@ class HelpRequest(models.Model):
         ordering = ["-created_at"]
 
 
+class HelpRequestReply(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    help_request = models.ForeignKey(
+        HelpRequest,
+        db_column="help_request_id",
+        related_name="replies",
+        on_delete=models.DO_NOTHING,
+    )
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    message = models.TextField()
+    created_at = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = "help_request_replies"
+        ordering = ["created_at"]
+
+
 class ScheduleEntry(models.Model):
     WEEKDAYS = (
         (0, "Monday"),

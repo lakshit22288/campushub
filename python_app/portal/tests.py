@@ -24,11 +24,13 @@ from django.utils import timezone
 from portal import auth
 from portal.branch_tool_catalog import BRANCH_TOOL_CATALOG, BRANCH_TOOL_SLUGS
 from portal.branch_tool_views import BranchToolForm, QUIZZES, branch_tool_groups
+from portal.features import _visible_help_requests, reply_to_help_request
 from portal.forms import (
     AnnouncementForm,
     AssignmentEntryForm,
     BookListingForm,
     CampusEventForm,
+    HelpRequestReplyForm,
     NoteForm,
     PasswordResetCompleteForm,
     PasswordResetRequestForm,
@@ -90,7 +92,7 @@ class PortalPageTests(SimpleTestCase):
         self.assertContains(response, "Computer Science / IT")
         self.assertContains(response, "/static/styles/global.css")
         self.assertContains(response, "/static/styles/global.css?v=49")
-        self.assertContains(response, "/static/python/python.css?v=51")
+        self.assertContains(response, "/static/python/python.css?v=52")
         self.assertContains(response, "/static/styles/font-preview.js?v=3")
         self.assertContains(response, 'name="description"')
         self.assertContains(
@@ -1454,6 +1456,107 @@ class PasswordResetTests(SimpleTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "The passwords do not match.")
         update_password.assert_not_called()
+
+
+class HelpBoardWorkflowTests(SimpleTestCase):
+    def test_reply_form_requires_message_within_limit(self):
+        self.assertFalse(HelpRequestReplyForm({"message": ""}).is_valid())
+        self.assertFalse(
+            HelpRequestReplyForm({"message": "x" * 3001}).is_valid()
+        )
+        self.assertTrue(
+            HelpRequestReplyForm({"message": "Try using a two-pointer approach."}).is_valid()
+        )
+
+    @patch("portal.features.HelpRequest.objects.select_related")
+    def test_staff_can_see_branch_questions_from_every_branch(self, select_related):
+        items = MagicMock()
+        select_related.return_value.prefetch_related.return_value = items
+        teacher = SimpleNamespace(role="teacher", branch_id=uuid.uuid4())
+
+        result = _visible_help_requests(teacher)
+
+        self.assertIs(result, items)
+        items.filter.assert_not_called()
+
+    @patch("portal.features.HelpRequest.objects.select_related")
+    def test_students_only_see_their_branch_and_campus_wide_questions(
+        self, select_related
+    ):
+        items = MagicMock()
+        select_related.return_value.prefetch_related.return_value = items
+        student = SimpleNamespace(role="student", branch_id=uuid.uuid4())
+
+        result = _visible_help_requests(student)
+
+        self.assertIs(result, items.filter.return_value)
+        items.filter.assert_called_once()
+        self.assertIn("branch__isnull", repr(items.filter.call_args))
+
+    @patch("portal.features.get_object_or_404")
+    @patch("portal.features._visible_help_requests")
+    @patch("portal.features.HelpRequestReplyForm")
+    @patch("portal.features.User.objects.filter")
+    def test_teacher_can_reply_to_an_open_branch_question(
+        self, user_query, reply_form_class, visible_questions, get_object
+    ):
+        user_id = uuid.uuid4()
+        question_id = uuid.uuid4()
+        teacher = SimpleNamespace(
+            id=user_id, role="teacher", branch_id=uuid.uuid4()
+        )
+        help_request = SimpleNamespace(id=question_id, status="open")
+        reply = MagicMock()
+        user_query.return_value.first.return_value = teacher
+        get_object.return_value = help_request
+        reply_form = reply_form_class.return_value
+        reply_form.is_valid.return_value = True
+        reply_form.save.return_value = reply
+
+        request = RequestFactory().post(
+            f"/help/{question_id}/replies/", {"message": "Here is one way to solve it."}
+        )
+        SessionMiddleware(lambda current_request: None).process_request(request)
+        request.session["campushub_user"] = {"id": str(user_id)}
+        request._messages = FallbackStorage(request)
+
+        response = reply_to_help_request(request, question_id)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], "/help/")
+        self.assertIs(reply.help_request, help_request)
+        self.assertIs(reply.user, teacher)
+        reply.save.assert_called_once()
+        self.assertTrue(visible_questions.called)
+
+    @patch("portal.features.get_object_or_404")
+    @patch("portal.features._visible_help_requests")
+    @patch("portal.features.HelpRequestReplyForm")
+    @patch("portal.features.User.objects.filter")
+    def test_resolved_help_request_does_not_accept_replies(
+        self, user_query, reply_form_class, visible_questions, get_object
+    ):
+        user_id = uuid.uuid4()
+        question_id = uuid.uuid4()
+        student = SimpleNamespace(
+            id=user_id, role="student", branch_id=uuid.uuid4()
+        )
+        user_query.return_value.first.return_value = student
+        get_object.return_value = SimpleNamespace(
+            id=question_id, status="resolved"
+        )
+
+        request = RequestFactory().post(
+            f"/help/{question_id}/replies/", {"message": "An answer"}
+        )
+        SessionMiddleware(lambda current_request: None).process_request(request)
+        request.session["campushub_user"] = {"id": str(user_id)}
+        request._messages = FallbackStorage(request)
+
+        response = reply_to_help_request(request, question_id)
+
+        self.assertEqual(response.status_code, 302)
+        reply_form_class.assert_not_called()
 
 
 class FeaturePermissionTests(SimpleTestCase):

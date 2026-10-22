@@ -2,9 +2,32 @@
 {% block title %}Help board · CampuZHub{% endblock %}
 {% block robots %}noindex,nofollow{% endblock %}
 {% block content %}
-<section class="page-header help-board-header"><div class="container"><span class="eyebrow">PEER SUPPORT</span><h1>Help board.</h1><p>Share a specific study question with your branch and get help from people learning the same things.</p></div></section>
+<section class="page-header help-board-header"><div class="container"><span class="eyebrow">PEER SUPPORT</span><h1>Help board.</h1><p>Share a specific question with your branch. Students, teachers, and admins can reply and help each other move forward.</p></div></section>
 <section class="container section feature-columns help-board-layout">
   <section class="content-card"><span class="eyebrow">ASK YOUR CAMPUS</span><h2>Post a question</h2><form method="post" class="form">{% csrf_token %}{% for field in form %}<label for="{{ field.id_for_label }}">{{ field.label }}{{ field }}{% if field.errors %}<span class="error">{{ field.errors }}</span>{% endif %}</label>{% endfor %}<button class="btn primary" type="submit">Post request</button></form></section>
-  <section class="help-board-questions"><div class="help-board-section-heading"><span class="eyebrow">OPEN QUESTIONS</span><h2>Help someone move forward.</h2></div><div class="help-request-list">{% for item in help_requests %}<article class="content-card"><div class="content-card-top"><span class="content-meta">{% if item.branch %}{{ item.branch.code }}{% else %}ALL BRANCHES{% endif %}</span><span class="status-pill">{{ item.status|title }}</span></div><h3>{{ item.title }}</h3><p>{{ item.description }}</p><span class="muted">Posted by {{ item.user.name }}</span>{% if item.user_id == campushub_user.id and item.status == "open" %}<form method="post" action="{% url 'close_help_request' item.id %}">{% csrf_token %}<button class="btn small" type="submit">Mark resolved</button></form>{% endif %}</article>{% empty %}<div class="empty">No requests yet. Be the first to ask or answer.</div>{% endfor %}</div></section>
+  <section class="help-board-questions">
+    <div class="help-board-section-heading"><span class="eyebrow">CAMPUS QUESTIONS</span><h2>Help someone move forward.</h2></div>
+    <div class="help-request-list">
+      {% for item in help_requests %}
+      <article class="content-card help-request-card">
+        <div class="content-card-top"><span class="content-meta">{% if item.branch %}{{ item.branch.code }}{% else %}ALL BRANCHES{% endif %}</span><span class="status-pill">{{ item.status|title }}</span></div>
+        <h3>{{ item.title }}</h3><p>{{ item.description }}</p><span class="muted">Posted by {{ item.user.name }}</span>
+        <div class="help-replies">
+          <h4>Replies <span>({{ item.replies.all|length }})</span></h4>
+          {% for reply in item.replies.all %}
+          <div class="help-reply">
+            <div class="help-reply-meta"><strong>{{ reply.user.name }}</strong>{% if reply.user.role == "teacher" %}<span class="help-staff-badge">Teacher</span>{% elif reply.user.role == "admin" or reply.user.role == "super_admin" %}<span class="help-staff-badge">Admin</span>{% elif reply.user.role == "moderator" %}<span class="help-staff-badge">Moderator</span>{% endif %}<time>{{ reply.created_at|date:"M j, Y · g:i A" }}</time></div>
+            <p>{{ reply.message|linebreaksbr }}</p>
+          </div>
+          {% empty %}<p class="help-no-replies">No replies yet. Share an answer if you can help.</p>{% endfor %}
+        </div>
+        {% if item.status == "open" %}
+        <form method="post" action="{% url 'reply_to_help_request' item.id %}" class="help-reply-form">{% csrf_token %}<label for="reply-{{ item.id }}">Add a reply<textarea id="reply-{{ item.id }}" name="message" rows="3" maxlength="3000" required placeholder="Write a helpful answer..."></textarea></label><button class="btn small" type="submit">Post reply</button></form>
+        {% endif %}
+        {% if item.status == "open" %}{% if item.user_id|stringformat:"s" == current_user_id or staff_can_resolve %}<form method="post" action="{% url 'close_help_request' item.id %}">{% csrf_token %}<button class="btn small" type="submit">Mark resolved</button></form>{% endif %}{% endif %}
+      </article>
+      {% empty %}<div class="empty">No requests yet. Be the first to ask or answer.</div>{% endfor %}
+    </div>
+  </section>
 </section>
 {% endblock %}

@@ -35,6 +35,7 @@ urlpatterns = [
     path("skillswap/requests/<uuid:request_id>/", features.update_skill_request, name="update_skill_request"),
     path("skillswap/requests/<uuid:request_id>/feedback/", features.submit_skill_feedback, name="submit_skill_feedback"),
     path("help/", features.help_requests, name="help_requests"),
+    path("help/<uuid:request_id>/replies/", features.reply_to_help_request, name="reply_to_help_request"),
     path("campus/", planner_views.campus_board, name="campus_board"),
     path("planner/", planner_views.planner, name="planner"),
     path("help/<uuid:request_id>/resolve/", features.close_help_request, name="close_help_request"),

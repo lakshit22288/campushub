@@ -8,6 +8,7 @@ from .models import (
     Branch,
     CampusEvent,
     HelpRequest,
+    HelpRequestReply,
     Note,
     Project,
     ScheduleEntry,
@@ -167,6 +168,18 @@ class HelpRequestForm(forms.ModelForm):
             "title": forms.TextInput(attrs={"maxlength": 160}),
             "description": forms.Textarea(attrs={"rows": 5, "maxlength": 3000}),
         }
+
+
+class HelpRequestReplyForm(forms.ModelForm):
+    message = forms.CharField(
+        max_length=3000,
+        widget=forms.Textarea(attrs={"rows": 4, "maxlength": 3000}),
+        label="Your reply",
+    )
+
+    class Meta:
+        model = HelpRequestReply
+        fields = ("message",)
 
 
 class ProjectForm(forms.Form):

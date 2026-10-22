@@ -3524,6 +3524,32 @@ body.campus-page main .help-request-list { display: grid; gap: 10px; }
 body.campus-page main .help-request-list > .content-card { margin: 0; padding: 17px 19px; }
 body.campus-page main .help-request-list > .content-card form { margin-top: 12px; }
 body.campus-page main .help-board-layout .empty { min-height: 130px; display: grid; place-content: center; text-align: center; }
+body.campus-page main .help-request-card > h3 { margin-top: 12px; }
+body.campus-page main .help-replies {
+  display: grid;
+  gap: 10px;
+  margin-top: 17px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(45, 27, 105, .1);
+}
+body.campus-page main .help-replies h4 { margin: 0; color: #2d1b69; font-size: 13px; }
+body.campus-page main .help-replies h4 span { color: var(--new-muted); font-weight: 500; }
+body.campus-page main .help-reply {
+  padding: 12px 13px;
+  border: 1px solid rgba(45, 27, 105, .1);
+  border-radius: 12px;
+  background: rgba(248, 247, 255, .62);
+}
+body.campus-page main .help-reply-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; color: var(--new-muted); font-size: 11px; }
+body.campus-page main .help-reply-meta strong { color: #2d1b69; }
+body.campus-page main .help-reply-meta time { margin-left: auto; }
+body.campus-page main .help-staff-badge { padding: 3px 7px; border-radius: 999px; color: #4b38b8; background: rgba(91, 61, 245, .1); font-size: 9px; font-weight: 800; text-transform: uppercase; }
+body.campus-page main .help-reply > p { margin: 8px 0 0; color: var(--new-muted); font-size: 12px; line-height: 1.65; overflow-wrap: anywhere; }
+body.campus-page main .help-no-replies { margin: 0; color: var(--new-muted); font-size: 12px; }
+body.campus-page main .help-reply-form { display: grid; gap: 8px; }
+body.campus-page main .help-reply-form label { display: grid; gap: 7px; color: #2d1b69; font-size: 11px; font-weight: 700; }
+body.campus-page main .help-reply-form textarea { width: 100%; min-height: 76px; resize: vertical; }
+body.campus-page main .help-reply-form .btn { justify-self: start; }
 
 body.campus-page main .planner-content,
 body.campus-page main .planner-lists { width: min(100% - 48px, 1080px); }
