@@ -219,16 +219,24 @@ def subject_detail(request, subject_id):
 def profile(request):
     user = request.campushub_user
     if request.method == "POST":
-        form = ProfileForm(request.POST, instance=user)
+        form = ProfileForm(request.POST, instance=user, user=user)
         if form.is_valid():
             form.save()
             auth.set_user_session(request, user)
             messages.success(request, "Your profile has been updated.")
             return redirect("profile")
     else:
-        form = ProfileForm(instance=user)
+        form = ProfileForm(instance=user, user=user)
     skills = Skill.objects.filter(user=user)
-    return render(request, "portal/profile.html", {"form": form, "skills": skills})
+    return render(
+        request,
+        "portal/profile.html",
+        {
+            "form": form,
+            "skills": skills,
+            "is_super_admin": user.role == "super_admin",
+        },
+    )
 
 
 @require_http_methods(["GET", "POST"])

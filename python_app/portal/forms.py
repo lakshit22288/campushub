@@ -143,6 +143,12 @@ class SkillRequestForm(forms.Form):
 
 
 class ProfileForm(forms.ModelForm):
+    def __init__(self, *args, user, **kwargs):
+        super().__init__(*args, **kwargs)
+        if user.role == "super_admin":
+            self.fields.pop("branch")
+            self.fields.pop("semester")
+
     class Meta:
         model = User
         fields = ("name", "branch", "semester", "bio")

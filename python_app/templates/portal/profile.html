@@ -2,7 +2,7 @@
 {% block title %}My profile · CampuZHub{% endblock %}
 {% block robots %}noindex,nofollow{% endblock %}
 {% block content %}
-<section class="page-header profile-page-header"><div class="container"><span class="eyebrow">YOUR CAMPUS IDENTITY</span><h1>My profile.</h1><p>Keep your branch and semester current so peers can find the right community.</p></div></section>
+<section class="page-header profile-page-header"><div class="container"><span class="eyebrow">{% if is_super_admin %}ADMIN ACCOUNT{% else %}YOUR CAMPUS IDENTITY{% endif %}</span><h1>My profile.</h1><p>{% if is_super_admin %}Manage your account details. Student branch and semester fields are not applicable to superadmins.{% else %}Keep your branch and semester current so peers can find the right community.{% endif %}</p></div></section>
 <section class="container section profile-layout profile-page-layout">
   <form method="post" class="content-card form profile-form">{% csrf_token %}
     {% if form.non_field_errors %}<div class="error" role="alert">{{ form.non_field_errors }}</div>{% endif %}

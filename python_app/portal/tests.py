@@ -32,10 +32,12 @@ from portal.forms import (
     NoteForm,
     PasswordResetCompleteForm,
     PasswordResetRequestForm,
+    ProfileForm,
     ProjectForm,
     ScheduleEntryForm,
 )
 from portal.idea_catalog import IDEAS
+from portal.models import User
 from portal.storage import (
     StorageUploadError,
     upload_announcement_file,
@@ -47,6 +49,17 @@ from campushub.settings import postgres_settings
 
 
 class PortalPageTests(SimpleTestCase):
+    def test_superadmin_profile_form_hides_student_fields(self):
+        admin = User(role="super_admin")
+        student = User(role="student")
+
+        admin_form = ProfileForm(instance=admin, user=admin)
+        student_form = ProfileForm(instance=student, user=student)
+
+        self.assertEqual(tuple(admin_form.fields), ("name", "bio"))
+        self.assertIn("branch", student_form.fields)
+        self.assertIn("semester", student_form.fields)
+
     def set_logged_in_user(self, user_id):
         session = self.client.session
         session["campushub_user"] = {"id": str(user_id)}
