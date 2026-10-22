@@ -69,7 +69,7 @@ python_app\.venv\Scripts\python.exe python_app\manage.py test portal --verbosity
 - BookShare listings and request/accept/reject/return flows.
 - SkillSwap teach/learn listings, reciprocal requests, two-sided completion, and feedback.
 - Branch-visible Help Board questions with student/teacher/admin replies and owner/staff resolution, a project idea catalog/submissions, and staff content/role administration.
-- PDF/PNG/JPG academic-resource and campus-notice uploads plus ZIP/PDF/PNG/JPG student project attachments to Supabase Storage (10 MB maximum; MIME/extension and file-signature checks).
+- PDF/PNG/JPG academic-resource and campus-notice uploads transfer directly from the admin browser to Supabase Storage using short-lived, server-issued upload URLs, with progress feedback and server-side file-signature verification; student project attachments support ZIP/PDF/PNG/JPG (10 MB maximum).
 
 Branch calculators and short practice sets are processed per request and do not write attempts to PostgreSQL. The SQL sandbox blocks writes and limits query time and returned rows; its in-memory sample data is recreated on every run. The Linux terminal modifies only its browser-memory practice filesystem. The HTML playground runs inside an isolated sandboxed iframe with a restrictive Content Security Policy. The MLT tools are educational only and do not provide diagnosis or treatment guidance.
 

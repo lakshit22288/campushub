@@ -3711,6 +3711,32 @@ body.campus-page main .campus-board-content .planner-list > .empty {
   body.campus-page main .campus-board-content { grid-template-columns: 1fr; gap: 28px; }
 }
 
+body.campus-page main .admin-upload-status {
+  display: grid;
+  gap: 7px;
+  color: var(--new-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+body.campus-page main .admin-upload-status[hidden] { display: none; }
+body.campus-page main .admin-upload-status progress {
+  width: 100%;
+  height: 8px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(45, 27, 105, .1);
+  accent-color: #5b3df5;
+}
+body.campus-page main .admin-upload-status progress::-webkit-progress-bar {
+  border-radius: 999px;
+  background: rgba(45, 27, 105, .1);
+}
+body.campus-page main .admin-upload-status progress::-webkit-progress-value {
+  border-radius: 999px;
+  background: #5b3df5;
+}
+
 body.campus-page .topbar .nav .nav-logout,
 body.campus-page .topbar .nav .nav-logout:hover {
   border: 0;

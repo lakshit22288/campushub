@@ -51,6 +51,28 @@ from campushub.settings import postgres_settings
 
 
 class PortalPageTests(SimpleTestCase):
+    @override_settings(SUPABASE_ANON_KEY="")
+    @patch("portal.features.User.objects.filter")
+    def test_admin_upload_prepare_explains_missing_public_supabase_key(self, users_query):
+        from portal.admin_views import prepare_admin_upload
+
+        user = SimpleNamespace(role="admin")
+        users_query.return_value.first.return_value = user
+        request = RequestFactory().post(
+            "/admin/uploads/prepare/",
+            {"action": "note"},
+        )
+        SessionMiddleware(lambda current_request: None).process_request(request)
+        request.session["campushub_user"] = {"id": str(uuid.uuid4())}
+
+        response = prepare_admin_upload(request)
+
+        self.assertEqual(response.status_code, 503)
+        self.assertIn(
+            "Browser uploads are not configured",
+            json.loads(response.content)["error"],
+        )
+
     def test_superadmin_profile_form_hides_student_fields(self):
         admin = User(role="super_admin")
         student = User(role="student")
@@ -92,7 +114,7 @@ class PortalPageTests(SimpleTestCase):
         self.assertContains(response, "Computer Science / IT")
         self.assertContains(response, "/static/styles/global.css")
         self.assertContains(response, "/static/styles/global.css?v=49")
-        self.assertContains(response, "/static/python/python.css?v=52")
+        self.assertContains(response, "/static/python/python.css?v=53")
         self.assertContains(response, "/static/styles/font-preview.js?v=3")
         self.assertContains(response, 'name="description"')
         self.assertContains(
@@ -1923,6 +1945,114 @@ class BookShareWorkflowTests(SimpleTestCase):
 
 
 class StorageTests(SimpleTestCase):
+    @override_settings(
+        SUPABASE_URL="https://campus-project.supabase.co/",
+        SUPABASE_SERVICE_ROLE_KEY="test-service-key",
+        SUPABASE_STORAGE_BUCKET="campushub-files",
+        SUPABASE_UPLOAD_BUCKET="campushub-python-files",
+    )
+    def test_admin_direct_upload_returns_a_signed_url_and_private_reference(self):
+        from portal.storage import create_admin_upload_url
+
+        response = MagicMock()
+        response.json.return_value = {
+            "signedURL": "/object/upload/sign/campushub-python-files/notes/unique.pdf?token=signed-token"
+        }
+        with patch("portal.storage.httpx.Client") as client_factory:
+            client = client_factory.return_value.__enter__.return_value
+            client.post.return_value = response
+            result = create_admin_upload_url(
+                file_name="lecture.pdf",
+                content_type="application/pdf",
+                file_size=1024,
+                folder="notes",
+            )
+
+        self.assertTrue(result["upload_url"].startswith(
+            "https://campus-project.supabase.co/storage/v1/object/upload/sign/"
+        ))
+        self.assertTrue(result["upload_url"].endswith("?token=signed-token"))
+        self.assertTrue(result["file_reference"].startswith(
+            "storage://campushub-python-files/notes/"
+        ))
+        self.assertEqual(result["file_name"], "lecture.pdf")
+        self.assertEqual(result["file_size"], 1024)
+
+    @override_settings(
+        SUPABASE_URL="https://campus-project.supabase.co",
+        SUPABASE_SERVICE_ROLE_KEY="test-service-key",
+        SUPABASE_STORAGE_BUCKET="campushub-files",
+    )
+    def test_admin_direct_upload_rejects_invalid_type_and_oversized_files_before_signing(self):
+        from portal.storage import create_admin_upload_url
+
+        with patch("portal.storage.httpx.Client") as client_factory:
+            with self.assertRaisesRegex(StorageUploadError, "matching PDF, PNG, and JPG"):
+                create_admin_upload_url(
+                    file_name="lecture.pdf",
+                    content_type="image/png",
+                    file_size=1024,
+                    folder="notes",
+                )
+            with self.assertRaisesRegex(StorageUploadError, "10 MB or smaller"):
+                create_admin_upload_url(
+                    file_name="lecture.pdf",
+                    content_type="application/pdf",
+                    file_size=10 * 1024 * 1024 + 1,
+                    folder="notes",
+                )
+        client_factory.assert_not_called()
+
+    @override_settings(
+        SUPABASE_URL="https://campus-project.supabase.co/",
+        SUPABASE_SERVICE_ROLE_KEY="test-service-key",
+        SUPABASE_STORAGE_BUCKET="campushub-files",
+    )
+    def test_admin_direct_upload_verifies_remote_size_and_file_signature(self):
+        from portal.storage import verify_admin_upload
+
+        response = MagicMock()
+        response.status_code = 206
+        response.headers = {"Content-Range": "bytes 0-7/14"}
+        response.iter_raw.return_value = iter([b"%PDF-1.7"])
+        with patch("portal.storage.httpx.Client") as client_factory:
+            client = client_factory.return_value.__enter__.return_value
+            client.stream.return_value.__enter__.return_value = response
+            self.assertTrue(
+                verify_admin_upload(
+                    "notes/lecture.pdf",
+                    content_type="application/pdf",
+                    expected_size=14,
+                    folder="notes",
+                )
+            )
+        self.assertEqual(
+            client.stream.call_args.kwargs["headers"]["Range"], "bytes=0-7"
+        )
+
+    @override_settings(
+        SUPABASE_URL="https://campus-project.supabase.co/",
+        SUPABASE_SERVICE_ROLE_KEY="test-service-key",
+        SUPABASE_STORAGE_BUCKET="campushub-files",
+    )
+    def test_admin_direct_upload_rejects_bad_remote_signature(self):
+        from portal.storage import verify_admin_upload
+
+        response = MagicMock()
+        response.status_code = 206
+        response.headers = {"Content-Range": "bytes 0-7/14"}
+        response.iter_raw.return_value = iter([b"not a PDF"])
+        with patch("portal.storage.httpx.Client") as client_factory:
+            client = client_factory.return_value.__enter__.return_value
+            client.stream.return_value.__enter__.return_value = response
+            with self.assertRaisesRegex(StorageUploadError, "actual format"):
+                verify_admin_upload(
+                    "notes/lecture.pdf",
+                    content_type="application/pdf",
+                    expected_size=14,
+                    folder="notes",
+                )
+
     @override_settings(
         SUPABASE_URL="",
         SUPABASE_SERVICE_ROLE_KEY="",

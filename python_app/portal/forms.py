@@ -253,6 +253,7 @@ class NoteForm(forms.Form):
         max_length=3000,
         widget=forms.Textarea(attrs={"rows": 3, "maxlength": 3000}),
     )
+    upload_id = forms.CharField(required=False, widget=forms.HiddenInput)
     subject = forms.ModelChoiceField(queryset=Subject.objects.select_related("branch"))
     source_type = forms.ChoiceField(
         choices=SOURCE_CHOICES,
@@ -263,6 +264,7 @@ class NoteForm(forms.Form):
 
 
 class AnnouncementForm(forms.ModelForm):
+    upload_id = forms.CharField(required=False, widget=forms.HiddenInput)
     attachment = forms.FileField(
         required=False,
         label="Notice image or PDF",

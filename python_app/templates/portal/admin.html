@@ -8,11 +8,11 @@
 </section>
 <section class="container section feature-columns">
   {% if can_manage_content %}
-  <section class="content-card"><span class="eyebrow">PUBLISH ACADEMIC RESOURCE</span><h2>Add notes or a file</h2><p>Choose whether this is a faculty upload or AI-generated study material. PDF, PNG and JPG uploads are sent to the configured Supabase Storage bucket (10 MB maximum).</p>
-    <form method="post" enctype="multipart/form-data" class="form">{% csrf_token %}<input type="hidden" name="action" value="note">{% for field in note_form %}<label for="{{ field.id_for_label }}">{{ field.label }}{{ field }}{% if field.errors %}<span class="error">{{ field.errors }}</span>{% endif %}</label>{% endfor %}<button class="btn primary" type="submit">Publish resource</button></form>
+  <section class="content-card"><span class="eyebrow">PUBLISH ACADEMIC RESOURCE</span><h2>Add notes or a file</h2><p>Choose whether this is a faculty upload or AI-generated study material. PDF, PNG and JPG uploads (10 MB maximum) transfer securely to storage directly from your browser.</p>
+    <form method="post" enctype="multipart/form-data" class="form admin-direct-upload" data-upload-prepare="{% url 'admin_upload_prepare' %}">{% csrf_token %}<input type="hidden" name="action" value="note">{% for field in note_form.hidden_fields %}{{ field }}{% endfor %}{% for field in note_form.visible_fields %}<label for="{{ field.id_for_label }}">{{ field.label }}{{ field }}{% if field.errors %}<span class="error">{{ field.errors }}</span>{% endif %}</label>{% endfor %}<div class="admin-upload-status" role="status" aria-live="polite" hidden><progress max="100" value="0"></progress><span></span></div><button class="btn primary" type="submit">Publish resource</button></form>
   </section>
   <section class="content-card"><span class="eyebrow">CAMPUS UPDATE</span><h2>Post an announcement</h2>
-    <form method="post" enctype="multipart/form-data" class="form">{% csrf_token %}<input type="hidden" name="action" value="announcement">{% for field in announcement_form %}<label for="{{ field.id_for_label }}">{{ field.label }}{{ field }}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}{% if field.errors %}<span class="error">{{ field.errors }}</span>{% endif %}</label>{% endfor %}<button class="btn primary" type="submit">Publish announcement</button></form>
+    <form method="post" enctype="multipart/form-data" class="form admin-direct-upload" data-upload-prepare="{% url 'admin_upload_prepare' %}">{% csrf_token %}<input type="hidden" name="action" value="announcement">{% for field in announcement_form.hidden_fields %}{{ field }}{% endfor %}{% for field in announcement_form.visible_fields %}<label for="{{ field.id_for_label }}">{{ field.label }}{{ field }}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}{% if field.errors %}<span class="error">{{ field.errors }}</span>{% endif %}</label>{% endfor %}<div class="admin-upload-status" role="status" aria-live="polite" hidden><progress max="100" value="0"></progress><span></span></div><button class="btn primary" type="submit">Publish announcement</button></form>
   </section>
   <section class="content-card"><span class="eyebrow">CAMPUS CALENDAR</span><h2>Add an event</h2>
     <form method="post" class="form">{% csrf_token %}<input type="hidden" name="action" value="event">{% for field in event_form %}<label for="{{ field.id_for_label }}">{{ field.label }}{{ field }}{% if field.errors %}<span class="error">{{ field.errors }}</span>{% endif %}</label>{% endfor %}<button class="btn primary" type="submit">Publish event</button></form>
@@ -28,4 +28,85 @@
 {% if can_manage_users %}
 <section class="container section"><div class="section-head"><div><span class="eyebrow">SUPER ADMIN</span><h2>Manage account roles</h2></div></div><div class="admin-user-list">{% for account in users %}<article class="request-row"><div><strong>{{ account.name }}</strong><span>{{ account.email }} · {{ account.branch.code|default:"No branch" }}</span></div><form method="post" class="role-form">{% csrf_token %}<input type="hidden" name="action" value="role"><input type="hidden" name="user_id" value="{{ account.id }}"><select name="role" aria-label="Role for {{ account.name }}">{% for role in role_choices %}<option value="{{ role }}" {% if account.role == role %}selected{% endif %}>{{ role|title }}</option>{% endfor %}</select><button class="btn small" type="submit">Update role</button></form></article>{% endfor %}</div></section>
 {% endif %}
+{% endblock %}
+{% block scripts %}
+<script>
+(() => {
+  document.querySelectorAll(".admin-direct-upload").forEach((form) => {
+    form.addEventListener("submit", (event) => {
+      const fileInput = form.querySelector('input[type="file"]');
+      const file = fileInput && fileInput.files && fileInput.files[0];
+      if (!file || form.dataset.uploadInProgress === "true") return;
+      if (!form.reportValidity()) return;
+      event.preventDefault();
+
+      const button = form.querySelector('button[type="submit"]');
+      const status = form.querySelector(".admin-upload-status");
+      const progress = status.querySelector("progress");
+      const statusText = status.querySelector("span");
+      const showStatus = (text, value) => {
+        status.hidden = false;
+        progress.hidden = value === null;
+        if (value !== null) progress.value = value;
+        statusText.textContent = text;
+      };
+      const fail = (text) => {
+        form.dataset.uploadInProgress = "false";
+        button.disabled = false;
+        showStatus(text, null);
+      };
+
+      form.dataset.uploadInProgress = "true";
+      button.disabled = true;
+      showStatus("Preparing secure upload…", 0);
+      const prepareData = new FormData(form);
+      prepareData.delete(fileInput.name);
+      prepareData.set("file_name", file.name);
+      prepareData.set("content_type", file.type);
+      prepareData.set("file_size", String(file.size));
+
+      fetch(form.dataset.uploadPrepare, {
+        method: "POST",
+        body: prepareData,
+        headers: {"X-CSRFToken": form.querySelector('[name="csrfmiddlewaretoken"]').value},
+        credentials: "same-origin"
+      }).then(async (response) => {
+        const result = await response.json();
+        if (!response.ok) {
+          const error = result.error || Object.values(result.errors || {}).flatMap((items) => items.map((item) => item.message)).join(" ");
+          throw new Error(error || "Could not prepare this upload.");
+        }
+        return result;
+      }).then((upload) => new Promise((resolve, reject) => {
+        const request = new XMLHttpRequest();
+        request.open("PUT", upload.upload_url);
+        request.setRequestHeader("apikey", upload.api_key);
+        request.setRequestHeader("Authorization", `Bearer ${upload.api_key}`);
+        request.setRequestHeader("Content-Type", upload.content_type);
+        request.upload.addEventListener("progress", (progressEvent) => {
+          if (progressEvent.lengthComputable) {
+            const percent = Math.round((progressEvent.loaded / progressEvent.total) * 100);
+            showStatus(`Uploading file… ${percent}%`, percent);
+          } else {
+            showStatus("Uploading file…", 0);
+          }
+        });
+        request.addEventListener("load", () => {
+          if (request.status >= 200 && request.status < 300) resolve(upload);
+          else reject(new Error("Storage rejected the upload. Check your connection and try again."));
+        });
+        request.addEventListener("error", () => reject(new Error("Upload connection failed. Please try again.")));
+        request.addEventListener("timeout", () => reject(new Error("The upload timed out. Please try again.")));
+        request.timeout = 120000;
+        request.send(file);
+      })).then((upload) => {
+        form.querySelector('[name="upload_id"]').value = upload.upload_id;
+        fileInput.value = "";
+        showStatus("File uploaded. Publishing resource…", 100);
+        form.submit();
+      }).catch((error) => fail(error.message));
+    });
+  });
+})();
+</script>
 {% endblock %}

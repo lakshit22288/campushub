@@ -1,4 +1,5 @@
 import logging
+import re
 from pathlib import PurePath
 from urllib.parse import quote, unquote, urlsplit
 from uuid import uuid4
@@ -24,6 +25,12 @@ PROJECT_FILE_SIGNATURES = {
     "application/zip": (b"PK\x03\x04", b"PK\x05\x06", b"PK\x07\x08"),
     "application/x-zip-compressed": (b"PK\x03\x04", b"PK\x05\x06", b"PK\x07\x08"),
 }
+ADMIN_UPLOAD_EXTENSIONS = {
+    ".pdf": "application/pdf",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+}
 
 
 class StorageUploadError(Exception):
@@ -36,6 +43,185 @@ def upload_note_file(uploaded_file):
 
 def upload_announcement_file(uploaded_file):
     return _upload_file(uploaded_file, folder="announcements")
+
+
+def create_admin_upload_url(*, file_name, content_type, file_size, folder):
+    if folder not in {"notes", "announcements"}:
+        raise StorageUploadError("This upload destination is not allowed.")
+    if not isinstance(file_name, str) or PurePath(file_name).name != file_name:
+        raise StorageUploadError("Choose a valid file name.")
+    extension = PurePath(file_name).suffix.lower()
+    expected_type = ADMIN_UPLOAD_EXTENSIONS.get(extension)
+    if not expected_type or content_type not in {"", expected_type}:
+        raise StorageUploadError("You can upload matching PDF, PNG, and JPG files only.")
+    if not isinstance(file_size, int) or isinstance(file_size, bool) or not 0 < file_size <= MAX_UPLOAD_SIZE:
+        raise StorageUploadError("The file must be larger than 0 bytes and 10 MB or smaller.")
+
+    supabase_url = settings.SUPABASE_URL.rstrip("/")
+    service_key = settings.SUPABASE_SERVICE_ROLE_KEY
+    legacy_bucket = settings.SUPABASE_STORAGE_BUCKET
+    bucket = getattr(settings, "SUPABASE_UPLOAD_BUCKET", "") or legacy_bucket
+    if not supabase_url or not service_key or not bucket:
+        raise StorageUploadError(
+            "File uploads are not configured. Ask an administrator to check the Supabase Storage settings."
+        )
+
+    object_name = f"{folder}/{uuid4().hex}{extension}"
+    endpoint = (
+        f"{supabase_url}/storage/v1/object/upload/sign/"
+        f"{quote(bucket, safe='')}/{quote(object_name, safe='/')}"
+    )
+    headers = {
+        "apikey": service_key,
+        "Authorization": f"Bearer {service_key}",
+    }
+    try:
+        with httpx.Client(timeout=10) as client:
+            response = client.post(endpoint, json={"upsert": False}, headers=headers)
+            response.raise_for_status()
+            payload = response.json()
+            if not isinstance(payload, dict):
+                raise ValueError("Expected an object response")
+            signed_url = payload.get("signedURL") or payload.get("signedUrl")
+    except httpx.TimeoutException as error:
+        logger.warning("Supabase Storage signed upload request timed out")
+        raise StorageUploadError("Could not prepare the upload in time. Please try again.") from error
+    except httpx.HTTPStatusError as error:
+        logger.error(
+            "Supabase Storage rejected a signed upload request with HTTP %s",
+            error.response.status_code,
+        )
+        raise StorageUploadError(
+            "Supabase Storage could not prepare this upload. Check the storage bucket and settings."
+        ) from error
+    except httpx.RequestError as error:
+        logger.exception("Could not reach Supabase Storage to prepare an upload")
+        raise StorageUploadError("Could not connect to Supabase Storage.") from error
+    except ValueError as error:
+        logger.exception("Supabase Storage returned an invalid signed upload response")
+        raise StorageUploadError("Supabase Storage returned an invalid upload link.") from error
+
+    if not isinstance(signed_url, str) or not signed_url:
+        logger.error("Supabase Storage response did not contain a signed upload URL")
+        raise StorageUploadError("Supabase Storage returned an invalid upload link.")
+    parsed_signed_url = urlsplit(signed_url)
+    parsed_supabase_url = urlsplit(supabase_url)
+    if parsed_signed_url.scheme:
+        if parsed_signed_url.netloc != parsed_supabase_url.netloc:
+            logger.error("Supabase Storage returned a signed upload URL for an unexpected host")
+            raise StorageUploadError("Supabase Storage returned an invalid upload link.")
+        browser_upload_url = signed_url
+    elif signed_url.startswith("/object/"):
+        browser_upload_url = f"{supabase_url}/storage/v1{signed_url}"
+    else:
+        browser_upload_url = f"{supabase_url}/storage/v1/{signed_url.lstrip('/')}"
+
+    file_reference = (
+        f"storage://{bucket}/{object_name}"
+        if legacy_bucket and bucket != legacy_bucket
+        else object_name
+    )
+    return {
+        "upload_url": browser_upload_url,
+        "file_reference": file_reference,
+        "file_name": PurePath(file_name).name[:255],
+        "content_type": expected_type,
+        "file_size": file_size,
+        "folder": folder,
+    }
+
+
+def verify_admin_upload(file_reference, *, content_type, expected_size, folder):
+    bucket, object_name = _storage_location(
+        file_reference,
+        settings.SUPABASE_URL.rstrip("/"),
+        _configured_buckets(),
+    )
+    if not object_name.startswith(f"{folder}/"):
+        raise StorageUploadError("The uploaded file does not match this form.")
+
+    extension = PurePath(object_name).suffix.lower()
+    if ADMIN_UPLOAD_EXTENSIONS.get(extension) != content_type:
+        raise StorageUploadError("The uploaded file type does not match this form.")
+
+    supabase_url = settings.SUPABASE_URL.rstrip("/")
+    service_key = settings.SUPABASE_SERVICE_ROLE_KEY
+    endpoint = (
+        f"{supabase_url}/storage/v1/object/"
+        f"{quote(bucket, safe='')}/{quote(object_name, safe='/')}"
+    )
+    headers = {
+        "apikey": service_key,
+        "Authorization": f"Bearer {service_key}",
+        "Range": "bytes=0-7",
+    }
+    try:
+        with httpx.Client(timeout=10) as client:
+            with client.stream("GET", endpoint, headers=headers) as response:
+                response.raise_for_status()
+                content_range = response.headers.get("Content-Range", "")
+                total_match = re.fullmatch(r"bytes \d+-\d+/(\d+)", content_range)
+                if response.status_code == 206 and total_match:
+                    actual_size = int(total_match.group(1))
+                else:
+                    actual_size = int(response.headers.get("Content-Length", "-1"))
+                prefix = next(response.iter_raw(chunk_size=8), b"")
+    except httpx.TimeoutException as error:
+        logger.warning("Supabase Storage upload verification timed out")
+        raise StorageUploadError("The uploaded file could not be verified in time.") from error
+    except httpx.HTTPStatusError as error:
+        logger.error(
+            "Supabase Storage could not verify an uploaded file (HTTP %s)",
+            error.response.status_code,
+        )
+        raise StorageUploadError("The uploaded file could not be verified.") from error
+    except httpx.RequestError as error:
+        logger.exception("Could not reach Supabase Storage to verify an upload")
+        raise StorageUploadError("Could not verify the uploaded file with storage.") from error
+    except ValueError as error:
+        logger.error("Supabase Storage returned invalid upload metadata")
+        raise StorageUploadError("Supabase Storage returned invalid upload metadata.") from error
+
+    signatures = FILE_SIGNATURES[content_type]
+    if actual_size != expected_size:
+        raise StorageUploadError("The uploaded file size does not match the selected file.")
+    if not any(prefix.startswith(signature) for signature in signatures):
+        raise StorageUploadError("The file's actual format does not match its selected type.")
+    return True
+
+
+def delete_admin_upload(file_reference):
+    bucket, object_name = _storage_location(
+        file_reference,
+        settings.SUPABASE_URL.rstrip("/"),
+        _configured_buckets(),
+    )
+    endpoint = (
+        f"{settings.SUPABASE_URL.rstrip('/')}/storage/v1/object/"
+        f"{quote(bucket, safe='')}/{quote(object_name, safe='/')}"
+    )
+    service_key = settings.SUPABASE_SERVICE_ROLE_KEY
+    headers = {
+        "apikey": service_key,
+        "Authorization": f"Bearer {service_key}",
+    }
+    try:
+        with httpx.Client(timeout=10) as client:
+            response = client.delete(endpoint, headers=headers)
+            response.raise_for_status()
+    except httpx.TimeoutException:
+        logger.warning("Supabase Storage cleanup timed out for an invalid admin upload")
+        return False
+    except httpx.HTTPStatusError as error:
+        logger.error(
+            "Supabase Storage rejected cleanup of an invalid upload with HTTP %s",
+            error.response.status_code,
+        )
+        return False
+    except httpx.RequestError:
+        logger.exception("Could not clean up an invalid admin upload")
+        return False
+    return True
 
 
 def upload_project_file(uploaded_file):

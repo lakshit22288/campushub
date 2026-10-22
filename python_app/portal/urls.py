@@ -44,4 +44,5 @@ urlpatterns = [
     path("compiler/execute/", compiler_views.execute_code, name="compiler_execute"),
     path("project-ideas/", features.project_ideas, name="project_ideas"),
     path("admin/", admin_views.admin_dashboard, name="admin"),
+    path("admin/uploads/prepare/", admin_views.prepare_admin_upload, name="admin_upload_prepare"),
 ]

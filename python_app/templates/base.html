@@ -13,7 +13,7 @@
   <title>{% block title %}CampuZHub{% endblock %}</title>
   {% block structured_data %}{% endblock %}
   <link rel="stylesheet" href="{% static 'styles/global.css' %}?v=49">
-  <link rel="stylesheet" href="{% static 'python/python.css' %}?v=52">
+  <link rel="stylesheet" href="{% static 'python/python.css' %}?v=53">
 </head>
 <body class="{% block body_class %}campus-page{% endblock %}">
   <div class="app-shell">
@@ -84,5 +84,6 @@
     })();
   </script>
   <script src="{% static 'styles/font-preview.js' %}?v=3" defer></script>
+  {% block scripts %}{% endblock %}
 </body>
 </html>
